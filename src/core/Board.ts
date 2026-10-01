@@ -1,0 +1,60 @@
+import { Cell } from "./Cell";
+import type { BoardSnapshot } from "./types";
+
+export class Board {
+  readonly width: number;
+  readonly height: number;
+  readonly #cells: Cell[];
+
+  constructor(width: number, height: number) {
+    if (
+      !Number.isInteger(width) ||
+      !Number.isInteger(height) ||
+      width < 1 ||
+      height < 1
+    ) {
+      throw new Error(`Invalid board size: ${width}x${height}.`);
+    }
+    this.width = width;
+    this.height = height;
+    this.#cells = Array.from({ length: width * height }, () => new Cell());
+  }
+
+  get size(): number {
+    return this.width * this.height;
+  }
+
+  inBound(x: number, y: number): boolean {
+    return x >= 0 && x < this.width && y >= 0 && y < this.height;
+  }
+
+  getCell(x: number, y: number): Cell | undefined {
+    if (!this.inBound(x, y)) return undefined;
+    return this.#cells[y * this.width + x];
+  }
+
+  *cells(): IterableIterator<Cell> {
+    yield* this.#cells;
+  }
+
+  snapshot(): BoardSnapshot {
+    return {
+      width: this.width,
+      height: this.height,
+      cells: this.#cells.map((cell) => cell.snapshot()),
+    };
+  }
+
+  static fromSnapshot(snapshot: BoardSnapshot): Board {
+    const board = new Board(snapshot.width, snapshot.height);
+    if (snapshot.cells.length !== board.size) {
+      throw new Error(
+        `Snapshot has ${snapshot.cells.length} cells, expected ${board.size}`,
+      );
+    }
+    snapshot.cells.forEach((cellSnapshot, i) => {
+      board.#cells[i] = Cell.fromSnapshot(cellSnapshot);
+    });
+    return board;
+  }
+}
