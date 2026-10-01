@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Game } from "../Game";
 import type { GameMode } from "../modes/GameMode";
+import type { GameStatus } from "../types";
 
 const config = { width: 9, height: 9, mines: 10, seed: 1 };
 
@@ -50,5 +51,24 @@ describe("Game", () => {
     const otherMode: GameMode = { id: "race", validateConfig: () => {} };
     const snapshot = new Game(config).snapshot();
     expect(() => Game.fromSnapshot(snapshot, otherMode)).toThrow();
+  });
+
+  it("is not finished at the start", () => {
+    expect(new Game(config).isFinished).toBe(false);
+  });
+
+  it("restores a finished status from a snapshot", () => {
+    const snapshot = { ...new Game(config).snapshot(), status: "won" as const };
+    const restored = Game.fromSnapshot(snapshot);
+    expect(restored.status).toBe("won");
+    expect(restored.isFinished).toBe(true);
+  });
+
+  it("rejects a snapshot with an unknown status", () => {
+    const snapshot = {
+      ...new Game(config).snapshot(),
+      status: "boom" as unknown as GameStatus,
+    };
+    expect(() => Game.fromSnapshot(snapshot)).toThrow();
   });
 });

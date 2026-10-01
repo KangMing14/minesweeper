@@ -1,13 +1,14 @@
 import { Board } from "./Board";
 import { ClassicMode } from "./modes/ClassicMode";
 import type { GameMode } from "./modes/GameMode";
+import { GameStateMachine } from "./states/GameStateMachine";
 import type { CellView, GameConfig, GameSnapshot, GameStatus } from "./types";
 
 export class Game {
   readonly config: GameConfig;
   readonly mode: GameMode;
   #board: Board;
-  #status: GameStatus = "ready";
+  #machine: GameStateMachine;
   #revealedCount = 0;
   #flagCount = 0;
 
@@ -16,10 +17,14 @@ export class Game {
     this.config = { ...config };
     this.mode = mode;
     this.#board = new Board(config.width, config.height);
+    this.#machine = new GameStateMachine();
   }
 
   get status(): GameStatus {
-    return this.#status;
+    return this.#machine.status;
+  }
+  get isFinished(): boolean {
+    return this.#machine.current.isFinished;
   }
   get revealedCount(): number {
     return this.#revealedCount;
@@ -39,7 +44,7 @@ export class Game {
     return {
       modeId: this.mode.id,
       config: { ...this.config },
-      status: this.#status,
+      status: this.#machine.status,
       revealCnt: this.#revealedCount,
       flagCnt: this.#flagCount,
       board: this.#board.snapshot(),
@@ -64,7 +69,7 @@ export class Game {
     }
     const game = new Game(snapshot.config, mode);
     game.#board = board;
-    game.#status = snapshot.status;
+    game.#machine = new GameStateMachine(snapshot.status);
     game.#revealedCount = snapshot.revealCnt;
     game.#flagCount = snapshot.flagCnt;
     return game;
