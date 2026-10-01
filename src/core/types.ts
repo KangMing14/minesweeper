@@ -34,3 +34,8 @@ export interface GameSnapshot {
 
   readonly board: BoardSnapshot;
 }
+
+export interface Coordinate {
+  readonly x: number;
+  readonly y: number;
+}

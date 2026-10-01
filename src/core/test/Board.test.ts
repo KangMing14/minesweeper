@@ -48,4 +48,32 @@ describe("Board", () => {
       Board.fromSnapshot({ ...snap, cells: snap.cells.slice(1) }),
     ).toThrow();
   });
+
+  it("placeMines marks the given cells", () => {
+    const board = new Board(3, 3);
+    board.placeMines([
+      { x: 0, y: 0 },
+      { x: 2, y: 2 },
+    ]);
+    expect(board.getCell(0, 0)?.isMine).toBe(true);
+    expect(board.getCell(2, 2)?.isMine).toBe(true);
+    expect(board.getCell(1, 1)?.isMine).toBe(false);
+  });
+
+  it("placeMines rejects out-of-bounds and duplicates, changing nothing", () => {
+    const board = new Board(3, 3);
+    expect(() =>
+      board.placeMines([
+        { x: 0, y: 0 },
+        { x: 3, y: 0 },
+      ]),
+    ).toThrow();
+    expect(() =>
+      board.placeMines([
+        { x: 1, y: 1 },
+        { x: 1, y: 1 },
+      ]),
+    ).toThrow();
+    expect([...board.cells()].some((c) => c.isMine)).toBe(false);
+  });
 });

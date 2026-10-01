@@ -1,5 +1,5 @@
 import { Cell } from "./Cell";
-import type { BoardSnapshot } from "./types";
+import type { BoardSnapshot, Coordinate } from "./types";
 
 export class Board {
   readonly width: number;
@@ -56,5 +56,23 @@ export class Board {
       board.#cells[i] = Cell.fromSnapshot(cellSnapshot);
     });
     return board;
+  }
+
+  placeMines(positions: readonly Coordinate[]): void {
+    const seen = new Set<number>();
+    for (const { x, y } of positions) {
+      const cell = this.getCell(x, y);
+      if (cell === undefined) {
+        throw new Error(`Mine position (${x}, ${y}) is outside the board`);
+      }
+      const index = y * this.width + x;
+      if (cell.isMine || seen.has(index)) {
+        throw new Error(`Duplicate mine at (${x}, ${y})`);
+      }
+      seen.add(index);
+    }
+    for (const { x, y } of positions) {
+      this.getCell(x, y)?.placeMine();
+    }
   }
 }

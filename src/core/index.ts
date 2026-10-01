@@ -12,4 +12,5 @@ export type {
   GameConfig,
   GameSnapshot,
   GameStatus,
+  Coordinate,
 } from "./types";
