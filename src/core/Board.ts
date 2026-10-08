@@ -1,5 +1,7 @@
 import { Cell } from "./Cell";
 import type { BoardSnapshot, Coordinate } from "./types";
+import { computeAdjacency } from "./adjacency";
+import { neighborCoordinates } from "./geometry";
 
 export class Board {
   readonly width: number;
@@ -74,5 +76,20 @@ export class Board {
     for (const { x, y } of positions) {
       this.getCell(x, y)?.placeMine();
     }
+    this.#recomputeAdjacency();
+  }
+
+  neighborsOf(x: number, y: number): Coordinate[] {
+    return neighborCoordinates(this.width, this.height, x, y);
+  }
+
+  #recomputeAdjacency(): void {
+    const mines: Coordinate[] = [];
+    this.#cells.forEach((cell, i) => {
+      if (cell.isMine)
+        mines.push({ x: i % this.width, y: Math.floor(i / this.width) });
+    });
+    const counts = computeAdjacency(this.width, this.height, mines);
+    this.#cells.forEach((cell, i) => cell.setAdjacentMines(counts[i] ?? 0));
   }
 }

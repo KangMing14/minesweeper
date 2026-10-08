@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FixedMinePlacer } from "../generation/FixedMinePlacer";
 import { BoardGenerator } from "../generation/BoardGenerator";
+import { referenceAdjacency } from "./tools/reference";
 
 const generator = new BoardGenerator();
 const mineCount = (g: ReturnType<BoardGenerator["generate"]>): number =>
@@ -50,5 +51,17 @@ describe("BoardGenerator", () => {
       seed: 1,
     });
     expect([...board.cells()].every((c) => c.state === "hidden")).toBe(true);
+  });
+
+  it("fills in correct adjacency counts on an Expert-size board", () => {
+    const snap = generator
+      .generate({ width: 30, height: 16, mines: 99, seed: 11 })
+      .snapshot();
+    const mines = snap.cells.flatMap((c, i) =>
+      c.isMine ? [{ x: i % 30, y: Math.floor(i / 30) }] : [],
+    );
+    expect(snap.cells.map((c) => c.adjMines)).toEqual(
+      referenceAdjacency(30, 16, mines),
+    );
   });
 });

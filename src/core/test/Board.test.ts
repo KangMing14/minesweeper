@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Board } from "../Board";
+import { parseLayout, renderBoard } from "./tools/ascii";
 
 describe("Board", () => {
   it("creates width*height hidden cells", () => {
@@ -75,5 +76,25 @@ describe("Board", () => {
       ]),
     ).toThrow();
     expect([...board.cells()].some((c) => c.isMine)).toBe(false);
+  });
+
+  it("placeMines fills in adjacency counts", () => {
+    const layout = parseLayout(["*..", "...", "..*"]);
+    const board = new Board(layout.width, layout.height);
+    board.placeMines(layout.mines);
+    expect(renderBoard(board.snapshot())).toEqual(["*1.", "121", ".1*"]);
+  });
+
+  it("placing mines in two calls keeps counts consistent", () => {
+    const board = new Board(3, 3);
+    board.placeMines([{ x: 0, y: 0 }]);
+    board.placeMines([{ x: 2, y: 2 }]);
+    expect(renderBoard(board.snapshot())).toEqual(["*1.", "121", ".1*"]);
+  });
+
+  it("neighborsOf returns only in-bounds cells", () => {
+    const board = new Board(3, 3);
+    expect(board.neighborsOf(0, 0)).toHaveLength(3);
+    expect(board.neighborsOf(1, 1)).toHaveLength(8);
   });
 });
