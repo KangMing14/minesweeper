@@ -1,8 +1,14 @@
 import { Board } from "./Board";
+import { Emitter, type Unsubscribe } from "./Emitter";
+import type { GameEvents } from "./events";
 import { ClassicMode } from "./modes/ClassicMode";
 import type { GameMode } from "./modes/GameMode";
 import { GameStateMachine } from "./states/GameStateMachine";
 import type { CellView, GameConfig, GameSnapshot, GameStatus } from "./types";
+
+export interface GameOptions {
+  readonly onListenerError?: (error: unknown) => void;
+}
 
 export class Game {
   readonly config: GameConfig;
@@ -11,13 +17,19 @@ export class Game {
   #machine: GameStateMachine;
   #revealedCount = 0;
   #flagCount = 0;
+  readonly #events: Emitter<GameEvents>;
 
-  constructor(config: GameConfig, mode: GameMode = new ClassicMode()) {
+  constructor(
+    config: GameConfig,
+    mode: GameMode = new ClassicMode(),
+    options: GameOptions = {},
+  ) {
     mode.validateConfig(config);
     this.config = { ...config };
     this.mode = mode;
     this.#board = new Board(config.width, config.height);
     this.#machine = new GameStateMachine();
+    this.#events = new Emitter<GameEvents>(options.onListenerError);
   }
 
   get status(): GameStatus {
@@ -38,6 +50,13 @@ export class Game {
 
   getCell(x: number, y: number): CellView | undefined {
     return this.#board.getCell(x, y);
+  }
+
+  on<K extends keyof GameEvents>(
+    event: K,
+    listener: (payload: GameEvents[K]) => void,
+  ): Unsubscribe {
+    return this.#events.on(event, listener);
   }
 
   snapshot(): GameSnapshot {

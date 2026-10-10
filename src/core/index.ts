@@ -14,3 +14,6 @@ export type {
   GameStatus,
   Coordinate,
 } from "./types";
+export type { Unsubscribe } from "./Emitter";
+export type { GameEvents, RevealedCell } from "./events";
+export type { GameOptions } from "./Game";

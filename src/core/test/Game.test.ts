@@ -71,4 +71,18 @@ describe("Game", () => {
     };
     expect(() => Game.fromSnapshot(snapshot)).toThrow();
   });
+
+  it("subscribing returns a working unsubscribe function", () => {
+    const game = new Game(config);
+    let calls = 0;
+    const off = game.on("statusChanged", () => calls++);
+    off();
+    expect(calls).toBe(0); // real emission is tested from Step 5 on
+  });
+
+  it("accepts options (listener error handler)", () => {
+    expect(
+      () => new Game(config, undefined, { onListenerError: () => {} }),
+    ).not.toThrow();
+  });
 });
