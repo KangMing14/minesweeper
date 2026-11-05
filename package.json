@@ -1,0 +1,21 @@
+{
+  "name": "minesweeper",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Competitive Minesweeper: 1v1 races on an identical seeded board plus solo time-attack.",
+  "type": "module",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=24.15.0"
+  },
+  "scripts": {
+    "typecheck": "tsc -b",
+    "build": "tsc -b",
+    "lint": "node -e \"console.log('[lint] not configured yet: ESLint arrives in M0-T03')\"",
+    "test": "node -e \"console.log('[test] not configured yet: Vitest arrives in M0-T04')\"",
+    "docs:api": "node -e \"console.log('[docs:api] not configured yet: TypeDoc arrives in M0-T04')\""
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

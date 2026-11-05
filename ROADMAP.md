@@ -13,8 +13,8 @@ File: `docs/milestones/M0-foundations.md`. Tag when finished: `m0-complete`.
 
 | Task | Title | Status | PR | Commit | Done on |
 |---|---|---|---|---|---|
-| M0-T01 | Initialize the repository and git conventions | Not started | | | |
-| M0-T02 | Scaffold the monorepo and pin versions | Not started | | | |
+| M0-T01 | Initialize the repository and git conventions | Done | n/a (bootstrap commit on main) | cc51e30 | 2026-11-05 |
+| M0-T02 | Scaffold the monorepo and pin versions | Done | | | |
 | M0-T03 | Lint, format, hooks and documentation lint | Not started | | | |
 | M0-T04 | Test tooling and CI | Not started | | | |
 | M0-T05 | Documentation skeleton | Not started | | | |

@@ -1,0 +1,5 @@
+# Workspace members. Dependency direction is enforced by each package.json
+# (and, from M0-T03, by lint): engine <- protocol <- apps/server, apps/web.
+packages:
+  - packages/*
+  - apps/*
