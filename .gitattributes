@@ -1,0 +1,16 @@
+# Normalize all text to LF in the repository and in working trees, on every OS.
+* text=auto eol=lf
+
+# Binary assets are never converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ogg binary
+*.mp3 binary
+*.wav binary
+*.zip binary

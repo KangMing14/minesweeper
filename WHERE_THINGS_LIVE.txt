@@ -1,0 +1,22 @@
+minesweeper/                      <- git repo root
+  ROADMAP.md                      status of all 78 tasks (you update after every task)
+  CLAUDE.md                       created in M0-T05: read-order and rules for Claude
+  README.md, PROJECT_OVERVIEW.md, ARCHITECTURE.md, DEVELOPMENT_GUIDE.md,
+  DECISIONS.md, CHANGELOG.md      created in M0-T05
+  docs/
+    superpowers/specs/            the approved design spec
+    superpowers/plans/            the master roadmap plan
+    milestones/                   M0..M11 files: handoff package + tasks
+    adr/                          ADR-001... one file per decision
+    handoffs/                     TEMPLATE.md (from M0-T05)
+    reviews/                      milestone review reports
+    workflow/
+      HOW_TO_USE.md               this file
+      PROMPT_TEMPLATES.md         copy-paste prompts
+      SESSION_LOG_TEMPLATE.md
+      sessions/                   one log per conversation (you save these)
+      checkpoints/                mid-task checkpoints (you save these)
+  packages/engine, packages/protocol, apps/server, apps/web   created in M0-T02
+  tools/snapshot.sh               zips the repo for attaching to a chat
+
+../snapshots/                     OUTSIDE the repo: snapshot zips you upload (never committed)
