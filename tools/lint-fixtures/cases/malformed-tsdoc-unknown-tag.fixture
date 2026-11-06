@@ -1,6 +1,10 @@
 /**
  * Adds two numbers.
  * @notarealtag nothing
+ * @example
+ * ```ts
+ * add(1, 2);
+ * ```
  */
 export function add(a: number, b: number): number {
   return a + b;

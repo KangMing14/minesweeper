@@ -1,2 +1,8 @@
-/** Rolls a die. */
+/**
+ * Rolls a die.
+ * @example
+ * ```ts
+ * roll;
+ * ```
+ */
 export const roll = (): number => Math['random']();

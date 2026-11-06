@@ -8,9 +8,45 @@ export const eslintCases = [
     expect: { errors: ['jsdoc/require-jsdoc'], count: 6 },
   },
   {
-    name: 'documented exports in engine are clean',
-    fixture: 'engine-documented-exports',
+    name: 'documented exports with @example in engine are clean',
+    fixture: 'engine-exports-with-examples',
     virtualPath: 'packages/engine/src/x.ts',
+    expect: { clean: true },
+  },
+  {
+    name: 'documented exports without @example in engine: all six kinds are errors',
+    fixture: 'engine-exports-without-example',
+    virtualPath: 'packages/engine/src/x.ts',
+    expect: { errors: ['jsdoc/require-example'], count: 6 },
+  },
+  {
+    name: 'documented exports without @example in protocol: all six kinds are errors',
+    fixture: 'engine-exports-without-example',
+    virtualPath: 'packages/protocol/src/x.ts',
+    expect: { errors: ['jsdoc/require-example'], count: 6 },
+  },
+  {
+    name: 'an empty @example is rejected in engine',
+    fixture: 'empty-example',
+    virtualPath: 'packages/engine/src/x.ts',
+    expect: { errors: ['jsdoc/require-example'] },
+  },
+  {
+    name: 'exports without @example are fine in apps/web',
+    fixture: 'app-documented-without-example',
+    virtualPath: 'apps/web/src/x.ts',
+    expect: { clean: true },
+  },
+  {
+    name: 'exports without @example are fine in apps/server',
+    fixture: 'app-documented-without-example',
+    virtualPath: 'apps/server/src/x.ts',
+    expect: { clean: true },
+  },
+  {
+    name: 'engine test files do not need @example',
+    fixture: 'engine-exports-without-example',
+    virtualPath: 'packages/engine/src/x.test.ts',
     expect: { clean: true },
   },
   {

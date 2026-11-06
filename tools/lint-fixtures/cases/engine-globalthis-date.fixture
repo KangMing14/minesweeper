@@ -1,2 +1,8 @@
-/** Reads the clock. */
+/**
+ * Reads the clock.
+ * @example
+ * ```ts
+ * now;
+ * ```
+ */
 export const now = (): number => globalThis.Date.now();

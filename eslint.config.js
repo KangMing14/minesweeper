@@ -64,6 +64,16 @@ const requireJsdocOptions = {
   checkConstructors: false,
 };
 
+// Spec 7.2: `@example` is required on the public API of engine and protocol. `jsdoc/require-example`
+// has no `publicOnly` option, so the exported declarations are selected directly. Limit: a symbol that is
+// declared first and exported later (`export { name }`) is covered by require-jsdoc but not by this rule,
+// so declare and export in one statement.
+const requireExampleOptions = {
+  // Selecting the export statement (not the declaration inside it) is what makes `export const` work:
+  // jsdoc does not resolve the comment of a variable declaration nested in an export.
+  contexts: ['ExportNamedDeclaration', 'ExportDefaultDeclaration'],
+};
+
 export default defineConfig([
   globalIgnores([
     '**/node_modules/**',
@@ -98,7 +108,15 @@ export default defineConfig([
   // Documentation: errors in the packages that form the public contract, warnings in the apps.
   {
     files: ['packages/engine/**/*.ts', 'packages/protocol/**/*.ts'],
-    rules: { 'jsdoc/require-jsdoc': ['error', requireJsdocOptions] },
+    rules: {
+      'jsdoc/require-jsdoc': ['error', requireJsdocOptions],
+      'jsdoc/require-example': ['error', requireExampleOptions],
+    },
+  },
+  {
+    // Tests rarely export anything, and an example on a test helper is noise.
+    files: ['packages/engine/**/*.test.ts', 'packages/protocol/**/*.test.ts'],
+    rules: { 'jsdoc/require-example': 'off' },
   },
   {
     files: ['apps/*/**/*.ts', 'apps/*/**/*.tsx'],

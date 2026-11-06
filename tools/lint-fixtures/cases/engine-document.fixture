@@ -1,2 +1,8 @@
-/** Reads the DOM. */
+/**
+ * Reads the DOM.
+ * @example
+ * ```ts
+ * title;
+ * ```
+ */
 export const title = (): string => document.title;

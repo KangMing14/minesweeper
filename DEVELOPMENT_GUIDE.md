@@ -88,7 +88,8 @@ git config core.hooksPath      # must print .husky/_ ; if it prints nothing, run
 
 - Every exported class, function, interface, type alias, enum and constant needs a `/** ... */` comment. This is an **error** in `packages/engine` and `packages/protocol`, and a **warning** in `apps/*` until M5-T03 turns it into an error.
 - Comment syntax is checked everywhere by `tsdoc/syntax`: use `@param name - text` (with the hyphen), standard tags only (`@remarks`, `@example`, `@throws`, `@returns`, `@internal`, `@deprecated`), and close every `{@link ...}`.
-- Not yet machine-enforced: `@example` on the public API of `engine` and `protocol`, and `@param`/`@returns` completeness. Reviewers check these until a rule is added.
+- In `packages/engine` and `packages/protocol` every exported symbol also needs an `@example` with content (error, `jsdoc/require-example`). Apps do not need one. Test files (`*.test.ts`) are exempt. Declare and export in one statement (`export function ...`, `export const ...`): a symbol exported later with `export { name }` is only covered by the doc-comment rule, not the `@example` rule.
+- Not machine-enforced: `@param`/`@returns` completeness. Reviewers check it.
 - Every TODO names a task: `// TODO(M6-T04): ...`. A bare `TODO` fails the commit and `pnpm check:todos`.
 
 ### Architecture and engine-purity rules

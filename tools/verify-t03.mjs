@@ -93,6 +93,7 @@ const eslintConfig = read('eslint.config.js');
 for (const needle of [
   'tsdoc/syntax',
   'jsdoc/require-jsdoc',
+  'jsdoc/require-example',
   'no-restricted-imports',
   'no-restricted-globals',
   'no-restricted-properties',
