@@ -11,11 +11,26 @@
   "scripts": {
     "typecheck": "tsc -b",
     "build": "tsc -b",
-    "lint": "node -e \"console.log('[lint] not configured yet: ESLint arrives in M0-T03')\"",
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.{ts,tsx,mts,cts,js,mjs,cjs,json,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,mts,cts,js,mjs,cjs,json,yml,yaml}\"",
+    "check:todos": "node scripts/check-todos.mjs",
+    "test:lint-fixtures": "node --test tools/lint-fixtures/lint-fixtures.test.mjs",
     "test": "node -e \"console.log('[test] not configured yet: Vitest arrives in M0-T04')\"",
-    "docs:api": "node -e \"console.log('[docs:api] not configured yet: TypeDoc arrives in M0-T04')\""
+    "docs:api": "node -e \"console.log('[docs:api] not configured yet: TypeDoc arrives in M0-T04')\"",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "typescript": "6.0.3"
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
+    "eslint-plugin-jsdoc": "65.4.0",
+    "eslint-plugin-tsdoc": "0.5.4",
+    "husky": "9.1.7",
+    "lint-staged": "17.6.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0"
   }
 }

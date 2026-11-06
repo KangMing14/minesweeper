@@ -1,0 +1,19 @@
+/** Adds two numbers. */
+export function add(a: number, b: number): number {
+  return a + b;
+}
+/** Counts things. */
+export class Counter {}
+/** A shape. */
+export interface Shape {
+  /** Number of sides. */
+  sides: number;
+}
+/** Identifier of a thing. */
+export type Id = number;
+/** Colors. */
+export enum Color {
+  Red,
+}
+/** Upper bound. */
+export const LIMIT = 10;

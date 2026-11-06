@@ -1,0 +1,4 @@
+import { thing } from '@minesweeper/protocol';
+
+/** Re-exposes a thing. */
+export const value = thing;

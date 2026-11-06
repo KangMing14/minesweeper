@@ -1,0 +1,5 @@
+import type { CellIndex } from '@minesweeper/engine';
+import type { WireCell } from '@minesweeper/protocol';
+
+/** A pair of cell types. */
+export type Pair = [CellIndex, WireCell];

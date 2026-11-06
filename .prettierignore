@@ -1,0 +1,14 @@
+# Generated, vendored or deliberately broken files.
+node_modules/
+dist/
+build/
+coverage/
+docs/api/
+pnpm-lock.yaml
+.husky/_/
+# Fixtures are intentionally malformed and may not parse.
+tools/lint-fixtures/cases/
+# Markdown and plain text are hand-written prose; the formatter only owns code and config.
+*.md
+*.txt
+*.fixture

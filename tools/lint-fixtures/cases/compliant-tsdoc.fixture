@@ -1,0 +1,15 @@
+/**
+ * Adds two numbers.
+ *
+ * @param a - First number.
+ * @param b - Second number.
+ * @returns The sum.
+ * @remarks Must stay deterministic.
+ * @example
+ * ```ts
+ * add(1, 2); // 3
+ * ```
+ */
+export function add(a: number, b: number): number {
+  return a + b;
+}

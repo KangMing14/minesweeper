@@ -1,0 +1,2 @@
+/** Reads the DOM. */
+export const title = (): string => document.title;

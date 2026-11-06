@@ -1,0 +1,2 @@
+/** Rolls a die. */
+export const roll = (): number => Math['random']();
