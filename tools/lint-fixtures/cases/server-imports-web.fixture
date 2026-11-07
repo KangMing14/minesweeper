@@ -1,0 +1,4 @@
+import { App } from '@minesweeper/web';
+
+/** The web app. */
+export const app = App;

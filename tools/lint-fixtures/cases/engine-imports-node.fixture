@@ -1,0 +1,10 @@
+import { readFileSync } from 'node:fs';
+
+/**
+ * Reads a file.
+ * @example
+ * ```ts
+ * read;
+ * ```
+ */
+export const read = readFileSync;

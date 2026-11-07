@@ -1,0 +1,8 @@
+/**
+ * Reads the viewport.
+ * @example
+ * ```ts
+ * width;
+ * ```
+ */
+export const width = (): number => window.innerWidth;

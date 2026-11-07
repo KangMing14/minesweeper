@@ -1,0 +1,10 @@
+import type { CellIndex } from '@minesweeper/engine';
+
+/**
+ * A cell reference on the wire.
+ * @example
+ * ```ts
+ * WireCell;
+ * ```
+ */
+export type WireCell = CellIndex;

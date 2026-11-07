@@ -1,0 +1,55 @@
+/**
+ * Adds two numbers.
+ * @example
+ * ```ts
+ * add(1, 2); // 3
+ * ```
+ */
+export function add(a: number, b: number): number {
+  return a + b;
+}
+/**
+ * Counts things.
+ * @example
+ * ```ts
+ * new Counter();
+ * ```
+ */
+export class Counter {}
+/**
+ * A shape.
+ * @example
+ * ```ts
+ * const s: Shape = { sides: 3 };
+ * ```
+ */
+export interface Shape {
+  /** Number of sides. */
+  sides: number;
+}
+/**
+ * Identifier of a thing.
+ * @example
+ * ```ts
+ * const id: Id = 1;
+ * ```
+ */
+export type Id = number;
+/**
+ * Colors.
+ * @example
+ * ```ts
+ * const c = Color.Red;
+ * ```
+ */
+export enum Color {
+  Red,
+}
+/**
+ * Upper bound.
+ * @example
+ * ```ts
+ * LIMIT; // 10
+ * ```
+ */
+export const LIMIT = 10;

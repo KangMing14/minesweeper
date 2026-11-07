@@ -1,0 +1,4 @@
+import { start } from '@minesweeper/server';
+
+/** Starts the server. */
+export const run = start;

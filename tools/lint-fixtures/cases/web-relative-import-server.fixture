@@ -1,0 +1,4 @@
+import { start } from '../../server/src/index.js';
+
+/** Starts the server. */
+export const run = start;

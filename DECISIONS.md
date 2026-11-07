@@ -57,17 +57,33 @@ Radix primitives are pinned per component when first used (M3, M10).
 
 | Tool | Pin | Published | Latest on 2026-11-05 | Status and notes |
 |---|---|---|---|---|
-| `eslint` | 10.13.0 | 2026-10-16 | 10.14.0 (2026-10-30) | M0-T03 |
-| `@eslint/js` | 10.0.1 | 2026-02-06 | 10.0.1 | M0-T03. Check it pairs with `eslint` 10.13.0 when added. |
-| `typescript-eslint` | 8.72.0 | 2026-10-19 | 8.72.1 (2026-10-26) | M0-T03. Peer: `typescript <6.1.0`. |
-| `eslint-plugin-tsdoc` | 0.5.4 | 2026-09-29 | 0.5.4 | M0-T03 |
-| `eslint-plugin-jsdoc` | 65.4.0 | 2026-10-20 | 65.4.3 (2026-11-03) | M0-T03. Node `^22.22.2 \|\| >=24.15.0`. |
-| `prettier` | 3.9.10 | 2026-10-10 | 3.9.10 | M0-T03 |
-| `husky` | 9.1.7 | 2024-11-18 | 9.1.7 | M0-T03. No release for almost two years; check it still works with pnpm 12 hooks. |
-| `lint-staged` | 17.6.0 | 2026-09-26 | 17.6.0 | M0-T03. Node `>=22.22.1`. |
-| `@commitlint/cli` | 21.2.4 | 2026-10-18 | 21.2.4 | M0-T03 |
-| `@commitlint/config-conventional` | 21.2.4 | 2026-10-18 | 21.2.4 | M0-T03. Keep equal to the CLI. |
+| `eslint` | 10.13.0 | 2026-10-16 | 10.14.0 (2026-10-30) | **installed** in M0-T03. |
+| `@eslint/js` | 10.0.1 | 2026-02-06 | 10.0.1 | **installed** in M0-T03. Verified: pairs with `eslint` 10.13.0. |
+| `typescript-eslint` | 8.72.0 | 2026-10-19 | 8.72.1 (2026-10-26) | **installed** in M0-T03. Peer: `typescript <6.1.0`. |
+| `eslint-plugin-tsdoc` | 0.5.4 | 2026-09-29 | 0.5.4 | **installed** in M0-T03. |
+| `eslint-plugin-jsdoc` | 65.4.0 | 2026-10-20 | 65.4.3 (2026-11-03) | **installed** in M0-T03. Node `^22.22.2 \|\| >=24.15.0`. |
+| `prettier` | 3.9.10 | 2026-10-10 | 3.9.10 | **installed** in M0-T03. |
+| `husky` | 9.1.7 | 2024-11-18 | 9.1.7 | **installed** in M0-T03. Verified in M0-T03: hooks run under pnpm 12.15.0. Caveat: `pnpm install` on an already up-to-date install skips `prepare`; run `pnpm prepare` to wire the hooks. |
+| `lint-staged` | 17.6.0 | 2026-09-26 | 17.6.0 | **installed** in M0-T03. Node `>=22.22.1`. |
+| `@commitlint/cli` | 21.2.4 | 2026-10-18 | 21.2.4 | **installed** in M0-T03. |
+| `@commitlint/config-conventional` | 21.2.4 | 2026-10-18 | 21.2.4 | **installed** in M0-T03. Keep equal to the CLI. |
 | `vitest` | 5.0.5 | 2026-10-15 | 5.1.0 (2026-11-02) | M0-T04. Peer: `vite ^6.4 \|\| ^7 \|\| ^8`. |
 | `@vitest/coverage-v8` | 5.0.5 | 2026-10-15 | 5.1.0 (2026-11-02) | M0-T04. Must equal the `vitest` version. |
 | `typedoc` | 0.28.20 | 2026-07-05 | 0.28.20 | M0-T04. Peer: `typescript <=6.0.x`; this is why TypeScript stays on 6.0.3. |
 | `@playwright/test` | 1.64.1 | 2026-10-14 | 1.64.1 | M3-T08 |
+
+### M0-T03 verification notes
+
+Re-verified on 2026-11-06 before adding: all ten packages exist at the pinned versions, none is deprecated, each was published on or before 2026-10-22, and all peer ranges are satisfied by `eslint` 10.13.0, `typescript` 6.0.3 and Node 24.
+
+- **Known peer warning (accepted):** `pnpm install` reports `eslint-plugin-tsdoc@0.5.4` pulling its own pinned `@typescript-eslint/utils@8.56.1`, whose peer range is `typescript <6.0.0`. The plugin only uses it for parsing helpers; the `tsdoc/syntax` rule is pinned by fixtures and works on TypeScript 6.0.3. No override added. Revisit when `eslint-plugin-tsdoc` releases a newer version (input for ADR-005).
+- **Prettier scope:** code and config files only (`ts, tsx, mts, cts, js, mjs, cjs, json, yml, yaml`). Markdown and text are excluded so hand-written docs are not rewritten.
+- **Test runner for tooling:** the lint fixtures use Node's built-in `node:test`, so M0-T03 does not depend on Vitest (M0-T04).
+
+### M0-T03 inputs for ADR-006 and ADR-007
+
+No ADR was written in M0-T03 (the eight foundation ADRs are M0-T06) and no open decision was closed. These choices refine spec sections 7.1 and 7.2 and belong in those ADRs.
+
+- **ADR-006 (git workflow):** commitlint allows the types `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci` and the optional scopes `engine`, `protocol`, `server`, `web`, `docs`. The subject must end with `[Mn-Tnn]` or `[chore]`; GitHub's ` (#n)` suffix after a squash-merge is allowed. The default `subject-case` rule is off because subjects often start with an acronym (`PRNG`, `ADR-001`); the type must still be lower case. Hooks are installed by `pnpm prepare`, which an up-to-date `pnpm install` skips.
+- **ADR-007 (code documentation):** `tsdoc/syntax` runs on all TypeScript. `jsdoc/require-jsdoc` on exports is an error in `engine` and `protocol` and a warning in `apps/*` until M5-T03. `jsdoc/require-example` on exports is an error in `engine` and `protocol` (test files exempt) and only sees declarations exported in the same statement. `@param` and `@returns` completeness is not machine-enforced. TypeDoc arrives in M0-T04.
+

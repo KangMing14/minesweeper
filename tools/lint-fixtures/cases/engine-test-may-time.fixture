@@ -1,0 +1,4 @@
+const start = performance.now();
+
+/** Milliseconds since the module loaded. */
+export const elapsed = (): number => performance.now() - start;

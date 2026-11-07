@@ -1,0 +1,8 @@
+/**
+ * Reads the environment.
+ * @example
+ * ```ts
+ * mode;
+ * ```
+ */
+export const mode = (): string | undefined => process.env['MODE'];

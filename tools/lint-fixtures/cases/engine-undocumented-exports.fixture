@@ -1,0 +1,12 @@
+export function add(a: number, b: number): number {
+  return a + b;
+}
+export class Counter {}
+export interface Shape {
+  sides: number;
+}
+export type Id = number;
+export enum Color {
+  Red,
+}
+export const LIMIT = 10;
