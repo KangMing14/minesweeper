@@ -201,12 +201,17 @@ check(
 console.log('Placeholders and documentation');
 for (const k of PKGS) {
   const src = read(`${k.dir}/src/index.ts`);
+  // M0-T04 adds one sample re-export to the engine (removed in M1-T07); nothing else may be exported yet.
+  const allowed = [
+    /^\s*export\s*\{\s*\}\s*;?\s*$/,
+    /^\s*export\s*\{\s*m0SampleAdd\s*\}\s*from\s*'\.\/sample\.js'\s*;?\s*$/,
+  ];
   const stray = src
     .split('\n')
-    .filter((l) => /^\s*export\b/.test(l) && !/^\s*export\s*\{\s*\}\s*;?\s*$/.test(l));
+    .filter((l) => /^\s*export\b/.test(l) && !allowed.some((re) => re.test(l)));
   check(
-    `${k.dir}/src/index.ts is a module that exports nothing`,
-    /^\s*export\s*\{\s*\}\s*;?\s*$/m.test(src) && stray.length === 0,
+    `${k.dir}/src/index.ts exports nothing (apart from the M0 sample)`,
+    src.split('\n').some((l) => allowed.some((re) => re.test(l))) && stray.length === 0,
     stray.join(' | '),
   );
 }

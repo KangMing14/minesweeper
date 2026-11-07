@@ -1,2 +1,1 @@
-# TODO(M0-T04): replace with Vitest's affected-tests run once Vitest is installed.
-pnpm test
+pnpm test:affected

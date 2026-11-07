@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Applies the repository merge settings and the `main` branch protection from DEVELOPMENT_GUIDE.md.
 # Usage: tools/github/protect-main.sh OWNER/REPO [CHECK_NAME]
-#   CHECK_NAME  Name of the CI job to require. Omit until the CI workflow exists (M0-T04);
-#               re-run with the name afterwards. The script is idempotent.
+#   CHECK_NAME  Name of the CI job to require: `ci` (.github/workflows/ci.yml, M0-T04). Omit it until the
+#               workflow has run once; re-run with `ci` afterwards. The script is idempotent.
 # Requires: gh (authenticated, with admin rights on the repository).
 set -euo pipefail
 

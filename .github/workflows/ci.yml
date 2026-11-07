@@ -1,0 +1,90 @@
+# Continuous integration (spec sections 5 and 7.1, M0-T04).
+#
+# One job, named `ci`, so branch protection needs exactly one required status check. After the first run
+# on GitHub, make it required with:  tools/github/protect-main.sh OWNER/REPO ci
+#
+# Every third-party action is pinned to a full commit SHA (the tag is in the comment). Releases were at
+# least two weeks old when pinned (see DECISIONS.md). Update them deliberately, never with a floating tag.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# A newer push to the same branch or PR makes the older run pointless.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The job only reads the repository. Nothing here needs a write token.
+permissions:
+  contents: read
+
+env:
+  # `pnpm install` runs the `prepare` script, which installs git hooks. CI has no use for them.
+  HUSKY: '0'
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Node version comes from .nvmrc (the 24 LTS line); `engines` in package.json sets the floor.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      # pnpm itself is pinned by the `packageManager` field; Corepack downloads exactly that version.
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Find the pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache the pnpm store
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - run: pnpm install --frozen-lockfile
+
+      # Order: cheapest and most informative first. Each step is its own command so a red run says why.
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm check:todos
+      - run: pnpm test:lint-fixtures
+      - run: pnpm test:coverage
+      - run: pnpm docs:api
+
+      # The PR title becomes the squash-commit subject on `main`, so it must follow the commit rules.
+      # It goes through an environment variable, never straight into the script text.
+      - name: Check the PR title
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "$PR_TITLE" | pnpm exec commitlint
+
+      # Coverage and the generated API reference are build artifacts: never committed (spec 7.2).
+      - name: Upload coverage and API reference
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ci-reports
+          path: |
+            coverage
+            docs/api
+          if-no-files-found: ignore
+          retention-days: 7
