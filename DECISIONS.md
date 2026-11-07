@@ -20,7 +20,7 @@ Only the rows marked **installed** are in a `package.json` today. The rest are d
 | Tool | Pin | Published | Latest on 2026-11-05 | Status and notes |
 |---|---|---|---|---|
 | `typescript` | 6.0.3 | 2026-04-16 | 7.0.2 (2026-07-08) | **installed**. Deliberately not 7.x: `typedoc@0.28.20` accepts TypeScript up to 6.0.x and `typescript-eslint@8.72.0` accepts `<6.1.0`, so 7.x would break M0-T03 and M0-T04. Revisit when both support 7. |
-| `@types/node` | 24.19.2 | 2026-10-09 | 26.6.6 | **installed** in `apps/server` only. Matches the Node 24 runtime line. |
+| `@types/node` | 24.19.2 | 2026-10-09 | 26.6.6 | **installed** in `apps/server` and, from M0-T04, at the root (types for `vitest.config.ts` and for Vitest's own declarations). Packages keep `types: []`. Matches the Node 24 runtime line. |
 
 ### Client (M3-T01)
 
@@ -30,7 +30,7 @@ Only the rows marked **installed** are in a `package.json` today. The rest are d
 | `react-dom` | 19.3.1 | 2026-10-14 | 19.3.1 | M3-T01 |
 | `@types/react` | 19.3.0 | 2026-09-09 | 19.3.0 | M3-T01 |
 | `@types/react-dom` | 19.3.0 | 2026-09-09 | 19.3.0 | M3-T01 |
-| `vite` | 8.3.5 | 2026-10-21 | 8.3.5 | M3-T01 |
+| `vite` | 8.3.5 | 2026-10-21 | 8.3.5 | **installed** at the root in M0-T04, because Vitest 5 takes `vite` as a peer dependency. M3-T01 adds the same version to `apps/web`. |
 | `@vitejs/plugin-react` | 6.1.2 | 2026-10-05 | 6.2.1 (2026-11-02) | M3-T01. Peer: `vite ^8`. |
 | `zustand` | 5.0.15 | 2026-08-13 | 5.0.16 (2026-10-22) | M3-T01 |
 | `tailwindcss` | 4.3.3 | 2026-07-16 | 4.3.4 (2026-11-02) | M3-T01 |
@@ -67,9 +67,9 @@ Radix primitives are pinned per component when first used (M3, M10).
 | `lint-staged` | 17.6.0 | 2026-09-26 | 17.6.0 | **installed** in M0-T03. Node `>=22.22.1`. |
 | `@commitlint/cli` | 21.2.4 | 2026-10-18 | 21.2.4 | **installed** in M0-T03. |
 | `@commitlint/config-conventional` | 21.2.4 | 2026-10-18 | 21.2.4 | **installed** in M0-T03. Keep equal to the CLI. |
-| `vitest` | 5.0.5 | 2026-10-15 | 5.1.0 (2026-11-02) | M0-T04. Peer: `vite ^6.4 \|\| ^7 \|\| ^8`. |
-| `@vitest/coverage-v8` | 5.0.5 | 2026-10-15 | 5.1.0 (2026-11-02) | M0-T04. Must equal the `vitest` version. |
-| `typedoc` | 0.28.20 | 2026-07-05 | 0.28.20 | M0-T04. Peer: `typescript <=6.0.x`; this is why TypeScript stays on 6.0.3. |
+| `vitest` | 5.0.5 | 2026-10-15 | 5.1.0 (2026-11-02) | **installed** in M0-T04. Peers: `vite ^6.4 \|\| ^7 \|\| ^8`, `@types/node ^22 \|\| >=24`. |
+| `@vitest/coverage-v8` | 5.0.5 | 2026-10-15 | 5.1.0 (2026-11-02) | **installed** in M0-T04. Must equal the `vitest` version. |
+| `typedoc` | 0.28.20 | 2026-07-05 | 0.28.20 | **installed** in M0-T04. Peer: `typescript <=6.0.x`; this is why TypeScript stays on 6.0.3. |
 | `@playwright/test` | 1.64.1 | 2026-10-14 | 1.64.1 | M3-T08 |
 
 ### M0-T03 verification notes
@@ -86,4 +86,36 @@ No ADR was written in M0-T03 (the eight foundation ADRs are M0-T06) and no open 
 
 - **ADR-006 (git workflow):** commitlint allows the types `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci` and the optional scopes `engine`, `protocol`, `server`, `web`, `docs`. The subject must end with `[Mn-Tnn]` or `[chore]`; GitHub's ` (#n)` suffix after a squash-merge is allowed. The default `subject-case` rule is off because subjects often start with an acronym (`PRNG`, `ADR-001`); the type must still be lower case. Hooks are installed by `pnpm prepare`, which an up-to-date `pnpm install` skips.
 - **ADR-007 (code documentation):** `tsdoc/syntax` runs on all TypeScript. `jsdoc/require-jsdoc` on exports is an error in `engine` and `protocol` and a warning in `apps/*` until M5-T03. `jsdoc/require-example` on exports is an error in `engine` and `protocol` (test files exempt) and only sees declarations exported in the same statement. `@param` and `@returns` completeness is not machine-enforced. TypeDoc arrives in M0-T04.
+
+### M0-T04 verification notes
+
+Re-verified on 2026-11-07 before adding: `vitest@5.0.5`, `@vitest/coverage-v8@5.0.5`, `typedoc@0.28.20`, `vite@8.3.5` and `@types/node@24.19.2` exist on the registry, none is deprecated, each was published on or before 2026-10-21 (at least 14 days old), and no peer range is violated by `typescript` 6.0.3 or Node 24. `vitest` and `@vitest/coverage-v8` 5.1.0 (2026-11-02) were skipped for being under two weeks old. The only peer warning is the accepted `eslint-plugin-tsdoc` one above; installing the new packages added none.
+
+- **Vitest 5 has no workspace file.** The task text lists `vitest.workspace.ts`, but Vitest 5.0.5 throws on the removed `test.workspace` option and does not read workspace files. Projects are declared with `test.projects` in `vitest.config.ts` (one per package). Same intent, current API.
+- **`vite` at the root.** Vitest lists `vite` as a peer, not a dependency, so it must be installed. It is the exact version already reserved for M3-T01.
+- **Tests run against workspace source.** `vitest.config.ts` aliases `@minesweeper/engine` and `@minesweeper/protocol` to their `src/index.ts`. Reason: `exports` point at `dist/`, which does not exist on a fresh clone, and `--changed` needs the source module graph to see cross-package effects. Types still come from `dist/` through `tsc -b`.
+- **TypeDoc** uses `entryPointStrategy: "packages"` and reads the TypeScript source through each package's tsconfig, so it works without a prior build. It runs with the defaults (unresolved links, unexported references) as errors. `validation.notDocumented` is deliberately not enabled: spec 7.2 requires comments on exported symbols, not on every member.
+- **Coverage:** provider v8, reporters `text`, `json-summary`, `lcov`, no thresholds until M1.
+- **Verification limit:** the workflow has not run on GitHub yet. It passes `actionlint` 1.7.12, and every step's command was run locally on a fresh copy with a frozen lockfile. The first real run is the pull request that adds it.
+
+### GitHub Actions pins (M0-T04)
+
+Pinned by full commit SHA in `.github/workflows/ci.yml`. Tag commit dates were all more than 14 days before 2026-11-07. All four run on the `node24` action runtime.
+
+| Action | Tag | Commit SHA | Tag commit date |
+|---|---|---|---|
+| `actions/checkout` | v7.0.1 | `3d3c42e5aac5ba805825da76410c181273ba90b1` | 2026-07-17 |
+| `actions/setup-node` | v7.1.0 | `949feb2413d6458794dcd2491c4babbbce0c15c1` | 2026-10-07 |
+| `actions/cache` | v6.1.0 | `55cc8345863c7cc4c66a329aec7e433d2d1c52a9` | 2026-06-23 |
+| `actions/upload-artifact` | v7.0.2 | `cf430e030ddbb5b0abf93d22962f4752f3646cd9` | 2026-10-07 |
+
+`pnpm/action-setup` is not used: Corepack provides pnpm from the `packageManager` field.
+
+### M0-T04 inputs for ADR-005, ADR-006 and ADR-007
+
+No ADR was written in M0-T04 and no open decision was closed.
+
+- **ADR-005 (stack):** Vitest 5 with `test.projects`, v8 coverage, TypeDoc 0.28 in `packages` mode, CI on GitHub Actions with Corepack-provided pnpm and SHA-pinned actions.
+- **ADR-006 (git workflow):** the required status check is the single job `ci`; the PR title is linted in CI because squash-merge uses it as the commit subject; `pre-push` runs `test:affected` (tests affected since `origin/main`).
+- **ADR-007 (code documentation):** TypeDoc warnings are errors in CI; the reference is a CI artifact (`ci-reports`), never committed.
 

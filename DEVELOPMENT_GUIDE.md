@@ -1,6 +1,6 @@
 # Development Guide
 
-> Stub: M0-T01 wrote the git section and M0-T03 added the tooling section below. M0-T04 adds how to run tests and docs, and M0-T05 completes the guide (task loop, skills).
+> Stub: M0-T01 wrote the git section, M0-T03 the tooling section and M0-T04 the tests, API docs and CI section. M0-T05 completes the guide (task loop, skills).
 
 ## Git workflow
 
@@ -42,7 +42,7 @@ Run once per repository, as an admin, with an authenticated `gh`:
 
 ```bash
 tools/github/protect-main.sh OWNER/REPO            # before CI exists
-tools/github/protect-main.sh OWNER/REPO <job-name>  # after M0-T04: also require the CI check
+tools/github/protect-main.sh OWNER/REPO ci           # after the first CI run (M0-T04): also require the `ci` check
 tools/verify-t01.sh --remote OWNER/REPO            # verify
 ```
 
@@ -73,7 +73,7 @@ git config core.hooksPath      # must print .husky/_ ; if it prints nothing, run
 
 - `pre-commit` (lint-staged): ESLint, Prettier check and the TODO check on staged files, plus `tsc -b` for every package that has a staged TypeScript file.
 - `commit-msg`: commitlint.
-- `pre-push`: `pnpm test`. This is a placeholder until M0-T04 installs Vitest and switches it to affected tests.
+- `pre-push`: `pnpm test:affected`, which runs only the tests affected by your changes since `origin/main` (see "Tests, API docs and CI").
 
 ### Commit message rule (commitlint)
 
@@ -102,3 +102,48 @@ git config core.hooksPath      # must print .husky/_ ; if it prints nothing, run
 ### Changing a rule
 
 Add or change a fixture in `tools/lint-fixtures/cases/` and its entry in `tools/lint-fixtures/manifest.mjs` first, watch `pnpm test:lint-fixtures` fail, then change `eslint.config.js`. Fixture files use the `.fixture` extension so the normal lint ignores them; the test lints them as if they lived at the `virtualPath` given in the manifest.
+
+## Tests, API docs and CI (M0-T04)
+
+### Commands
+
+| Command | What it does |
+|---|---|
+| `pnpm test` | Vitest, all four projects (`engine`, `protocol`, `server`, `web`), once, no watch |
+| `pnpm test:coverage` | The same with v8 coverage: terminal table plus `coverage/` (`lcov.info`, `coverage-summary.json`) |
+| `pnpm test:affected` | Only tests affected by changes since `origin/main` (what `pre-push` runs); the whole suite if `origin/main` is missing |
+| `pnpm typecheck` | `tsc -b` for the packages, then `pnpm typecheck:tests` |
+| `pnpm typecheck:tests` | Type-checks test files (`packages/*/tsconfig.test.json`) and `vitest.config.ts` (`tsconfig.tooling.json`) |
+| `pnpm docs:api` | TypeDoc API reference for `engine` and `protocol` into `docs/api/` (ignored by git); any warning is an error |
+| `pnpm exec vitest --project engine` | Run one project; add `--watch` while developing |
+
+### Where tests live
+- Unit tests sit next to the code: `src/**/*.test.ts` (or `.spec.ts`). Shared and integration tests go in a package's `test/` directory (`engine` determinism suite in M2, server fault tests in M6).
+- Playwright specs live in `e2e/` (M3-T08) and are never picked up by Vitest.
+- `vitest.config.ts` defines one project per package. Workspace files (`vitest.workspace.ts`) were removed in Vitest 4, so projects are declared in `test.projects`.
+- Tests import workspace packages by name (`@minesweeper/engine`). Vitest resolves those names to the package **source**, so tests run on a fresh clone without `tsc -b`. TypeScript still reads types from the built output, which is why `typecheck` builds first.
+- `*.test.ts` files are excluded from the `tsc -b` build of `engine` and `protocol` (they are not shipped, and those packages compile without Node types). The `tsconfig.test.json` next to each checks them instead.
+- Coverage has no thresholds yet. M1 sets them once the engine has real code.
+- The M0 sample (`packages/engine/src/sample.ts` and its test) exists only to exercise the pipeline. M1-T07 removes it.
+
+### API reference (TypeDoc)
+- `typedoc.json` documents `packages/engine` and `packages/protocol` (spec section 7.2). `treatWarningsAsErrors` makes unresolved `{@link}`s, unknown tags and unexported references fail `pnpm docs:api`, locally and in CI.
+- Open `docs/api/index.html` after a run to read the reference as a consumer would. The output is never committed.
+- `@internal` symbols are left out of the reference. An empty package (`protocol` until M5-T01) is not a warning.
+
+### Continuous integration
+- Workflow: `.github/workflows/ci.yml`, one job named `ci`, on every pull request to `main` and every push to `main`.
+- Steps, in order: install with `--frozen-lockfile` (pnpm store cached), `typecheck`, `lint`, `format:check`, `check:todos`, `test:lint-fixtures`, `test:coverage`, `docs:api`, and on pull requests a commitlint check of the **PR title**. Coverage and `docs/api` are uploaded as the `ci-reports` artifact (7 days).
+- Third-party actions are pinned to full commit SHAs (tag in a comment). Versions and dates are in `DECISIONS.md`. Update them on purpose, one at a time.
+- Running everything CI runs, locally: `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:todos && pnpm test:lint-fixtures && pnpm test:coverage && pnpm docs:api`.
+- Checking a PR title locally: `printf '%s\n' 'ci: add test tooling [M0-T04]' | pnpm exec commitlint`.
+
+### Making CI a required check
+After the first CI run exists on GitHub (open the M0-T04 pull request), run once as a repository admin:
+
+```bash
+tools/github/protect-main.sh OWNER/REPO ci
+tools/verify-t01.sh --remote OWNER/REPO
+```
+
+The required check is the job name, `ci`. Rename the job only together with this command.

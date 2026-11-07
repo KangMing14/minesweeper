@@ -1,0 +1,11 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["packages/engine", "packages/protocol"],
+  "entryPointStrategy": "packages",
+  "out": "docs/api",
+  "name": "Competitive Minesweeper API",
+  "readme": "none",
+  "excludeInternal": true,
+  "treatWarningsAsErrors": true,
+  "treatValidationWarningsAsErrors": true
+}
