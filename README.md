@@ -1,6 +1,6 @@
 # Competitive Minesweeper
 
-[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
+[![CI](https://github.com/KangMing14/minesweeper/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/KangMing14/minesweeper/actions/workflows/ci.yml)
 
 A browser-based competitive Minesweeper: 1v1 races on an identical seeded board, plus solo time-attack with leaderboards. TypeScript, pnpm monorepo.
 
