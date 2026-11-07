@@ -8,5 +8,10 @@
     "types": []
   },
   "include": ["src"],
-  "references": [{ "path": "../engine" }]
+  "exclude": ["src/**/*.test.ts", "src/**/*.spec.ts"],
+  "references": [
+    {
+      "path": "../engine"
+    }
+  ]
 }
