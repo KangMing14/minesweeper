@@ -1,6 +1,80 @@
 # Decisions
 
-> Stub created in M0-T02 with the dependency version table only. M0-T05 completes this document (ADR template, ADR list, open decisions D-01..D-13) and must keep the section below. ADRs themselves live in `docs/adr/` from M0-T06.
+Where decisions live: **architecture decision records (ADRs)** in `docs/adr/`, one file per decision, plus this index; **open decisions** in the table below until an ADR settles them; and the **dependency pins** at the end of this file, which are inputs to ADR-005.
+
+## How decisions are recorded
+
+- One file per decision: `docs/adr/ADR-0NN-short-title.md`. The ADRs are written by the tasks named in the index below; the first eight in M0-T06.
+- **Append-only.** An accepted ADR is never edited. A changed decision gets a new ADR that supersedes the old one; the old file only gains a `Superseded by ADR-0NN` line in its status.
+- A task that conflicts with an ADR stops and proposes a new ADR (see `CLAUDE.md`, rule 4).
+- When an open decision is settled, its row below changes to `Settled by ADR-0NN` in the same task that writes the ADR, and the milestone close-out lists it in `CHANGELOG.md`.
+
+### ADR template
+
+```markdown
+# ADR-0NN: <title>
+
+- Status: Proposed | Accepted | Superseded by ADR-0NN
+- Date: <YYYY-MM-DD>
+- Task: <Mn-Tnn>
+- Settles: <D-nn, or "none">
+
+## Context
+<The situation and the forces at play. What would go wrong without a decision?>
+
+## Decision
+<What was decided, in one or two paragraphs, in the present tense.>
+
+## Consequences
+<What becomes easier, what becomes harder, what must now be true. Include the known limits.>
+
+## Alternatives
+<The options considered and why each was not chosen.>
+```
+
+## ADR index
+
+Source: master plan, "ADR plan". **None written yet**: the table is the plan, and every row stays `Planned` until its task commits the file.
+
+| ADR | Decision | Task | Status |
+|---|---|---|---|
+| ADR-001 | Monorepo and modular monolith | M0-T06 | Planned |
+| ADR-002 | Deterministic engine | M0-T06 | Planned |
+| ADR-003 | Server-authoritative play | M0-T06 | Planned |
+| ADR-004 | `GameSession` adapter | M0-T06 | Planned |
+| ADR-005 | Technology stack (incl. Better Auth re-verification) | M0-T06 | Planned |
+| ADR-006 | Git workflow | M0-T06 | Planned |
+| ADR-007 | Code documentation | M0-T06 | Planned |
+| ADR-008 | License | M0-T06 | Planned |
+| ADR-009 | Cell rules: chording and flags (D-04) | M1-T05 | Planned |
+| ADR-010 | Race rules and presets (D-01, D-02) | M4-T03 | Planned |
+| ADR-011 | Disconnect grace period (D-05) | M6-T03 | Planned |
+| ADR-012 | Auth methods (D-07) | M7-T02 | Planned |
+| ADR-013 | Rating system (D-06) | M8-T04 | Planned |
+| ADR-014 | Hosting provider (D-09) | M9-T02 | Planned |
+| ADR-015 | Platform priority and touch (D-08) | M10-T04 | Planned |
+| ADR-016 | Telemetry and privacy (D-13) | M10-T07 | Planned |
+
+## Open decisions
+
+D-01 to D-11 come from spec section 3, D-12 and D-13 from the master plan. The working assumption is what tasks may rely on until the owning task settles it.
+
+| ID | Item | Working assumption | Owner | Status |
+|---|---|---|---|---|
+| D-01 | Board presets | Classic three: beginner 9x9/10, intermediate 16x16/40, expert 30x16/99. Ranked race preset undecided. | M4-T03 (ADR-010); working values in M1-T01 | Open |
+| D-02 | Mine hit in a race | Hitting a mine ends your run (DNF). If both DNF, more safe cells revealed wins. Alternative: time penalty and continue. | M4-T03 (ADR-010) | Open |
+| D-03 | Match format | Single round for the first networked race; best-of-N as a configurable `MatchRules` value later. | M5-T04 (single round); revisited in M8-T06 | Open |
+| D-04 | Chording and flags | Chording allowed; flags allowed but never required to win; no question marks. | M1-T05 (ADR-009) | Open |
+| D-05 | Disconnect grace period | 30 seconds to resume before forfeit. | M6-T03 (ADR-011) | Open |
+| D-06 | Rating system | Glicko-2 behind a `RatingSystem` strategy; final choice at M8. | M8-T04 (ADR-013) | Open |
+| D-07 | Auth methods | Guests plus email/password at launch; OAuth providers undecided. | M7-T02 (ADR-012) | Open |
+| D-08 | Platform priority | Desktop-first; mobile and touch controls at M10. | M10-T04 (ADR-015) | Open |
+| D-09 | Hosting provider | Single container on a VPS or PaaS; provider undecided. | M9-T02 (ADR-014) | Open |
+| D-10 | Ping fairness | Higher-latency players are disadvantaged; pipelining and server timestamps mitigate but do not eliminate. Accepted for the MVP as a known limit. | Measured in M5-T08 and M11-T02; recorded in `ARCHITECTURE.md` | Accepted limit |
+| D-11 | Capacity target | About 200 concurrent matches on one small instance. | Measured in M11-T02 | Open |
+| D-12 | License | Open source or all rights reserved until launch. | M0-T06 (ADR-008) | Open |
+| D-13 | Telemetry and privacy | Working idea: the minimum useful set (errors, basic aggregate counts of matches and queue times). What, if anything, is measured is decided in M10-T07. | M10-T07 (ADR-016) | Open |
+
 
 ## ADR-005 input: dependency pins
 

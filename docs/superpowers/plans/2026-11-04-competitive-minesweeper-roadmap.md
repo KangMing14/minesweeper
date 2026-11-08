@@ -171,7 +171,7 @@ Each item begins with `/brainstorming` and gets its own spec before planning.
 
 Full rules: spec section 7. Operational summary:
 
-**Documents (source of truth):** `README.md`, `PROJECT_OVERVIEW.md`, `ROADMAP.md` (status table), `ARCHITECTURE.md`, `DEVELOPMENT_GUIDE.md`, `DECISIONS.md`, `CHANGELOG.md`, `CLAUDE.md`, `docs/handoffs/`, `docs/milestones/`, `docs/specs/`.
+**Documents (source of truth):** `README.md`, `PROJECT_OVERVIEW.md`, `ROADMAP.md` (status table), `ARCHITECTURE.md`, `DEVELOPMENT_GUIDE.md`, `DECISIONS.md`, `CHANGELOG.md`, `CLAUDE.md`, `docs/handoffs/`, `docs/milestones/`, `docs/superpowers/specs/`.
 
 **Progress tracking:** `ROADMAP.md` holds one row per task with status (`Not started`, `In progress`, `Done`), the merged commit, and the date. M0-T05 creates it from the milestone index above.
 

@@ -1,6 +1,58 @@
 # Development Guide
 
-> Stub: M0-T01 wrote the git section, M0-T03 the tooling section and M0-T04 the tests, API docs and CI section. M0-T05 completes the guide (task loop, skills).
+How to work in this repository. Spec section 7 is the source for the rules; this guide is the practical version. If this guide and an ADR disagree, the ADR wins.
+
+Contents: [Getting started](#getting-started), [The task loop](#the-task-loop), [Skills](#skills), [Git workflow](#git-workflow), [Tooling and enforcement](#tooling-and-enforcement-m0-t03), [Tests, API docs and CI](#tests-api-docs-and-ci-m0-t04), [Keeping the documents current](#keeping-the-documents-current).
+
+## Getting started
+
+Requirements: Git, Node 24 LTS (`>=24.15.0`, see `.nvmrc`) and pnpm, which Corepack provides at the exact version pinned in `package.json`.
+
+```bash
+git clone https://github.com/KangMing14/minesweeper.git
+cd minesweeper
+corepack enable
+pnpm install --frozen-lockfile
+git config core.hooksPath      # must print .husky/_ ; if it prints nothing, run: pnpm prepare
+pnpm typecheck && pnpm lint && pnpm test
+```
+
+**Windows note.** If `npm i -g pnpm` blocks its install script and `pnpm` then fails to start, use `corepack enable`, or install with `npm install -g --allow-scripts=pnpm pnpm@12.15.0`.
+
+## The task loop
+
+One task is one conversation, one branch and one pull request (spec section 7; the per-task loop in the master plan, section F; the developer's checklist in `docs/workflow/HOW_TO_USE.md`).
+
+1. **Pick the task.** The first row of `ROADMAP.md` that is not `Done`. Tasks in a milestone run in numeric order.
+2. **Start a conversation.** Attach the milestone file and a snapshot (`tools/snapshot.sh`), and paste Prompt A from `docs/workflow/PROMPT_TEMPLATES.md`. The assistant reads `CLAUDE.md`, the handoff package and the task, and reports any mismatch with the real code before writing anything.
+3. **Implement test first.** Failing test, run it, implement, run it again (`/test-driven-development`). Use `/systematic-debugging` on any failure.
+4. **Verify.** `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:todos && pnpm check:links && pnpm test:lint-fixtures && pnpm test && pnpm docs:api` (`/verification-before-completion`). Tasks may add their own verification script, for example `node tools/verify-t05.mjs --full`.
+5. **Branch, commit, push.** Branch `m<n>/<task-id>-<slug>`; commit `type(scope): subject [Mn-Tnn]`. Open a PR with the same title and wait for the `ci` check.
+6. **Review and merge.** Run `/requesting-code-review` at the end of a milestone. Squash-merge, delete the branch, pull `main`.
+7. **Close out.** Set the task's row in `ROADMAP.md` (status, PR number, commit SHA, date); update `CHANGELOG.md`, `ARCHITECTURE.md` if an interface changed, and `DECISIONS.md` (with a new `docs/adr/` file) if a decision was made; save the session log in `docs/workflow/sessions/`. When the milestone's last task is done, tag `m<n>-complete`.
+
+If a task conflicts with an ADR, an open decision or the canonical names, stop and settle it first; do not work around it.
+
+## Skills
+
+Skills the project uses, and when. Each task names its own; the baseline for every task is the first two.
+
+| Skill | Use it for |
+|---|---|
+| `/test-driven-development` | Every task that adds behavior or tooling: failing test first |
+| `/verification-before-completion` | Before saying a task is done: run the checks, read the output |
+| `/systematic-debugging` | Any failing test or unexpected behavior, before proposing a fix |
+| `/requesting-code-review` | Once at the end of each milestone |
+| `/using-git-worktrees` | Optional isolated workspace for a task (`.worktrees/` is git-ignored) |
+| `/documentation` | Documentation tasks (M0-T05) and doc updates |
+| `/architecture` | Writing ADRs |
+| `/frontend-design` | UI work in M3 and M10 |
+| `/accessibility-review` | The accessibility pass in M10 |
+| `/deploy-checklist` | Staging and launch in M9 and M11 |
+| `/testing-strategy` | Test layout (light in M0-T04) and launch testing in M11 |
+| `/brainstorming` | Before any post-launch item (backlog P10-A to P10-H) |
+
+
 
 ## Git workflow
 
@@ -66,6 +118,7 @@ git config core.hooksPath      # must print .husky/_ ; if it prints nothing, run
 | `pnpm lint` | ESLint over the whole repo: TSDoc syntax, doc comments on exports, dependency boundaries, engine purity |
 | `pnpm format` / `pnpm format:check` | Prettier write / check (code and config files; not Markdown) |
 | `pnpm check:todos` | Fails on any TODO that does not name a task |
+| `pnpm check:links` | Fails on a broken relative link or `#anchor` in any Markdown file (external links are not fetched) |
 | `pnpm test:lint-fixtures` | Proves each rule above fires on a known-bad sample and stays quiet on a good one |
 | `pnpm typecheck` | `tsc -b` for all packages |
 
@@ -133,9 +186,9 @@ Add or change a fixture in `tools/lint-fixtures/cases/` and its entry in `tools/
 
 ### Continuous integration
 - Workflow: `.github/workflows/ci.yml`, one job named `ci`, on every pull request to `main` and every push to `main`.
-- Steps, in order: install with `--frozen-lockfile` (pnpm store cached), `typecheck`, `lint`, `format:check`, `check:todos`, `test:lint-fixtures`, `test:coverage`, `docs:api`, and on pull requests a commitlint check of the **PR title**. Coverage and `docs/api` are uploaded as the `ci-reports` artifact (7 days).
+- Steps, in order: install with `--frozen-lockfile` (pnpm store cached), `typecheck`, `lint`, `format:check`, `check:todos`, `check:links` (added in M0-T05), `test:lint-fixtures`, `test:coverage`, `docs:api`, and on pull requests a commitlint check of the **PR title**. Coverage and `docs/api` are uploaded as the `ci-reports` artifact (7 days).
 - Third-party actions are pinned to full commit SHAs (tag in a comment). Versions and dates are in `DECISIONS.md`. Update them on purpose, one at a time.
-- Running everything CI runs, locally: `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:todos && pnpm test:lint-fixtures && pnpm test:coverage && pnpm docs:api`.
+- Running everything CI runs, locally: `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:todos && pnpm check:links && pnpm test:lint-fixtures && pnpm test:coverage && pnpm docs:api`.
 - Checking a PR title locally: `printf '%s\n' 'ci: add test tooling [M0-T04]' | pnpm exec commitlint`.
 
 ### Making CI a required check
@@ -147,3 +200,24 @@ tools/verify-t01.sh --remote OWNER/REPO
 ```
 
 The required check is the job name, `ci`. Rename the job only together with this command.
+
+## Keeping the documents current
+
+The documents carry context between conversations, so a task is not done until they are right.
+
+| Document | Holds | Changes when |
+|---|---|---|
+| `README.md` | Setup, scripts, where everything is | A script or setup step changes |
+| `PROJECT_OVERVIEW.md` | Concept, MVP, scope, glossary | Scope or vocabulary changes (rare; scope changes need an ADR) |
+| `ROADMAP.md` | Milestone index and the status of all 78 tasks, the only status table | Every task close-out |
+| `ARCHITECTURE.md` | Diagrams, canonical names, public interfaces, known limits | An interface, package or limit changes |
+| `DECISIONS.md` | ADR index, open decisions, dependency pins | A decision is made or a dependency is added |
+| `CHANGELOG.md` | What changed, by task | Every task close-out |
+| `DEVELOPMENT_GUIDE.md` | This guide | A rule, command or workflow changes |
+| `CLAUDE.md` | Read order and rules for assistants | The workflow changes |
+| `docs/milestones/` | Handoff package and tasks per milestone | A task is split or corrected on purpose |
+| `docs/handoffs/TEMPLATE.md` | The handoff package format | The format changes |
+| `docs/adr/` | One file per decision, append-only | A decision is made (never edited afterwards) |
+| `docs/workflow/sessions/` | One log per conversation | Every task close-out |
+
+`pnpm check:links` keeps the links between these files honest; CI runs it on every pull request. The spec and the master plan are approved documents: correct a typo in them only deliberately and say so in the changelog.
