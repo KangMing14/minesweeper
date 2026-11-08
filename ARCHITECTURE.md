@@ -1,6 +1,125 @@
 # Architecture
 
-> Stub created in M0-T02 with the package layout only. M0-T05 completes this document (diagrams from the spec, canonical names, public interfaces). Source of truth until then: `docs/superpowers/specs/2026-11-04-competitive-minesweeper-design.md` section 4 and the plan's "Canonical names" table.
+> Status after M0-T05: "Package layout", "Dependency rule" and "TypeScript configuration" describe what exists in the repository today. The other sections are the approved design (spec section 4) and the canonical names from the master plan; that code is planned and not yet implemented. The first real engine code arrives in M1. When an interface changes, the task that changes it updates this file.
+
+## Principles
+
+Spec section 4.1. Each is enforced by lint, by tests or by the package layout, not by good intentions.
+
+1. **Deterministic engine.** `(seed, config, commands) -> state`. No clocks, no `Math.random`, no DOM, no Node APIs. Time is supplied by the caller as `t` on each command. The PRNG is implemented inside the engine with integer arithmetic.
+2. **Server-authoritative play.** The server holds the real board; clients receive only revealed cells. Mine positions never reach a browser during a match.
+3. **One session interface.** The UI talks to `GameSession`. `LocalSession` runs the engine in the browser; `RemoteSession` speaks the protocol over WebSocket. Moving from local to LAN to online changes the session, not the UI.
+4. **Replay-based validation.** Every game is a command log. Ranked solo runs are verified by replaying the log through the same engine.
+5. **Strict inward dependencies.** `engine` imports nothing project-internal; `protocol` imports only engine types; `server` and `web` depend on both (see "Dependency rule").
+
+## System diagram
+
+Spec section 4.3.
+
+```mermaid
+flowchart LR
+  subgraph Browser
+    UI[React UI] --> GS[GameSession]
+    GS --> LS[LocalSession]
+    GS --> RS[RemoteSession]
+    LS --> ENG1[engine]
+    UI --> R[BoardRenderer Canvas]
+  end
+  RS -- WebSocket / protocol --> WS[ws gateway]
+  subgraph Server
+    WS --> MM[MatchManager]
+    MM --> M[Match state machine]
+    M --> ENG2[engine]
+    MM --> MQ[Matchmaker]
+    API[Fastify REST + Better Auth] --> REPO[Repositories]
+    M --> REPO
+    MQ --> RAT[RatingSystem]
+  end
+  REPO --> PG[(PostgreSQL)]
+```
+
+## Match lifecycle
+
+Spec section 4.4. The match is a State pattern on the server.
+
+```mermaid
+stateDiagram-v2
+  [*] --> Lobby
+  Lobby --> Countdown: both ready
+  Countdown --> Playing: seed revealed, timer starts
+  Playing --> Finished: win / DNF / forfeit
+  Playing --> PlayerDisconnected: a player drops (slot held, clock keeps running)
+  PlayerDisconnected --> Playing: resume within grace period
+  PlayerDisconnected --> Finished: grace expired (forfeit)
+  Finished --> [*]
+```
+
+The race clock never pauses. A player who drops keeps their slot for the grace period (D-05, working value 30 s) but loses time while away, which keeps the race fair to the opponent.
+
+## Engine domain model
+
+Spec section 4.5.
+
+- `BoardConfig` (width, height, mineCount), `Board`, and index-addressed cells with a state of hidden, revealed or flagged.
+- `BoardGenerator` (interface) with `SeededBoardGenerator`, an in-engine PRNG and a `SafeOpeningPolicy`.
+- `Game` (aggregate): `apply(command)` returns `GameEvent[]` and owns win and loss detection.
+- Commands `reveal`, `flag` and `chord`, each with `{ index, t }`. Events `CellsRevealed`, `FlagToggled`, `GameWon`, `GameLost`.
+- `GameMode` (Strategy): rules, scoring and result evaluation, with `RaceMode` and `TimeAttackMode`, found through a small `ModeRegistry`.
+- Flood fill is iterative (explicit stack), never recursive.
+
+## Data flow: one race click
+
+Spec section 4.6.
+
+1. The client click makes `RemoteSession` send `{ type: "cmd", seq, cmd }` without waiting for earlier acknowledgments (pipelining).
+2. The server validates the message against the Zod schema, rate-limits it and stamps the receive time.
+3. `Match` routes the command to that player's `Game`; the engine returns events.
+4. The server sends the acting player the newly revealed cells (with their values) and the opponent only a progress count.
+5. On a win or DNF the server finalizes the result, persists the match and both command logs, and updates ratings.
+
+## Reconnection
+
+Spec section 4.7. Each player holds a resume token and the last acknowledged `seq`. On reconnect within the grace period the server sends a snapshot of that player's revealed state and resumes the match. Opening the game in a second tab with the same token is a takeover: exactly one live connection remains.
+
+## Design patterns
+
+Spec section 4.8. Not used on purpose: Singleton, Visitor, Decorator, and a Factory for cells.
+
+| Pattern | Where | Simpler alternative |
+|---|---|---|
+| Command | Engine actions, replay, wire format | None; backbone |
+| State | Match lifecycle; client screen flow (enum + switch is enough there) | Enum + switch |
+| Strategy | `GameMode`, `BoardGenerator`, `RatingSystem` | Config flags (insufficient once versus mode exists) |
+| Observer | Engine events to renderer, audio, network, stats | Typed event emitter, no framework |
+| Adapter | `GameSession` (Local/Remote), `Transport` over WebSocket | None; the local-to-online seam |
+| Repository | `UserRepository`, `MatchRepository`, `ReplayRepository` | Thin data-access module |
+
+## Canonical names
+
+Copied verbatim from the master plan (section D). Tasks use these names exactly. A rename requires updating this table and every consumer in the same task. **Status: planned, not yet implemented.** The tasks of M1 to M8 create these symbols; until then the only exported symbol in the repository is the throwaway `m0SampleAdd` in `engine`, which M1-T07 removes.
+
+| Package | Names |
+|---|---|
+| `engine` | `CellIndex` (number, `y * width + x`), `BoardConfig { width; height; mineCount }`, `PRESETS` (`beginner` 9x9/10, `intermediate` 16x16/40, `expert` 30x16/99), `InvalidBoardConfigError`, `Board`, `Game`, `GameStatus` (`'ready' \| 'playing' \| 'won' \| 'lost'`), `GameView`, `CellView`, `Command` (`{ type: 'reveal' \| 'flag' \| 'chord'; index: CellIndex; t: number }`), `GameEvent` (`CellsRevealed`, `FlagToggled`, `GameWon`, `GameLost`), `GameResult`, `Prng`, `createPrng`, `BoardGenerator`, `GeneratedBoard`, `SeededBoardGenerator`, `SafeOpeningPolicy`, `createGame`, `ReplayLog`, `replay`, `validateReplayLog`, `GameMode`, `ModeId` (`'race' \| 'time-attack'`), `PlayerResult`, `MatchOutcome`, `ModeRegistry`, `RaceMode`, `TimeAttackMode`, `GhostPlayer`, `Clock` (interface only) |
+| `protocol` | `PROTOCOL_VERSION`, `ClientMessageSchema`, `ServerMessageSchema`, `encodeMessage`, `decodeMessage`, `Transport`, `InMemoryTransport`, `FaultyTransport` |
+| `apps/web` | `GameSession`, `PlayerAction` (`{ type: Command['type']; index: CellIndex }`), `LocalSession`, `RemoteSession`, `ViewMirror`, `BoardRenderer`, `CanvasBoardRenderer`, `InputController`, `StatsStore`, `SystemClock` |
+| `apps/server` | `Match`, `MatchState`, `MatchManager`, `Matchmaker`, `RatingSystem`, `Glicko2RatingSystem`, `ReplayValidator`, `StatsService`, `UserRepository`, `MatchRepository`, `ReplayRepository`, `SystemClock` |
+
+## Public interfaces today
+
+| Package | Exports now | Arrives |
+|---|---|---|
+| `engine` | `m0SampleAdd` (M0 pipeline sample, not a canonical name) | real surface from M1-T01; API-surface test in M1-T07 |
+| `protocol` | nothing | M5-T01 |
+| `apps/server` | nothing | M5-T03 |
+| `apps/web` | nothing | M3-T01 |
+
+`engine` and `protocol` expose their public API from a single `index.ts` each, guarded by an API-surface test (M1-T07). Every exported symbol carries a TSDoc comment (spec section 7.2); the generated reference is a CI artifact, never committed.
+
+## Known limits
+
+- **D-10, ping fairness.** Higher-latency players are disadvantaged in a race. Command pipelining and server timestamps reduce this but do not remove it. Accepted for the MVP; measured in M5-T08 and M11-T02, and this section is updated with the numbers.
+- **Solver bots.** Hidden mines, rate limits, impossible-speed flags and replay audits reduce cheating, but a bot that plays by deduction cannot be detected reliably. A known limit, not a bug.
 
 ## Package layout
 

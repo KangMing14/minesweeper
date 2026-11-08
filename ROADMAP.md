@@ -6,6 +6,25 @@ Single source of truth for progress. Update one row at the end of every task (se
 
 Full task details live in `docs/milestones/`; the plan is `docs/superpowers/plans/2026-11-04-competitive-minesweeper-roadmap.md`.
 
+## Milestone index
+
+Twelve milestones, 78 tasks. Tasks inside a milestone run in numeric order unless a task's prerequisites say otherwise. A milestone is finished when all its tasks are `Done` and its exit criteria hold; then it is reviewed and tagged (`docs/workflow/HOW_TO_USE.md`, section 7). Dependency graph: master plan, section E.
+
+| ID | Milestone | Tasks | Depends on | Exit criteria | File | Tag |
+| --- | --- | --- | --- | --- | --- | --- |
+| M0 | Foundations | 6 | spec approved | CI green on wired monorepo; docs and ADR-001..008 committed; tag `m0-complete` | [`M0-foundations.md`](docs/milestones/M0-foundations.md) | `m0-complete` |
+| M1 | Engine core | 7 | M0 | Playable-in-tests engine; public API exported and documented | [`M1-engine-core.md`](docs/milestones/M1-engine-core.md) | `m1-complete` |
+| M2 | Deterministic engine | 6 | M1 | Seeded boards, command log, replay; golden-seed tests pass in Node and a browser | [`M2-deterministic-engine.md`](docs/milestones/M2-deterministic-engine.md) | `m2-complete` |
+| M3 | Local solo client | 8 | M2 | Playable solo game in the browser; Playwright smoke test green | [`M3-local-solo-client.md`](docs/milestones/M3-local-solo-client.md) | `m3-complete` |
+| M4 | Mode framework and ghost race | 5 | M2, M3 | `GameMode` registry; race against your ghost; ADR-010 | [`M4-mode-framework-ghost-race.md`](docs/milestones/M4-mode-framework-ghost-race.md) | `m4-complete` |
+| M5 | First networked race | 8 | M4 | Two browsers race on localhost and a second LAN device | [`M5-first-networked-race.md`](docs/milestones/M5-first-networked-race.md) | `m5-complete` |
+| M6 | Match lifecycle and reconnection | 5 | M5 | Fault-injection suite green; ADR-011 | [`M6-lifecycle-reconnection.md`](docs/milestones/M6-lifecycle-reconnection.md) | `m6-complete` |
+| M7 | Accounts and persistence | 7 | M5 | Guests and registered users; matches and replays persisted; ADR-012 | [`M7-accounts-persistence.md`](docs/milestones/M7-accounts-persistence.md) | `m7-complete` |
+| M8 | Competitive layer | 7 | M6, M7 | Validated solo leaderboards; ranked 1v1; ADR-013 | [`M8-competitive-layer.md`](docs/milestones/M8-competitive-layer.md) | `m8-complete` |
+| M9 | Staging and hardening | 6 | M8 | Deployed staging with rate limits, anti-cheat flags, reviewed security; ADR-014 | [`M9-staging-hardening.md`](docs/milestones/M9-staging-hardening.md) | `m9-complete` |
+| M10 | Polish and alpha | 7 | M8 (T01 can start after M3) | Accessible, responsive, animated, with sound; alpha released; ADR-015, ADR-016 | [`M10-polish-alpha.md`](docs/milestones/M10-polish-alpha.md) | `m10-complete` |
+| M11 | Launch readiness | 6 | M9, M10 | Load tested, monitored, end-to-end suites green; public launch `v1.0.0` | [`M11-launch-readiness.md`](docs/milestones/M11-launch-readiness.md) | `m11-complete` |
+
 ## M0 Foundations
 
 File: `docs/milestones/M0-foundations.md`. Tag when finished: `m0-complete`.
@@ -16,7 +35,7 @@ File: `docs/milestones/M0-foundations.md`. Tag when finished: `m0-complete`.
 | M0-T02 | Scaffold the monorepo and pin versions        | Done        | M0/m0 t02 monorepo scaffold (#1) | 80f3dfc | 2026-11-05 |
 | M0-T03 | Lint, format, hooks and documentation lint    | Done        |chore: add lint, format, hooks and doc lint [M0-T03] (#2)|d90869d|2026-11-07|
 | M0-T04 | Test tooling and CI                           | Done        |ci: add test tooling, TypeDoc and CI workflow [M0-T04] (#5)|722bf34|2026-11-07|
-| M0-T05 | Documentation skeleton                        | Not started |                                  |         |            |
+| M0-T05 | Documentation skeleton                        | In progress |                                  |         |            |
 | M0-T06 | ADRs, dependency verification and license     | Not started |                                  |         |            |
 
 ## M1 Engine Core
