@@ -5,7 +5,15 @@
 // Tools are launched with `node <script>` rather than through pnpm, because the pnpm shim can be broken on
 // some Windows setups (seen in M0-T02). Temporary files are created in the OS temp directory only.
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -115,7 +123,8 @@ for (const [id, sha] of [
   );
 }
 check('M0-T05 is no longer "Not started"', rows.get('M0-T05')?.[1] !== 'Not started');
-check('M0-T06 is untouched ("Not started")', rows.get('M0-T06')?.[1] === 'Not started');
+// M0-T06 was "Not started" when this script was written; it only has to exist as a valid row now.
+check('M0-T06 row exists', rows.has('M0-T06'));
 const indexSection = roadmap.split(/^## M0 Foundations/m)[0] ?? '';
 check(
   'milestone index lists M0..M11 with file and tag',
@@ -206,9 +215,17 @@ for (let n = 1; n <= 13; n += 1) {
   check(`open decisions include ${id}`, new RegExp(`\\|\\s*${id}\\s*\\|`).test(dec));
 }
 check('ADR files are append-only per the rules', /append-only/i.test(dec));
+// Was "no ADR claimed as written yet" until M0-T06. The lasting rule: an ADR marked Accepted has a file.
+const acceptedIds = dec
+  .split('\n')
+  .map((l) => l.match(/^\|\s*\[?(ADR-\d{3})\b[^|]*\|.*\|\s*Accepted\s*\|\s*$/)?.[1])
+  .filter(Boolean);
+const adrDir = path.join(root, 'docs/adr');
+const adrNames = existsSync(adrDir) ? readdirSync(adrDir) : [];
 check(
-  'no ADR claimed as written yet',
-  !/\bAccepted\b/.test(dec) || /None written yet|not yet written/i.test(dec),
+  'every ADR marked Accepted has a file in docs/adr/',
+  acceptedIds.every((id) => adrNames.some((f) => f.startsWith(`${id}-`))),
+  acceptedIds.join(','),
 );
 
 console.log('DEVELOPMENT_GUIDE.md');

@@ -6,6 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- **M0-T06 ADRs, dependency verification and license.** `docs/adr/ADR-001` to `ADR-008` (monorepo and modular monolith, deterministic engine, server-authoritative play, `GameSession` adapter, technology stack, git workflow, code documentation, license), all `Accepted`; the ADR index in `DECISIONS.md` links them. ADR-005 records the Better Auth re-verification of 2026-11-09 (verdict: passes with conditions) and its fallback. D-12 is settled: **all rights reserved until launch**, with a `LICENSE` file and `"license": "UNLICENSED"` in the five `package.json` files. The M0 milestone review is `docs/reviews/M0-review.md`; `tools/verify-t06.mjs` verifies the deliverables.
 - **M0-T05 Documentation skeleton.** `PROJECT_OVERVIEW.md`, `CHANGELOG.md`, `CLAUDE.md` (read order and rules for AI assistants) and `docs/handoffs/TEMPLATE.md`. `ROADMAP.md` gains a milestone index; `ARCHITECTURE.md` gains the principles, diagrams, patterns and the canonical-names table; `DECISIONS.md` gains the ADR template, the ADR index (ADR-001..016) and the open decisions D-01..D-13; `DEVELOPMENT_GUIDE.md` gains the task loop, the skills and the Windows pnpm note; `README.md` is completed.
 - **M0-T05** `pnpm check:links` (`scripts/check-links.mjs`): fails on a broken relative link or anchor in any Markdown file. It runs in CI after `check:todos`. `tools/verify-t05.mjs` verifies the deliverables.
 - **M0-T04 Test tooling and CI.** Vitest with one project per package and v8 coverage, TypeDoc for `engine` and `protocol` with warnings as errors, a single-job GitHub Actions workflow named `ci` (typecheck, lint, format check, to-do check, lint fixtures, coverage, API reference, PR-title check), a `pre-push` hook that runs only the affected tests, and a type-check of test files.
@@ -15,6 +16,8 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Changed
 
+- **M0-T06** The pinned `better-auth` moves from 1.7.12 to 1.7.18: every version below 1.7.16 is affected by the 12 advisories of 2026-11-03. The pin rule in `DECISIONS.md` gains a security-fix exception to the 14-day wait (ADR-005). The developer chose 1.7.18 over 1.7.16.
+- **M0-T06** `tools/verify-t05.mjs` no longer asserts that M0-T06 is `Not started` or that no ADR is accepted; both were true only until this task. It now checks that every ADR marked `Accepted` has a file in `docs/adr/`.
 - **M0-T05** The master plan's section F now names the real spec path `docs/superpowers/specs/` (it said `docs/specs/`).
 
 ### Notes

@@ -4,7 +4,7 @@
 
 A browser-based competitive Minesweeper: 1v1 races on an identical seeded board with a guaranteed safe opening, plus solo time-attack with leaderboards. TypeScript, pnpm monorepo, a deterministic engine and a server-authoritative backend. Inspired by the competitive feel of TETR.IO, not a copy of it.
 
-**Status:** M0 Foundations in progress; the game itself starts with the engine in M1. [ROADMAP.md](ROADMAP.md) has the status of every task. License: decided in M0-T06 (ADR-008); until then, all rights reserved.
+**Status:** M0 Foundations is done (the `m0-complete` tag follows its review); the game itself starts with the engine in M1. [ROADMAP.md](ROADMAP.md) has the status of every task. License: all rights reserved until launch ([ADR-008](docs/adr/ADR-008-license.md), [LICENSE](LICENSE)).
 
 ## Setup
 

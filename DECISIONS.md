@@ -34,18 +34,18 @@ Where decisions live: **architecture decision records (ADRs)** in `docs/adr/`, o
 
 ## ADR index
 
-Source: master plan, "ADR plan". **None written yet**: the table is the plan, and every row stays `Planned` until its task commits the file.
+Source: master plan, "ADR plan". ADR-001 to ADR-008 were written in M0-T06 and are `Accepted`. Every other row stays `Planned` until its task commits the file.
 
 | ADR | Decision | Task | Status |
 |---|---|---|---|
-| ADR-001 | Monorepo and modular monolith | M0-T06 | Planned |
-| ADR-002 | Deterministic engine | M0-T06 | Planned |
-| ADR-003 | Server-authoritative play | M0-T06 | Planned |
-| ADR-004 | `GameSession` adapter | M0-T06 | Planned |
-| ADR-005 | Technology stack (incl. Better Auth re-verification) | M0-T06 | Planned |
-| ADR-006 | Git workflow | M0-T06 | Planned |
-| ADR-007 | Code documentation | M0-T06 | Planned |
-| ADR-008 | License | M0-T06 | Planned |
+| [ADR-001](docs/adr/ADR-001-monorepo-modular-monolith.md) | Monorepo and modular monolith | M0-T06 | Accepted |
+| [ADR-002](docs/adr/ADR-002-deterministic-engine.md) | Deterministic engine | M0-T06 | Accepted |
+| [ADR-003](docs/adr/ADR-003-server-authoritative-play.md) | Server-authoritative play | M0-T06 | Accepted |
+| [ADR-004](docs/adr/ADR-004-gamesession-adapter.md) | `GameSession` adapter | M0-T06 | Accepted |
+| [ADR-005](docs/adr/ADR-005-technology-stack.md) | Technology stack (incl. Better Auth re-verification) | M0-T06 | Accepted |
+| [ADR-006](docs/adr/ADR-006-git-workflow.md) | Git workflow | M0-T06 | Accepted |
+| [ADR-007](docs/adr/ADR-007-code-documentation.md) | Code documentation | M0-T06 | Accepted |
+| [ADR-008](docs/adr/ADR-008-license.md) | License | M0-T06 | Accepted |
 | ADR-009 | Cell rules: chording and flags (D-04) | M1-T05 | Planned |
 | ADR-010 | Race rules and presets (D-01, D-02) | M4-T03 | Planned |
 | ADR-011 | Disconnect grace period (D-05) | M6-T03 | Planned |
@@ -72,13 +72,13 @@ D-01 to D-11 come from spec section 3, D-12 and D-13 from the master plan. The w
 | D-09 | Hosting provider | Single container on a VPS or PaaS; provider undecided. | M9-T02 (ADR-014) | Open |
 | D-10 | Ping fairness | Higher-latency players are disadvantaged; pipelining and server timestamps mitigate but do not eliminate. Accepted for the MVP as a known limit. | Measured in M5-T08 and M11-T02; recorded in `ARCHITECTURE.md` | Accepted limit |
 | D-11 | Capacity target | About 200 concurrent matches on one small instance. | Measured in M11-T02 | Open |
-| D-12 | License | Open source or all rights reserved until launch. | M0-T06 (ADR-008) | Open |
+| D-12 | License | All rights reserved until launch; revisit at `v1.0.0`. Decided 2026-11-09. | M0-T06 (ADR-008) | Settled by [ADR-008](docs/adr/ADR-008-license.md) |
 | D-13 | Telemetry and privacy | Working idea: the minimum useful set (errors, basic aggregate counts of matches and queue times). What, if anything, is measured is decided in M10-T07. | M10-T07 (ADR-016) | Open |
 
 
 ## ADR-005 input: dependency pins
 
-Versions were looked up on the npm registry on **2026-11-05**. Rule: the newest stable release at least 14 days old (published on or before 2026-10-22), within the major line of the registry's `latest`, unless a compatibility note says otherwise. Every version is exact (no `^` or `~`). "Latest" is what the registry tagged `latest` on that day.
+Versions were looked up on the npm registry on **2026-11-05**. Rule: the newest stable release at least 14 days old (published on or before 2026-10-22), within the major line of the registry's `latest`, unless a compatibility note says otherwise. A security fix is a second exception (added in M0-T06, ADR-005): a version below the first patched release of a published security advisory is not eligible, however old it is, and the 14-day wait does not apply to the patched version. Every version is exact (no `^` or `~`). "Latest" is what the registry tagged `latest` on that day.
 
 Only the rows marked **installed** are in a `package.json` today. The rest are decided pins that the named task adds; that task re-verifies the version before adding it (plan, Global Constraints).
 
@@ -124,7 +124,7 @@ Radix primitives are pinned per component when first used (M3, M10).
 | `drizzle-orm` | 0.45.4 | 2026-10-08 | 0.45.4 | M7-T01 |
 | `drizzle-kit` | 0.31.11 | 2026-09-21 | 0.31.11 | M7-T01 |
 | `pg` | 8.23.1 | 2026-09-30 | 8.23.1 | M7-T01. The Postgres driver is confirmed in M7-T01. |
-| `better-auth` | 1.7.12 | 2026-10-20 | 1.7.17 (2026-11-04) | M7-T02. Maintenance status, advisories and Drizzle adapter support are re-verified in M0-T06 (ADR-005). |
+| `better-auth` | 1.7.18 | 2026-11-05 | 1.7.18 (2026-11-05) | M7-T02. **Security exception to the 14-day rule**: 1.7.12, the pin until M0-T06, is affected by the 12 advisories of the 2026-11-03 release (fixed in 1.7.16), and the 14-day rule would select 1.7.14, which is affected too. The developer chose 1.7.18 on 2026-11-09 (4 days old). The Drizzle adapter ships inside it at the same version. M7-T02 repeats the check before adding the package. Verified in M0-T06 (ADR-005). |
 | `@sentry/node` | 11.8.0 | 2026-10-15 | 11.10.0 (2026-10-28) | M11. The browser SDK is looked up then. |
 
 ### Quality tooling (M0-T03, M0-T04, M3)
@@ -193,3 +193,23 @@ No ADR was written in M0-T04 and no open decision was closed.
 - **ADR-006 (git workflow):** the required status check is the single job `ci`; the PR title is linted in CI because squash-merge uses it as the commit subject; `pre-push` runs `test:affected` (tests affected since `origin/main`).
 - **ADR-007 (code documentation):** TypeDoc warnings are errors in CI; the reference is a CI artifact (`ci-reports`), never committed.
 
+### M0-T06 verification notes
+
+Re-verified on 2026-11-09: only `better-auth` (and its bundled `@better-auth/*` packages) was looked up again; no other pin in this file was re-checked in M0-T06. The full record, with the method and what could not be checked, is in [ADR-005](docs/adr/ADR-005-technology-stack.md).
+
+- **Result.** Better Auth passes with conditions. The pin moved from 1.7.12 to 1.7.18 because every version below 1.7.16 is affected by the 12 advisories of 2026-11-03.
+- **Peers, checked against the registry.** `drizzle-orm` `^0.45.2` (pin 0.45.4), `drizzle-kit` `>=0.31.4` (pin 0.31.11), `pg` `^8` (pin 8.23.1) and a `zod` dependency of `^4.5.4` (pin 4.6.7) are all satisfied. `vitest` `^5` is accepted as an optional peer.
+- **Not checked.** GitHub's repository API was rate-limited, so the archived flag, open issues and last commit were not read directly. The fixed-in version of the Low-severity Drizzle adapter rate-limit advisory (2026-09-30) was not confirmed.
+
+### M0-T06 inputs for ADR-012, ADR-016 and M7-T02
+
+No ADR beyond ADR-001..008 was written in M0-T06 and no open decision other than D-12 was closed. These findings belong to later records and tasks.
+
+- **M7-T02 (before installing).** Repeat the registry and advisory check; keep every `@better-auth/*` package at the same version as `better-auth`; confirm that the pinned version includes the fix for the 2026-09-30 Drizzle adapter rate-limit advisory on PostgreSQL; do not enable the cookie cache or secondary storage without reading the revoked-session advisory fixed in 1.7.16; keep Better Auth inside one module of `apps/server`.
+- **ADR-012 (auth methods, D-07).** With `emailAndPassword` enabled, `requireEmailVerification` defaults to false. A May 2026 advisory showed that this lets an attacker register an unverified account for someone else's address before its owner. Decide the setting, and whether any OAuth provider is added, with that in mind. The 1.7.16 release also fixes an OAuth sign-in that could treat an unverified provider email as verified.
+- **ADR-016 (telemetry and privacy, D-13).** `better-auth` depends on a `@better-auth/telemetry` package. Its default behavior was not checked in M0-T06; check it before launch and record it.
+- **M9-T05 (security review).** Include the auth module and the advisory-watch routine: Better Auth has published advisory rounds in May and June, on 2026-09-29 and 09-30, and on 2026-11-03.
+
+### M0-T06 inputs for the license (ADR-008)
+
+- D-12 is settled: all rights reserved until launch. The `LICENSE` file and `"license": "UNLICENSED"` in the five `package.json` files carry the decision. Revisit at `v1.0.0` with a new ADR that supersedes ADR-008. A dependency license review belongs in the launch checklist (M11-T05).

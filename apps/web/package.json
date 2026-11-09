@@ -2,6 +2,7 @@
   "name": "@minesweeper/web",
   "version": "0.0.0",
   "private": true,
+  "license": "UNLICENSED",
   "description": "Browser client (React, Vite, Canvas 2D). Talks to the game through a GameSession.",
   "type": "module",
   "scripts": {
