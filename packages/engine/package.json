@@ -2,6 +2,7 @@
   "name": "@minesweeper/engine",
   "version": "0.0.0",
   "private": true,
+  "license": "UNLICENSED",
   "description": "Pure, deterministic Minesweeper game logic. No DOM, Node APIs, clocks or Math.random.",
   "type": "module",
   "exports": {

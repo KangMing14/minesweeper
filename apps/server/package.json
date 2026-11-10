@@ -2,6 +2,7 @@
   "name": "@minesweeper/server",
   "version": "0.0.0",
   "private": true,
+  "license": "UNLICENSED",
   "description": "Authoritative game server (Fastify and ws). Never sends mine positions mid-game.",
   "type": "module",
   "scripts": {

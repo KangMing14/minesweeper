@@ -1,0 +1,8 @@
+Copyright (c) 2026 the Minesweeper project authors. All rights reserved.
+
+This software and its documentation are proprietary. No permission is granted to use, copy, modify, merge,
+publish, distribute, sublicense or sell copies of it, in whole or in part, until a license is published for it.
+Viewing and forking this repository on GitHub is allowed only to the extent GitHub's Terms of Service allow it.
+
+The project revisits this at its public launch (v1.0.0). The decision and its reasons are recorded in
+docs/adr/ADR-008-license.md.

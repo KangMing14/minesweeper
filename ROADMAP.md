@@ -32,11 +32,11 @@ File: `docs/milestones/M0-foundations.md`. Tag when finished: `m0-complete`.
 | Task   | Title                                         | Status      | PR                               | Commit  | Done on    |
 | ------ | --------------------------------------------- | ----------- | -------------------------------- | ------- | ---------- |
 | M0-T01 | Initialize the repository and git conventions | Done        | n/a (bootstrap commit on main)   | cc51e30 | 2026-11-05 |
-| M0-T02 | Scaffold the monorepo and pin versions        | Done        | M0/m0 t02 monorepo scaffold (#1) | 80f3dfc | 2026-11-05 |
+| M0-T02 | Scaffold the monorepo and pin versions        | Done        |chore: scaffold monorepo and pin versions [M0-T02] (#1)| 80f3dfc | 2026-11-05 |
 | M0-T03 | Lint, format, hooks and documentation lint    | Done        |chore: add lint, format, hooks and doc lint [M0-T03] (#2)|d90869d|2026-11-07|
 | M0-T04 | Test tooling and CI                           | Done        |ci: add test tooling, TypeDoc and CI workflow [M0-T04] (#5)|722bf34|2026-11-07|
-| M0-T05 | Documentation skeleton                        | Done        |                                  |         |            |
-| M0-T06 | ADRs, dependency verification and license     | Not started |                                  |         |            |
+| M0-T05 | Documentation skeleton                        | Done        |docs: add documentation skeleton and link check [M0-T05] (#6)|cab55e4|2026-11-08|
+| M0-T06 | ADRs, dependency verification and license     | Done        |                                  |         |            |
 
 ## M1 Engine Core
 
