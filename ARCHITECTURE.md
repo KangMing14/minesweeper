@@ -1,13 +1,13 @@
 # Architecture
 
-> Status after M0-T05: "Package layout", "Dependency rule" and "TypeScript configuration" describe what exists in the repository today. The other sections are the approved design (spec section 4) and the canonical names from the master plan; that code is planned and not yet implemented. The first real engine code arrives in M1. When an interface changes, the task that changes it updates this file.
+> Status after M0-T11: "Package layout", "Dependency rule" and "TypeScript configuration" describe what exists in the repository today. The other sections are the approved design (spec section 4) and the canonical names from the master plan; that code is planned and not yet implemented. The first real engine code arrives in M1. When an interface changes, the task that changes it updates this file.
 
 ## Principles
 
 Spec section 4.1. Each is enforced by lint, by tests or by the package layout, not by good intentions.
 
 1. **Deterministic engine.** `(seed, config, commands) -> state`. No clocks, no `Math.random`, no DOM, no Node APIs. Time is supplied by the caller as `t` on each command. The PRNG is implemented inside the engine with integer arithmetic.
-2. **Server-authoritative play.** The server holds the real board; clients receive only revealed cells. Mine positions never reach a browser during a match.
+2. **Server-authoritative play.** The server holds the real board; clients receive only revealed cells. Mine positions never reach a browser while a game is in progress. After a game ends, only the player's own finished game may expose its mines. In a race both players share one board, so until D-14 is settled (M4-T03, ADR-010) the layout is released only when the match result is final for both players.
 3. **One session interface.** The UI talks to `GameSession`. `LocalSession` runs the engine in the browser; `RemoteSession` speaks the protocol over WebSocket. Moving from local to LAN to online changes the session, not the UI.
 4. **Replay-based validation.** Every game is a command log. Ranked solo runs are verified by replaying the log through the same engine.
 5. **Strict inward dependencies.** `engine` imports nothing project-internal; `protocol` imports only engine types; `server` and `web` depend on both (see "Dependency rule").

@@ -7,8 +7,9 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { ESLint } from 'eslint';
-import { findBareTodos } from '../../scripts/check-todos.mjs';
-import { commitCases, eslintCases, todoCases } from './manifest.mjs';
+import { checkBranchName } from '../../scripts/check-branch-name.mjs';
+import { findBareTodos, isChecked } from '../../scripts/check-todos.mjs';
+import { branchCases, commitCases, eslintCases, todoCases, todoScopeCases } from './manifest.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../..');
@@ -54,6 +55,22 @@ describe('unnamed-task marker check', () => {
   for (const c of todoCases) {
     it(`${c.fixture}: ${c.bare} unnamed marker(s)`, () => {
       assert.equal(findBareTodos(read(c.fixture)).length, c.bare);
+    });
+  }
+});
+
+describe('unnamed-task marker scope', () => {
+  for (const c of todoScopeCases) {
+    it(`${c.file} is ${c.checked ? '' : 'not '}scanned`, () => {
+      assert.equal(isChecked(c.file), c.checked);
+    });
+  }
+});
+
+describe('branch name check', () => {
+  for (const c of branchCases) {
+    it(`${c.ok ? 'accepts' : 'rejects'} ${JSON.stringify(c.name)}${c.why ? ` (${c.why})` : ''}`, () => {
+      assert.equal(checkBranchName(c.name) === null, c.ok);
     });
   }
 });

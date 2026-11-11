@@ -37,7 +37,7 @@ Four packages in a pnpm monorepo, with dependencies pointing only inward: `engin
 
 ## Where the project stands
 
-Progress is tracked in one place: [ROADMAP.md](ROADMAP.md) (12 milestones, 78 tasks). Decisions and open questions are in [DECISIONS.md](DECISIONS.md). How work is done, task by task, is in [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) and [CLAUDE.md](CLAUDE.md).
+Progress is tracked in one place: [ROADMAP.md](ROADMAP.md) (12 milestones, 83 tasks). Decisions and open questions are in [DECISIONS.md](DECISIONS.md). How work is done, task by task, is in [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) and [CLAUDE.md](CLAUDE.md).
 
 ## Glossary
 

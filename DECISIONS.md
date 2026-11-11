@@ -47,7 +47,7 @@ Source: master plan, "ADR plan". ADR-001 to ADR-008 were written in M0-T06 and a
 | [ADR-007](docs/adr/ADR-007-code-documentation.md) | Code documentation | M0-T06 | Accepted |
 | [ADR-008](docs/adr/ADR-008-license.md) | License | M0-T06 | Accepted |
 | ADR-009 | Cell rules: chording and flags (D-04) | M1-T05 | Planned |
-| ADR-010 | Race rules and presets (D-01, D-02) | M4-T03 | Planned |
+| ADR-010 | Race rules, presets and mine release (D-01, D-02, D-14) | M4-T03 | Planned |
 | ADR-011 | Disconnect grace period (D-05) | M6-T03 | Planned |
 | ADR-012 | Auth methods (D-07) | M7-T02 | Planned |
 | ADR-013 | Rating system (D-06) | M8-T04 | Planned |
@@ -55,9 +55,25 @@ Source: master plan, "ADR plan". ADR-001 to ADR-008 were written in M0-T06 and a
 | ADR-015 | Platform priority and touch (D-08) | M10-T04 | Planned |
 | ADR-016 | Telemetry and privacy (D-13) | M10-T07 | Planned |
 
+## Errata to accepted ADRs
+
+Accepted ADRs are never edited (see above). Corrections of fact are listed here and in the review that found them.
+
+- **ADR-005, Alternatives (Biome):** the sentence "the TSDoc and boundary rules of ADR-006 and ADR-007 rely on ESLint plugins" should cite ADR-001 and ADR-002 for the boundary rules (ADR-006 is the git workflow). Found in the M0 review (L6).
+- **ADR-007, Context:** it says spec 7.2 asked for Doxygen-style comments. Spec 7.2 and section 5 reject Doxygen; the request came from the original brief. The decision itself (TSDoc and TypeDoc) is unaffected. Found in the M0 review (L6).
+- **ADR-002 and `DEVELOPMENT_GUIDE.md`:** "lint bans any import that leaves the package" is the combined effect of lint and the compiler, not of lint alone (M0 review, L3). The guide now says so.
+
+## Dependency advisories
+
+Handling rules (M0-T10). The checks are `pnpm audit:prod` in `ci` and the weekly `audit` workflow.
+
+| Date | Advisory | Affects | Decision |
+|---|---|---|---|
+| 2026-11-10 | GHSA-g3hv-75wg-m249 (moderate, `minimatch` below 11.0.1) | Development tools only (`eslint`, `typedoc`); no production dependency exists yet | Accepted until `eslint` or `typedoc` ships a release that pulls a patched `minimatch`. Review at the next dependency revisit or on the first red `audit` run, whichever is first. Not worth a `pnpm.overrides` entry while it is dev-only. |
+
 ## Open decisions
 
-D-01 to D-11 come from spec section 3, D-12 and D-13 from the master plan. The working assumption is what tasks may rely on until the owning task settles it.
+D-01 to D-11 come from spec section 3, D-12 and D-13 from the master plan, D-14 from the M0 milestone review. The working assumption is what tasks may rely on until the owning task settles it.
 
 | ID | Item | Working assumption | Owner | Status |
 |---|---|---|---|---|
@@ -74,6 +90,7 @@ D-01 to D-11 come from spec section 3, D-12 and D-13 from the master plan. The w
 | D-11 | Capacity target | About 200 concurrent matches on one small instance. | Measured in M11-T02 | Open |
 | D-12 | License | All rights reserved until launch; revisit at `v1.0.0`. Decided 2026-11-09. | M0-T06 (ADR-008) | Settled by [ADR-008](docs/adr/ADR-008-license.md) |
 | D-13 | Telemetry and privacy | Working idea: the minimum useful set (errors, basic aggregate counts of matches and queue times). What, if anything, is measured is decided in M10-T07. | M10-T07 (ADR-016) | Open |
+| D-14 | Mine release in a race | Both players race the same seeded board, so the mine layout is released to a player only when the match result is final for both players; no mine data in any earlier frame, including a `delta` after a DNF. A player's own finished game exposes its mines only then. | M4-T03 (ADR-010); leak test in M5-T05 | Open |
 
 
 ## ADR-005 input: dependency pins
@@ -86,7 +103,7 @@ Only the rows marked **installed** are in a `package.json` today. The rest are d
 
 | Tool | Pin | Published | Latest on 2026-11-05 | Status and notes |
 |---|---|---|---|---|
-| `node` | 24 (LTS line); `engines.node` `>=24.15.0` | 24.22.1 is 14 days old | 26.12.x | **installed** via `.nvmrc` and `engines`. Node 26 became LTS on 2026-10-28, eight days ago, which is under the two-week preference. Node 24 is LTS until 2028-04-30. `eslint-plugin-jsdoc` requires `>=24.15.0` on the 24 line, which sets the floor. Revisit Node 26 once it is a few months old. |
+| `node` | 24 (LTS line); `engines.node` `>=24.15.0` | 24.22.1 is 14 days old | 26.12.x | **installed** via `.nvmrc` and `engines`. Node 26 became LTS on 2026-10-28, eight days ago, which is under the two-week preference. Node 24 is LTS until 2028-04-30. `eslint-plugin-jsdoc` requires `>=24.15.0` on the 24 line, which sets the floor. Revisit Node 26 once it is a few months old; as far as I know Corepack is no longer bundled with Node from v25, so `ci.yml` and `audit.yml` (`corepack enable`) need another way to provide pnpm at that point (check when upgrading). |
 | `pnpm` | 12.15.0 | 2026-10-21 | 12.16.1 (2026-10-27) | **installed** via `packageManager` (use `corepack enable`). |
 
 ### Language and types

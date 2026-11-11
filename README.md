@@ -8,7 +8,7 @@ A browser-based competitive Minesweeper: 1v1 races on an identical seeded board 
 
 ## Setup
 
-Requires Node 24 LTS (`>=24.15.0`, see `.nvmrc`) and Git. pnpm is pinned by `packageManager` in `package.json` and provided by Corepack.
+Requires Node 24 LTS (`>=24.15.0`, see `.nvmrc`; an older Node makes `pnpm install` fail) and Git. pnpm is pinned by `packageManager` in `package.json` and provided by Corepack.
 
 ```bash
 corepack enable
@@ -24,9 +24,14 @@ On Windows, if pnpm fails to start after `npm i -g pnpm`, see the Windows note i
 |---|---|
 | `pnpm typecheck` | Type-check every package and every test file |
 | `pnpm lint` / `pnpm format:check` | ESLint (TSDoc, boundaries, engine purity) / Prettier |
-| `pnpm check:todos` | Fails on any TODO that does not name a task |
+| `pnpm build` | `tsc -b`, the same build `typecheck` starts with |
+| `pnpm format` | Prettier, writing changes |
+| `pnpm check:todos` | Fails on any TODO, FIXME, XXX or HACK that does not name a task (code, workflow and shell files) |
 | `pnpm check:links` | Fails on a broken relative link or anchor in any Markdown file |
+| `pnpm test:lint-fixtures` | Proves each lint, TODO, branch-name and commit-message rule fires for the intended reason |
 | `pnpm test` | Vitest, once |
+| `pnpm test:affected` | Vitest on tests affected since `origin/main` (the pre-push hook) |
+| `pnpm audit:prod` / `pnpm audit:all` | Dependency advisories: moderate or higher in production dependencies (CI) / high or higher anywhere (weekly workflow) |
 | `pnpm test:coverage` | Vitest with coverage reports in `coverage/` |
 | `pnpm docs:api` | TypeDoc API reference in `docs/api/` |
 
@@ -48,7 +53,7 @@ CI runs all of these on every pull request. Details, the git workflow and the do
 | Read this | For |
 |---|---|
 | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) | The concept, the MVP, what is out of scope, a glossary |
-| [ROADMAP.md](ROADMAP.md) | Milestone index and the status of all 78 tasks |
+| [ROADMAP.md](ROADMAP.md) | Milestone index and the status of all 83 tasks |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Diagrams, package layout, dependency rule, canonical names |
 | [DECISIONS.md](DECISIONS.md) | ADR index, open decisions, dependency pins |
 | [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) | Git workflow, tooling, tests, CI, the task loop |

@@ -50,12 +50,12 @@
 ### M4-T03 `RaceMode` and tie-break rules (ADR-010)
 
 - **Objective:** a deterministic definition of who wins a race.
-- **Description:** implement `RaceMode`, settle D-01, D-02, D-03 and record ADR-010.
+- **Description:** implement `RaceMode`, settle D-01, D-02, D-03 and D-14 and record ADR-010.
 - **Prerequisites:** M4-T02.
-- **Implementation guidance:** working rules from the spec: both players get the same seed and opening; a mine hit ends that player's run (DNF). `decide(results)` for exactly two results: (1) one won and the other did not: winner, reason `'opponent-dnf'`; (2) both won: lower `timeMs` wins, reason `'faster'`; equal `timeMs`: `winnerIndex: null`, reason `'tie'` (a draw); (3) both DNF: more `safeCellsRevealed` wins, reason `'progress'`; equal progress: draw; (4) a forfeit loses to any non-forfeit, reason `'forfeit'`; both forfeit: draw. If playtesting suggests a time penalty instead of DNF, run `/brainstorming` first and revise ADR-010 before coding. Choose the ranked race preset (working assumption: `intermediate`) and list it in the ADR. Race `boardConfig()` is fixed per match preset.
+- **Implementation guidance:** working rules from the spec: both players get the same seed and opening; a mine hit ends that player's run (DNF). `decide(results)` for exactly two results: (1) one won and the other did not: winner, reason `'opponent-dnf'`; (2) both won: lower `timeMs` wins, reason `'faster'`; equal `timeMs`: `winnerIndex: null`, reason `'tie'` (a draw); (3) both DNF: more `safeCellsRevealed` wins, reason `'progress'`; equal progress: draw; (4) a forfeit loses to any non-forfeit, reason `'forfeit'`; both forfeit: draw. If playtesting suggests a time penalty instead of DNF, run `/brainstorming` first and revise ADR-010 before coding. Choose the ranked race preset (working assumption: `intermediate`) and list it in the ADR. D-14: both players race the same board, so state in the ADR when mine positions may be released (working assumption: only when the match result is final for both players, and never in a `delta`, even after a DNF). Race `boardConfig()` is fixed per match preset.
 - **Expected output:** `modes/race.ts`, `docs/adr/ADR-010-race-rules.md`, tests.
 - **Testing requirements:** table-driven tests for every `decide` branch including equal times, equal progress, both DNF, forfeit combinations, and result order symmetry (swapping players swaps the winner) (Review Focus #3); determinism: same inputs always same outcome.
-- **Acceptance criteria:** ADR-010 committed with D-01, D-02, D-03 decided; tests pass.
+- **Acceptance criteria:** ADR-010 committed with D-01, D-02, D-03, D-14 decided; tests pass.
 - **Relevant skills:** baseline; `/architecture`; `/brainstorming` (only if rules change).
 - **Documentation updates:** `DECISIONS.md`, `PROJECT_OVERVIEW.md` (race rules in plain language), TSDoc.
 

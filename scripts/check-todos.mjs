@@ -1,14 +1,27 @@
-// Fails when a source file contains a TODO that does not name a task, e.g. `TODO(M6-T04)` is allowed
-// and a bare TODO or `TODO:` is not (spec section 7.2: every TODO names a task, CI fails on a bare one).
+// Fails when a code, workflow or shell file contains a TODO, FIXME, XXX or HACK that does not name a task:
+// `TODO(M6-T04)` is allowed, a bare TODO or `TODO:` is not (spec section 7.2: every TODO names a task, CI
+// fails on a bare one). Markdown is not scanned: the documents discuss the rule.
 // Usage: `node scripts/check-todos.mjs [file ...]`. Without arguments it scans the whole repository.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/** Matches the marker word when it is not immediately followed by a task reference. */
-const BARE_TODO = /\bTODO\b(?!\(M\d+-T\d+\))/g;
+/** Matches a marker word when it is not immediately followed by a task reference. */
+const BARE_TODO = /\b(?:TODO|FIXME|XXX|HACK)\b(?!\(M\d+-T\d+\))/g;
 
-const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs']);
+const SOURCE_EXTENSIONS = new Set([
+  '.ts',
+  '.tsx',
+  '.mts',
+  '.cts',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+  '.yml',
+  '.yaml',
+  '.sh',
+]);
 const SKIPPED_DIRECTORIES = new Set([
   'node_modules',
   'dist',
@@ -36,7 +49,12 @@ export function findBareTodos(text) {
   return found;
 }
 
-function isChecked(relativePath) {
+/**
+ * Says whether the scan reads a file.
+ * @param {string} relativePath - Repo-relative path.
+ * @returns {boolean} `true` when the file is scanned.
+ */
+export function isChecked(relativePath) {
   const posix = relativePath.split(path.sep).join('/');
   if (posix === 'scripts/check-todos.mjs') return false; // this file documents the marker word
   if (SKIPPED_PREFIXES.some((prefix) => posix.startsWith(prefix))) return false;
@@ -73,7 +91,7 @@ export function scan(root, files = []) {
       continue;
     for (const hit of findBareTodos(readFileSync(path.join(root, relative), 'utf8'))) {
       violations.push(
-        `${relative}:${hit.line}: TODO must name a task, e.g. TODO(M6-T04): ${hit.text}`,
+        `${relative}:${hit.line}: TODO, FIXME, XXX and HACK must name a task, e.g. TODO(M6-T04): ${hit.text}`,
       );
     }
   }
@@ -85,7 +103,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const violations = scan(root, process.argv.slice(2));
   if (violations.length > 0) {
     console.error(violations.join('\n'));
-    console.error(`\n${violations.length} bare TODO(s). Name the task: // TODO(M6-T04): ...`);
+    console.error(`\n${violations.length} unnamed marker(s). Name the task: // TODO(M6-T04): ...`);
     process.exit(1);
   }
   console.log('[check:todos] ok');

@@ -26,7 +26,7 @@ One task is one conversation, one branch and one pull request (spec section 7; t
 1. **Pick the task.** The first row of `ROADMAP.md` that is not `Done`. Tasks in a milestone run in numeric order.
 2. **Start a conversation.** Attach the milestone file and a snapshot (`tools/snapshot.sh`), and paste Prompt A from `docs/workflow/PROMPT_TEMPLATES.md`. The assistant reads `CLAUDE.md`, the handoff package and the task, and reports any mismatch with the real code before writing anything.
 3. **Implement test first.** Failing test, run it, implement, run it again (`/test-driven-development`). Use `/systematic-debugging` on any failure.
-4. **Verify.** `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:todos && pnpm check:links && pnpm test:lint-fixtures && pnpm test && pnpm docs:api` (`/verification-before-completion`). Tasks may add their own verification script, for example `node tools/verify-t05.mjs --full`.
+4. **Verify.** `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:todos && pnpm check:links && pnpm test:lint-fixtures && pnpm test && pnpm docs:api` (`/verification-before-completion`). Do not keep per-task verification scripts in the repository: they assert the state of one moment (task counts, which files exist) and turn red when a later task changes it. A one-off check belongs in the task's own tests, or in a script deleted at close-out. The M0 scripts `tools/verify-t02.mjs` to `verify-t06.mjs` were removed in M0-T09 and remain in history (`git show 3aa4c1b:tools/verify-t06.mjs`). `tools/verify-t01.sh` stays: it checks repository settings that do not change.
 5. **Branch, commit, push.** Branch `m<n>/<task-id>-<slug>`; commit `type(scope): subject [Mn-Tnn]`. Open a PR with the same title and wait for the `ci` check.
 6. **Review and merge.** Run `/requesting-code-review` at the end of a milestone. Squash-merge, delete the branch, pull `main`.
 7. **Close out.** Set the task's row in `ROADMAP.md` (status, PR number, commit SHA, date); update `CHANGELOG.md`, `ARCHITECTURE.md` if an interface changed, and `DECISIONS.md` (with a new `docs/adr/` file) if a decision was made; save the session log in `docs/workflow/sessions/`. When the milestone's last task is done, tag `m<n>-complete`.
@@ -61,7 +61,7 @@ Source: spec section 7.1. Rules are enforced by GitHub settings (`tools/github/p
 ### Branches
 - `main` is protected and always green. History on `main` is never rewritten. No direct pushes, no force pushes, no branch deletion, linear history required. The rules apply to admins too.
 - Trunk-based development: one task = one short-lived branch = one pull request.
-- Branch name: `m<n>/<task-id>-<slug>`, for example `m1/M1-T04-flood-fill`.
+- Branch name: `m<n>/M<n>-T<nn>-<slug>`, for example `m1/M1-T04-flood-fill`; the milestone number repeats in the task ID. Work that belongs to no task: `chore/<slug>`. Lower case and hyphens only. CI checks the name of every pull request's branch (`scripts/check-branch-name.mjs`).
 
 ### Commits
 - Conventional Commits: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`.
@@ -141,16 +141,22 @@ git config core.hooksPath      # must print .husky/_ ; if it prints nothing, run
 
 - Every exported class, function, interface, type alias, enum and constant needs a `/** ... */` comment. This is an **error** in `packages/engine` and `packages/protocol`, and a **warning** in `apps/*` until M5-T03 turns it into an error.
 - Comment syntax is checked everywhere by `tsdoc/syntax`: use `@param name - text` (with the hyphen), standard tags only (`@remarks`, `@example`, `@throws`, `@returns`, `@internal`, `@deprecated`), and close every `{@link ...}`.
-- In `packages/engine` and `packages/protocol` every exported symbol also needs an `@example` with content (error, `jsdoc/require-example`). Apps do not need one. Test files (`*.test.ts`) are exempt. Declare and export in one statement (`export function ...`, `export const ...`): a symbol exported later with `export { name }` is only covered by the doc-comment rule, not the `@example` rule.
+- In `packages/engine` and `packages/protocol` every exported symbol also needs an `@example` with content (error, `jsdoc/require-example`). Apps do not need one. Test files (`*.test.ts`) are exempt. A symbol that is exported only for other engine files or for tests, not through `index.ts`, is tagged `@internal`: it keeps its summary comment but needs no `@example`, and TypeDoc leaves it out. Declare and export in one statement (`export function ...`, `export const ...`): a symbol exported later with `export { name }` is only covered by the doc-comment rule, not the `@example` rule.
 - Not machine-enforced: `@param`/`@returns` completeness. Reviewers check it.
-- Every TODO names a task: `// TODO(M6-T04): ...`. A bare `TODO` fails the commit and `pnpm check:todos`.
+- Every TODO, FIXME, XXX and HACK names a task: `// TODO(M6-T04): ...`. A bare one fails the commit and `pnpm check:todos`. The scan reads code, workflow and shell files (`.ts .tsx .mts .cts .js .jsx .mjs .cjs .yml .yaml .sh`), not Markdown.
 
 ### Architecture and engine-purity rules
 
-- `packages/engine` may import nothing project-internal and no Node built-ins.
+- `packages/engine` may import nothing project-internal and no Node built-ins. Lint bans the package names, paths into `packages` and `apps`, and `node:` imports; the compiler (`types: []`, no DOM lib, `rootDir`) rejects the rest (bare `fs`, relative paths into another package, `setTimeout`). Neither sees aliasing such as `const M = Math; M.random()`; the determinism tests of M2-T06 run with throwing stubs to catch that.
 - `packages/protocol` may import only `@minesweeper/engine` (and third-party packages), no Node built-ins.
 - `apps/server` and `apps/web` may not import each other, by package name or relative path.
 - Inside `packages/engine` (tests excepted) these are errors: `Math.random`, `Date`, `performance`, `window`, `document`, `process`, and the same names through `globalThis`. Time enters only as `t` on a `Command`.
+
+### Dependency advisories
+
+- `ci` runs `pnpm audit:prod` on every pull request: an advisory of moderate severity or higher in a production dependency fails it. Fix by moving to the patched version, with a new pin and the 14-day rule's security exception (see `DECISIONS.md`).
+- The `audit` workflow runs weekly and on demand: it prints the full report and fails on high or critical severity anywhere, including development tools.
+- A moderate advisory in a development tool that has no fixed release yet is recorded in `DECISIONS.md` under "Dependency advisories" with its reason and review date, not silenced.
 
 ### Changing a rule
 
@@ -209,7 +215,7 @@ The documents carry context between conversations, so a task is not done until t
 |---|---|---|
 | `README.md` | Setup, scripts, where everything is | A script or setup step changes |
 | `PROJECT_OVERVIEW.md` | Concept, MVP, scope, glossary | Scope or vocabulary changes (rare; scope changes need an ADR) |
-| `ROADMAP.md` | Milestone index and the status of all 78 tasks, the only status table | Every task close-out |
+| `ROADMAP.md` | Milestone index and the status of all 83 tasks, the only status table | Every task close-out |
 | `ARCHITECTURE.md` | Diagrams, canonical names, public interfaces, known limits | An interface, package or limit changes |
 | `DECISIONS.md` | ADR index, open decisions, dependency pins | A decision is made or a dependency is added |
 | `CHANGELOG.md` | What changed, by task | Every task close-out |

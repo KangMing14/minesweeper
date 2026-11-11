@@ -86,7 +86,7 @@
 - **Prerequisites:** M2-T05.
 - **Implementation guidance:** a shared test module consumed by Vitest in Node and in a real browser (Vitest browser mode with Chromium, or a Playwright page that loads the built engine and runs the same checks). The suite verifies golden board hashes for at least 20 seeds across all presets, PRNG vectors, and 500 fuzzed games whose live final state equals `replay` output. Add the browser job to CI (Chromium only). If browser mode is impractical, use Playwright against a minimal static page; record the choice in `ARCHITECTURE.md`.
 - **Expected output:** `packages/engine/test/determinism.shared.ts`, Node and browser runners, CI job.
-- **Testing requirements:** the suite itself; deliberately introduce a `Math.random` call in a branch and confirm CI fails (lint and test).
+- **Testing requirements:** the suite itself; deliberately introduce a `Math.random` call in a branch and confirm CI fails (lint and test). Run the golden-seed and fuzz suites once more with `Date`, `Math.random`, `performance` and `Intl.DateTimeFormat` replaced by stubs that throw, so a clock or random read that lint cannot see (an alias, `globalThis['performance']`) fails at runtime (M0 review, L3).
 - **Acceptance criteria:** both environments pass in CI; tag `m2-complete` after review.
 - **Relevant skills:** baseline; `/testing-strategy`; `/requesting-code-review`.
 - **Documentation updates:** `ARCHITECTURE.md`, `DEVELOPMENT_GUIDE.md` (running the browser tests), `ROADMAP.md`, `CHANGELOG.md`.

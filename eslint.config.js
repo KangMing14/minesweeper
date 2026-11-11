@@ -67,8 +67,10 @@ const requireJsdocOptions = {
 // Spec 7.2: `@example` is required on the public API of engine and protocol. `jsdoc/require-example`
 // has no `publicOnly` option, so the exported declarations are selected directly. Limit: a symbol that is
 // declared first and exported later (`export { name }`) is covered by require-jsdoc but not by this rule,
-// so declare and export in one statement.
+// so declare and export in one statement. A symbol tagged `@internal` (exported only for other modules or
+// for tests, spec 7.2) is exempt: it is not part of the public API, and TypeDoc leaves it out.
 const requireExampleOptions = {
+  exemptedBy: ['inheritdoc', 'internal'],
   // Selecting the export statement (not the declaration inside it) is what makes `export const` work:
   // jsdoc does not resolve the comment of a variable declaration nested in an export.
   contexts: ['ExportNamedDeclaration', 'ExportDefaultDeclaration'],

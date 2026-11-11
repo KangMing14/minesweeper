@@ -1,0 +1,45 @@
+# Weekly dependency advisory check (ADR-005: advisories must be watched and applied promptly).
+#
+# `ci` already blocks pull requests on advisories in production dependencies. This workflow also covers
+# development tools, on a schedule, because an advisory can appear while no pull request is open. A red run
+# sends GitHub's usual failure email to the repository owner. Handling rules are in DECISIONS.md.
+#
+# Same pinned actions as ci.yml; update them together.
+name: audit
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  HUSKY: '0'
+
+jobs:
+  audit:
+    name: audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - run: pnpm install --frozen-lockfile
+
+      # Everything, any severity, for the log. Never fails the run.
+      - name: Full report
+        run: pnpm audit || true
+
+      # The gate: high or critical severity anywhere, including development tools.
+      - run: pnpm audit:all
