@@ -37,11 +37,11 @@ File: `docs/milestones/M0-foundations.md`. Tag when finished: `m0-complete`.
 | M0-T04 | Test tooling and CI                           | Done        |#5|722bf34|2026-11-07|
 | M0-T05 | Documentation skeleton                        | Done        |#6|cab55e4|2026-11-08|
 | M0-T06 | ADRs, dependency verification and license     | Done        |#7|3aa4c1b|2026-11-10|
-| M0-T07 | Narrow `jsdoc/require-example`: exempt `@internal`, add fixtures | Done |  |  |  |
-| M0-T08 | Carry the full mine-exposure rule into the docs; open D-14 | Done |  |  |  |
-| M0-T09 | Snapshot git state and `--with-git`; remove the per-task verify scripts | Done |  |  |  |
-| M0-T10 | Advisory check in CI, branch-name check, engine-strict, wider marker scan | Done |  |  |  |
-| M0-T11 | Documentation tidy-ups and ADR errata | Done |  |  |  |
+| M0-T07 | Narrow `jsdoc/require-example`: exempt `@internal`, add fixtures | Done |#8|9c6c701|2026-11-11|
+| M0-T08 | Carry the full mine-exposure rule into the docs; open D-14 | Done |#8|9c6c701|2026-11-11|
+| M0-T09 | Snapshot git state and `--with-git`; remove the per-task verify scripts | Done |#8|9c6c701|2026-11-11|
+| M0-T10 | Advisory check in CI, branch-name check, engine-strict, wider marker scan | Done |#8|9c6c701|2026-11-11|
+| M0-T11 | Documentation tidy-ups and ADR errata | Done |#8|9c6c701|2026-11-11|
 
 ## M1 Engine Core
 
