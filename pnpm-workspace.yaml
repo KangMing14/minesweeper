@@ -3,3 +3,7 @@
 packages:
   - packages/*
   - apps/*
+
+# Make `engines` in package.json binding: installing on a Node older than 24.15.0 fails
+# (ERR_PNPM_UNSUPPORTED_ENGINE) instead of passing silently. (`engine-strict` in .npmrc is ignored by pnpm 12.)
+engineStrict: true

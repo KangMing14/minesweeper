@@ -90,6 +90,20 @@ Use /requesting-code-review to review the whole milestone against its acceptance
 Output docs/reviews/<Mn>-review.md with findings grouped by severity (blocking, important, minor). Do not change code; propose fixes as new tasks I can add to ROADMAP.md.
 ```
 
+Take the snapshot with `git fetch && tools/snapshot.sh --git-state`, so the review can see history, tags and branch protection (`GIT_STATE.txt`).
+
+## Prompt F2: Re-review after the review follow-ups
+
+Use a **new** conversation, not the one that made the fixes. Attach a fresh snapshot (`git fetch && tools/snapshot.sh --git-state`), the milestone file, `ARCHITECTURE.md`, `DECISIONS.md`, `ROADMAP.md`, and the first review (`docs/reviews/<Mn>-review.md`).
+
+```
+Milestone <Mn> had a review (attached) and its follow-up tasks (<list of task IDs>) are merged. Attached: the first review, the milestone file, a whole-repo snapshot with GIT_STATE.txt, ARCHITECTURE.md, DECISIONS.md, ROADMAP.md.
+
+Use /requesting-code-review for a re-review. (1) For every finding in the first review, say whether it is resolved, partly resolved or open, with the evidence (file, line, command output). (2) Review the follow-up changes themselves for new problems, including whether each task met its own acceptance criteria. (3) Use GIT_STATE.txt to check the blocking items about history, tags and branch protection. (4) Re-run the full check suite from a clean install and show the output.
+
+Output docs/reviews/<Mn>-review-2.md with a resolution table first, then any new findings by severity. State plainly whether the milestone is ready to tag. Do not change code.
+```
+
 ---
 
 ## Prompt G: A conflict or a new decision

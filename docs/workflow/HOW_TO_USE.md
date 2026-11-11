@@ -40,7 +40,7 @@ Project memory may remember some facts, but treat it as a convenience, never as 
 
 ```
 minesweeper/                      <- git repo root
-  ROADMAP.md                      status of all 78 tasks (you update after every task)
+  ROADMAP.md                      status of all 83 tasks (you update after every task)
   CLAUDE.md                       created in M0-T05: read-order and rules for Claude
   README.md, PROJECT_OVERVIEW.md, ARCHITECTURE.md, DEVELOPMENT_GUIDE.md,
   DECISIONS.md, CHANGELOG.md      created in M0-T05
@@ -77,6 +77,7 @@ minesweeper/                      <- git repo root
 | M0 tasks | Nothing else (spec and plan are in Project knowledge) |
 | After M0 | The Project already holds `CLAUDE.md`, `ROADMAP.md`, `ARCHITECTURE.md`, `DECISIONS.md` |
 | First task of a milestone | Also `packages/*/src/index.ts` files of the packages it depends on, or a partial snapshot |
+| Milestone review, or any check of history, tags or branch protection | A snapshot taken with `tools/snapshot.sh --git-state` after `git fetch` (adds `GIT_STATE.txt`; `--with-git` adds the `.git` folder itself, rarely needed) |
 | Any coding task | A snapshot zip: `tools/snapshot.sh` (whole repo) or `tools/snapshot.sh packages/engine packages/protocol` (only what the task touches) |
 | Tasks that change docs | Also the doc file being changed if it is not in Project knowledge |
 | Resuming an interrupted task | The checkpoint file (section 8) |
@@ -151,8 +152,8 @@ If a task produced no code (for example an ADR-only task), skip steps that do no
 
 When the last task of a milestone is `Done`:
 
-1. Take a whole-repo snapshot: `tools/snapshot.sh`.
-2. New conversation, attach the milestone file, snapshot, `ARCHITECTURE.md`, `DECISIONS.md`, and paste **Prompt F** (milestone review with `/requesting-code-review`). Save the report as `docs/reviews/Mn-review.md`.
+1. Run `git fetch`, then take a whole-repo snapshot with git state: `tools/snapshot.sh --git-state`.
+2. New conversation, attach the milestone file, snapshot, `ARCHITECTURE.md`, `DECISIONS.md`, and paste **Prompt F** (milestone review with `/requesting-code-review`). Save the report as `docs/reviews/Mn-review.md`. After the follow-up tasks are merged, run a re-review in a **new** conversation with **Prompt F2** and save it as `docs/reviews/Mn-review-2.md`; tag only after it is clean.
 3. Fix blocking findings as extra tasks (add rows to `ROADMAP.md`), through the normal loop.
 4. Tag and push: `git tag m1-complete && git push --tags`.
 5. Check that the next milestone's "Prerequisites and baseline" matches what you now have. The next milestone's first conversation will ask Claude to copy the real exported signatures from your code.

@@ -26,6 +26,18 @@ export const eslintCases = [
     expect: { errors: ['jsdoc/require-example'], count: 6 },
   },
   {
+    name: '@internal exports in engine need no @example (spec 7.2: exported only for other modules or tests)',
+    fixture: 'engine-internal-without-example',
+    virtualPath: 'packages/engine/src/x.ts',
+    expect: { clean: true },
+  },
+  {
+    name: '@internal exports in protocol need no @example',
+    fixture: 'engine-internal-without-example',
+    virtualPath: 'packages/protocol/src/x.ts',
+    expect: { clean: true },
+  },
+  {
     name: 'an empty @example is rejected in engine',
     fixture: 'empty-example',
     virtualPath: 'packages/engine/src/x.ts',
@@ -206,6 +218,20 @@ export const todoCases = [
   { fixture: 'todo-colon', bare: 1 },
   { fixture: 'todo-no-task', bare: 1 },
   { fixture: 'todo-good', bare: 0 },
+  { fixture: 'todo-fixme', bare: 1 },
+  { fixture: 'todo-xxx-hack', bare: 2 },
+  { fixture: 'todo-markers-good', bare: 0 },
+];
+
+// Which paths the marker scan reads: code, workflow and shell files, not Markdown (the docs discuss the rule).
+export const todoScopeCases = [
+  { file: 'packages/engine/src/a.ts', checked: true },
+  { file: '.github/workflows/ci.yml', checked: true },
+  { file: 'tools/snapshot.sh', checked: true },
+  { file: 'scripts/x.mjs', checked: true },
+  { file: 'README.md', checked: false },
+  { file: 'docs/milestones/M1-engine-core.md', checked: false },
+  { file: 'tools/lint-fixtures/cases/todo-bare.fixture', checked: false },
 ];
 
 export const commitCases = [
@@ -223,4 +249,21 @@ export const commitCases = [
   { msg: 'feat(engine): [M1-T04] flood fill', ok: false, why: 'task ID must end the subject' },
   { msg: 'feat(engine): flood fill [M1-4]', ok: false, why: 'malformed task ID' },
   { msg: 'Feat(engine): flood fill [M1-T04]', ok: false, why: 'type must be lower case' },
+];
+
+// Branch names (ADR-006): `m<n>/M<n>-T<nn>-<slug>` for a task, `chore/<slug>` for work that belongs to no task.
+export const branchCases = [
+  { name: 'm1/M1-T04-iterative-flood-fill', ok: true },
+  { name: 'm0/M0-T07-narrow-example-rule', ok: true },
+  { name: 'm10/M10-T05-accessibility-audit', ok: true },
+  { name: 'chore/m0-review-followups', ok: true },
+  { name: 'feature/flood-fill', ok: false, why: 'unknown prefix' },
+  { name: 'main', ok: false, why: 'not a working branch' },
+  { name: 'm1/M1-T04', ok: false, why: 'slug missing' },
+  { name: 'm1/M2-T04-wrong-milestone', ok: false, why: 'milestone differs from the task ID' },
+  { name: 'M1/M1-T04-flood-fill', ok: false, why: 'prefix must be lower case' },
+  { name: 'm1/M1-T04-Flood-Fill', ok: false, why: 'slug must be lower case' },
+  { name: 'm1/M1-T4-flood-fill', ok: false, why: 'task number needs two digits' },
+  { name: 'chore/', ok: false, why: 'empty slug' },
+  { name: 'chore/two words', ok: false, why: 'no spaces' },
 ];

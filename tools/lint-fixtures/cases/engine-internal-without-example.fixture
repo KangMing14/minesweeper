@@ -1,0 +1,37 @@
+/**
+ * Adds two numbers.
+ * @internal
+ */
+export function add(a: number, b: number): number {
+  return a + b;
+}
+/**
+ * Counts things.
+ * @internal
+ */
+export class Counter {}
+/**
+ * A shape.
+ * @internal
+ */
+export interface Shape {
+  /** Number of sides. */
+  sides: number;
+}
+/**
+ * Identifier of a thing.
+ * @internal
+ */
+export type Id = number;
+/**
+ * Colors.
+ * @internal
+ */
+export enum Color {
+  Red,
+}
+/**
+ * Upper bound.
+ * @internal
+ */
+export const LIMIT = 10;

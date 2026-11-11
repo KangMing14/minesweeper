@@ -8,11 +8,11 @@ Full task details live in `docs/milestones/`; the plan is `docs/superpowers/plan
 
 ## Milestone index
 
-Twelve milestones, 78 tasks. Tasks inside a milestone run in numeric order unless a task's prerequisites say otherwise. A milestone is finished when all its tasks are `Done` and its exit criteria hold; then it is reviewed and tagged (`docs/workflow/HOW_TO_USE.md`, section 7). Dependency graph: master plan, section E.
+Twelve milestones, 83 tasks. Tasks inside a milestone run in numeric order unless a task's prerequisites say otherwise. A milestone is finished when all its tasks are `Done` and its exit criteria hold; then it is reviewed and tagged (`docs/workflow/HOW_TO_USE.md`, section 7). Dependency graph: master plan, section E.
 
 | ID | Milestone | Tasks | Depends on | Exit criteria | File | Tag |
 | --- | --- | --- | --- | --- | --- | --- |
-| M0 | Foundations | 6 | spec approved | CI green on wired monorepo; docs and ADR-001..008 committed; tag `m0-complete` | [`M0-foundations.md`](docs/milestones/M0-foundations.md) | `m0-complete` |
+| M0 | Foundations | 11 | spec approved | CI green on wired monorepo; docs and ADR-001..008 committed; tag `m0-complete` | [`M0-foundations.md`](docs/milestones/M0-foundations.md) | `m0-complete` |
 | M1 | Engine core | 7 | M0 | Playable-in-tests engine; public API exported and documented | [`M1-engine-core.md`](docs/milestones/M1-engine-core.md) | `m1-complete` |
 | M2 | Deterministic engine | 6 | M1 | Seeded boards, command log, replay; golden-seed tests pass in Node and a browser | [`M2-deterministic-engine.md`](docs/milestones/M2-deterministic-engine.md) | `m2-complete` |
 | M3 | Local solo client | 8 | M2 | Playable solo game in the browser; Playwright smoke test green | [`M3-local-solo-client.md`](docs/milestones/M3-local-solo-client.md) | `m3-complete` |
@@ -32,11 +32,16 @@ File: `docs/milestones/M0-foundations.md`. Tag when finished: `m0-complete`.
 | Task   | Title                                         | Status      | PR                               | Commit  | Done on    |
 | ------ | --------------------------------------------- | ----------- | -------------------------------- | ------- | ---------- |
 | M0-T01 | Initialize the repository and git conventions | Done        | n/a (bootstrap commit on main)   | cc51e30 | 2026-11-05 |
-| M0-T02 | Scaffold the monorepo and pin versions        | Done        |chore: scaffold monorepo and pin versions [M0-T02] (#1)| 80f3dfc | 2026-11-05 |
-| M0-T03 | Lint, format, hooks and documentation lint    | Done        |chore: add lint, format, hooks and doc lint [M0-T03] (#2)|d90869d|2026-11-07|
-| M0-T04 | Test tooling and CI                           | Done        |ci: add test tooling, TypeDoc and CI workflow [M0-T04] (#5)|722bf34|2026-11-07|
-| M0-T05 | Documentation skeleton                        | Done        |docs: add documentation skeleton and link check [M0-T05] (#6)|cab55e4|2026-11-08|
-| M0-T06 | ADRs, dependency verification and license     | Done        |                                  |         |            |
+| M0-T02 | Scaffold the monorepo and pin versions        | Done        |#1| 80f3dfc | 2026-11-05 |
+| M0-T03 | Lint, format, hooks and documentation lint    | Done        |#2|d90869d|2026-11-07|
+| M0-T04 | Test tooling and CI                           | Done        |#5|722bf34|2026-11-07|
+| M0-T05 | Documentation skeleton                        | Done        |#6|cab55e4|2026-11-08|
+| M0-T06 | ADRs, dependency verification and license     | Done        |#7|3aa4c1b|2026-11-10|
+| M0-T07 | Narrow `jsdoc/require-example`: exempt `@internal`, add fixtures | Done |  |  |  |
+| M0-T08 | Carry the full mine-exposure rule into the docs; open D-14 | Done |  |  |  |
+| M0-T09 | Snapshot git state and `--with-git`; remove the per-task verify scripts | Done |  |  |  |
+| M0-T10 | Advisory check in CI, branch-name check, engine-strict, wider marker scan | Done |  |  |  |
+| M0-T11 | Documentation tidy-ups and ADR errata | Done |  |  |  |
 
 ## M1 Engine Core
 
@@ -187,4 +192,4 @@ File: `docs/milestones/M11-launch-readiness.md`. Tag when finished: `m11-complet
 | M11-T05 | Launch checklist and legal basics | Not started |     |        |         |
 | M11-T06 | Public launch and feedback loop   | Not started |     |        |         |
 
-_Total tasks: 78._
+_Total tasks: 83._

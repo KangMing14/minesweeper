@@ -7,7 +7,7 @@ Instructions for Claude (and any other AI assistant) working in this repository.
 At the start of every conversation, read these in this order, and stop reading when you have what the task needs:
 
 1. `CLAUDE.md` (this file).
-2. `ROADMAP.md`: the status of all 78 tasks. The next task is the first row that is not `Done`, unless the developer names another one.
+2. `ROADMAP.md`: the status of all 83 tasks. The next task is the first row that is not `Done`, unless the developer names another one.
 3. The milestone file for the task, `docs/milestones/Mn-*.md`. Its Conversation Handoff Package comes first; then the task itself.
 4. `ARCHITECTURE.md`: package layout, dependency rule, diagrams and the canonical names.
 5. `DECISIONS.md`: the ADR index, the open decisions and the dependency pins.
@@ -23,7 +23,7 @@ Read further only when the task points there: the spec is `docs/superpowers/spec
 5. **Canonical names are exact.** Use the names in the canonical-names table of `ARCHITECTURE.md` exactly. A rename is a deliberate task that updates the table and every consumer together.
 6. **Test first.** Write the failing test, watch it fail for the right reason, then implement (`/test-driven-development`). Before saying a task is done, run the checks and show the real output (`/verification-before-completion`). Say plainly which checks you could not run.
 7. **The engine stays pure.** `packages/engine` must not use `Math.random`, `Date`, `performance`, `window`, `document`, `process`, Node APIs, or import anything project-internal. Time enters only as `t` on a `Command`. Lint enforces this; do not disable the rule.
-8. **Mine positions never reach a client while a game is in progress.** Every inbound network message is validated with a Zod schema and is size- and rate-limited.
+8. **Mine positions never reach a client while a game is in progress. After a game ends, only the player's own finished game may expose its mines.** In a race both players share one board, so until D-14 is settled (M4-T03, ADR-010) release the mine layout only when the match result is final for both players. Every inbound network message is validated with a Zod schema and is size- and rate-limited.
 9. **Document the code.** Every exported symbol gets a TSDoc comment (`@example` is required in `engine` and `protocol`). Inline comments say why, not what. Every TODO names a task: `// TODO(M6-T04): ...`.
 10. **Git conventions.** One task = one branch `m<n>/<task-id>-<slug>` = one PR, squash-merged. Commit and PR title: `type(scope): subject [Mn-Tnn]`, for example `feat(engine): iterative flood fill [M1-T04]`; work that belongs to no task ends with `[chore]`.
 11. **Deliver files, not snippets.** Hand over one zip that keeps repo-relative paths, plus the exact commands to run. Never ask for or paste secrets (`.env` contents, tokens, database URLs).

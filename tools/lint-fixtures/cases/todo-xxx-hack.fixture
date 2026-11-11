@@ -1,0 +1,3 @@
+// XXX revisit this
+// HACK: temporary
+export const a = 1;

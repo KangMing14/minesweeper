@@ -96,7 +96,7 @@
 - **Objective:** a single guarded entry point for the engine.
 - **Description:** export the public API from `packages/engine/src/index.ts` and lock it with a test.
 - **Prerequisites:** M1-T06.
-- **Implementation guidance:** export only the canonical names from this milestone. Add an API-surface test that compares the exported names (and the type shapes of `Command`, `GameEvent`, `GameView`) against a committed snapshot, so signature changes are visible in review. Remove the M0 sample code. Build TypeDoc and read it as a consumer.
+- **Implementation guidance:** export only the canonical names from this milestone. Add an API-surface test that compares the exported names (and the type shapes of `Command`, `GameEvent`, `GameView`) against a committed snapshot, so signature changes are visible in review. Remove the M0 sample code. Set numeric `coverage.thresholds` for the `engine` project in `vitest.config.ts` (a number you can defend, for example 90% branches) and exclude `index.ts` barrels from coverage; the config comment says M1 does this. Build TypeDoc and read it as a consumer.
 - **Expected output:** `index.ts`, `api-surface.test.ts` and snapshot, TypeDoc build clean.
 - **Testing requirements:** a full game played using only `index.ts` imports; the snapshot test fails when an export is added or renamed.
 - **Acceptance criteria:** `pnpm docs:api` has zero warnings; `m1-complete` tagged after milestone review.

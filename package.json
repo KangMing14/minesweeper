@@ -18,6 +18,8 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,mts,cts,js,mjs,cjs,json,yml,yaml}\"",
     "check:todos": "node scripts/check-todos.mjs",
     "check:links": "node scripts/check-links.mjs",
+    "audit:prod": "pnpm audit --prod --audit-level moderate",
+    "audit:all": "pnpm audit --audit-level high",
     "test:lint-fixtures": "node --test tools/lint-fixtures/lint-fixtures.test.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

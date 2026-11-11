@@ -35,3 +35,6 @@ pnpm-debug.log*
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Written by tools/snapshot.sh --git-state while the zip is made
+GIT_STATE.txt
