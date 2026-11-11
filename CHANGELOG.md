@@ -5,7 +5,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 ## [Unreleased]
 
 ### Added
-
+- **M0 close-out** Re-review `docs/reviews/M0-review-2.md`: all 13 findings of the first review are resolved. M0-T07 to M0-T11 were merged together in PR #8 as an accepted exception to one task per pull request. Milestone tagged `m0-complete`.
 - **M0-T07** `jsdoc/require-example` no longer applies to symbols tagged `@internal` (`exemptedBy`); two fixtures pin it.
 - **M0-T08** The full mine-exposure constraint is in `CLAUDE.md` rule 8 and `ARCHITECTURE.md` principle 2. New open decision D-14 (when race mines are released), owned by M4-T03 (ADR-010); M5-T05's leak test and M4-T03 are reworded. M1-T07 (coverage thresholds), M2-T06 (throwing stubs), M5-T01 (`protocol` and engine imports) gained one sentence each.
 - **M0-T09** `tools/snapshot.sh --git-state` writes `GIT_STATE.txt` into the zip; `--with-git` includes `.git` (without `config` and `hooks`); no flag, no change. Prompt F2 (re-review) added. `tools/verify-t02.mjs` to `verify-t06.mjs` removed.
