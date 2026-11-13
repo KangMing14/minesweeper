@@ -5,6 +5,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 ## [Unreleased]
 
 ### Added
+- **M1-T01** `packages/engine` gets its first real code: `CellIndex`, `BoardConfig`, the frozen `PRESETS` (beginner 9x9/10, intermediate 16x16/40, expert 30x16/99), `validateBoardConfig`, `InvalidBoardConfigError` (with `reason`) and the helpers `cellCount` and `safeCellCount`. Width and height must be integers from 1 to 100; `mineCount` an integer from 0 to cells minus one. `ARCHITECTURE.md` gains a "Board configuration" section and lists the three helper names it adds to the canonical table.
 - **M0 close-out** Re-review `docs/reviews/M0-review-2.md`: all 13 findings of the first review are resolved. M0-T07 to M0-T11 were merged together in PR #8 as an accepted exception to one task per pull request. Milestone tagged `m0-complete`.
 - **M0-T07** `jsdoc/require-example` no longer applies to symbols tagged `@internal` (`exemptedBy`); two fixtures pin it.
 - **M0-T08** The full mine-exposure constraint is in `CLAUDE.md` rule 8 and `ARCHITECTURE.md` principle 2. New open decision D-14 (when race mines are released), owned by M4-T03 (ADR-010); M5-T05's leak test and M4-T03 are reworded. M1-T07 (coverage thresholds), M2-T06 (throwing stubs), M5-T01 (`protocol` and engine imports) gained one sentence each.
@@ -28,4 +29,4 @@ All notable changes to this project are recorded here. The format follows [Keep 
 ### Notes
 
 - The task count is 83 (was 78): M0-T07 to M0-T11 came from the M0 milestone review. The approved master plan and spec still say 78; `ROADMAP.md` is the authority.
-- The engine exports only the throwaway `m0SampleAdd`, which exists to exercise the pipeline and is removed in M1-T07. The other packages export nothing yet.
+- The throwaway `m0SampleAdd` still exists next to the real engine exports; it exercises the pipeline and is removed in M1-T07. The other packages export nothing yet.
