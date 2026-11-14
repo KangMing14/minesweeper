@@ -49,8 +49,8 @@ File: `docs/milestones/M1-engine-core.md`. Tag when finished: `m1-complete`.
 
 | Task   | Title                                                 | Status      | PR  | Commit | Done on |
 | ------ | ----------------------------------------------------- | ----------- | --- | ------ | ------- |
-| M1-T01 | Core types, presets and config validation             | Done        |     |        |         |
-| M1-T02 | Board and neighbor math                               | Not started |     |        |         |
+| M1-T01 | Core types, presets and config validation             | Done        |#10|ceaeee3|2026-11-13|
+| M1-T02 | Board and neighbor math                               | Done        |     |        |         |
 | M1-T03 | Game state, views and events                          | Not started |     |        |         |
 | M1-T04 | Reveal and iterative flood fill                       | Not started |     |        |         |
 | M1-T05 | Flags and chording                                    | Not started |     |        |         |
