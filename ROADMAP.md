@@ -51,7 +51,7 @@ File: `docs/milestones/M1-engine-core.md`. Tag when finished: `m1-complete`.
 | ------ | ----------------------------------------------------- | ----------- | --- | ------ | ------- |
 | M1-T01 | Core types, presets and config validation             | Done        |#10|ceaeee3|2026-11-13|
 | M1-T02 | Board and neighbor math                               | Done        |#11|e2decf7|2026-11-14|
-| M1-T03 | Game state, views and events                          | Not started |     |        |         |
+| M1-T03 | Game state, views and events                          | Done        |     |        | 2026-11-14 |
 | M1-T04 | Reveal and iterative flood fill                       | Not started |     |        |         |
 | M1-T05 | Flags and chording                                    | Not started |     |        |         |
 | M1-T06 | Win and loss, status transitions, post-game rejection | Not started |     |        |         |
