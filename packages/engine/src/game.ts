@@ -1,8 +1,8 @@
 import type { Board } from './board.js';
 import { chordCells } from './chord.js';
 import type { Command } from './command.js';
-import type { CellIndex } from './config.js';
-import { GameEventEmitter, type GameEvent } from './events.js';
+import { safeCellCount, type CellIndex } from './config.js';
+import { GameEventEmitter, type CellsRevealed, type GameEvent } from './events.js';
 import { revealCell } from './reveal.js';
 import {
   buildGameView,
@@ -15,6 +15,9 @@ import {
 /** What a command that changes nothing returns. Shared, because it is frozen. */
 const NO_EVENTS: readonly GameEvent[] = Object.freeze([]);
 
+/** The cells a command revealed when it revealed none (stepping on a mine). Shared, because it is frozen. */
+const NO_CELLS: CellsRevealed['cells'] = Object.freeze([]);
+
 /**
  * One game of Minesweeper on a fixed mine layout: the mutable aggregate that players act on.
  *
@@ -23,8 +26,9 @@ const NO_EVENTS: readonly GameEvent[] = Object.freeze([]);
  * The mine layout lives in the immutable `Board`, so several games can share one board. Callers read the game
  * only through `view()`, which says nothing about hidden mines, and listen to it through `subscribe`.
  *
- * Players act through `apply`. It understands `reveal` (M1-T04), `flag` and `chord` (M1-T05); win detection
- * and the full post-game rules follow in M1-T06.
+ * Players act through `apply`. It understands `reveal`, `flag` and `chord`. The game is won when every safe
+ * cell is revealed and lost when a mine is revealed; both are final, and a finished game ignores every
+ * further command.
  *
  * @example
  * ```ts
@@ -47,6 +51,12 @@ export class Game {
   /** Where the game stands. */
   #status: GameStatus = 'ready';
 
+  /** How many cells are not mines. Revealing all of them wins the game. */
+  readonly #safeCells: number;
+
+  /** How many cells are revealed. Counted here, so that detecting a win does not scan the board. */
+  #revealedCount = 0;
+
   /** Delivers events to subscribers. */
   readonly #events = new GameEventEmitter();
 
@@ -64,6 +74,7 @@ export class Game {
   constructor(board: Board) {
     this.#board = board;
     this.#cellStates = new Uint8Array(board.config.width * board.config.height).fill(CELL_HIDDEN);
+    this.#safeCells = safeCellCount(board.config);
   }
 
   /**
@@ -94,7 +105,7 @@ export class Game {
    * @remarks
    * A command that is not valid in the current state, or that changes nothing, returns `[]` and leaves the
    * game untouched: revealing a cell that is already revealed or flagged, and any command after the game
-   * has been lost or won. Only an index outside the board is an error.
+   * has been lost or won (the status is final). Only an index outside the board is an error.
    *
    * `reveal` on a hidden, safe cell reveals it; if it shows 0 the reveal spreads to the cells around it
    * (an iterative flood fill, see `revealCell`). All of that is one `cellsRevealed` event, listing every
@@ -115,8 +126,14 @@ export class Game {
    * lowest-index mine. A chord on a hidden or flagged cell, on a zero, with a different number of flags,
    * or with nothing left to open, does nothing (`[]`).
    *
-   * Winning (every safe cell revealed) is detected from M1-T06; until then a game with every safe cell
-   * open is still `'playing'`.
+   * The game is won the moment the last safe cell is revealed, by a `reveal`, a cascade or a `chord`: the
+   * status becomes `'won'` and the command's events end with one `gameWon`, after the `cellsRevealed` that
+   * completed the board. Flags play no part: the game counts revealed safe cells only, and a flag on a safe
+   * cell has to come off before that cell can be revealed. A chord that reaches a mine is lost, never won:
+   * it can only reach a mine when a flag sits on a safe cell, and that cell is still closed.
+   *
+   * Once the game is won or lost, `view().exposedMines` lists every mine (the player's own finished game;
+   * in a race the server decides when a client may see it, D-14).
    *
    * The state is changed before the events are delivered to subscribers. If a subscriber throws, every
    * other subscriber still hears every event of the command, and the first error is rethrown from
@@ -177,21 +194,49 @@ export class Game {
    *
    * @param index - A valid cell index.
    * @param t - Milliseconds since the game started.
-   * @returns The events the chord caused: nothing, `cellsRevealed`, `gameLost`, or `cellsRevealed` then `gameLost`.
+   * @returns The events the chord caused: nothing, `cellsRevealed`, `gameLost`, `cellsRevealed` then
+   * `gameLost`, or `cellsRevealed` then `gameWon`.
    */
   #chord(index: CellIndex, t: number): readonly GameEvent[] {
     const result = chordCells(this.#board, this.#cellStates, index);
     if (result.kind === 'none') return NO_EVENTS;
+    return this.#settle(result.cells, result.mineIndex, t);
+  }
 
+  /**
+   * Records what a command that took effect revealed, decides where the game stands and announces it.
+   *
+   * @remarks
+   * The one place where the game's lifecycle changes, so that `reveal` and `chord` cannot disagree about it.
+   * A mine reached means the game is lost. Otherwise it is won exactly when every safe cell is revealed, and
+   * playing if not. A loss wins over a win only on paper: a command that reaches a mine always leaves a safe
+   * cell closed (see `apply`), so both can never be true at once.
+   *
+   * The events are `cellsRevealed` (only if a cell was opened), then at most one of `gameLost` and `gameWon`.
+   *
+   * @param cells - The cells the command revealed, possibly none.
+   * @param mineIndex - The mine the command reached, or `null` if it reached none.
+   * @param t - Milliseconds since the game started, taken from the command.
+   * @returns The announced events, a frozen array.
+   */
+  #settle(
+    cells: CellsRevealed['cells'],
+    mineIndex: CellIndex | null,
+    t: number,
+  ): readonly GameEvent[] {
     const events: GameEvent[] = [];
-    if (result.cells.length > 0) {
-      events.push(Object.freeze({ type: 'cellsRevealed', cells: result.cells }));
+    if (cells.length > 0) {
+      this.#revealedCount += cells.length;
+      events.push(Object.freeze({ type: 'cellsRevealed', cells }));
     }
-    if (result.mineIndex === null) {
-      this.#status = 'playing';
-    } else {
+    if (mineIndex !== null) {
       this.#status = 'lost';
-      events.push(Object.freeze({ type: 'gameLost', t, mineIndex: result.mineIndex }));
+      events.push(Object.freeze({ type: 'gameLost', t, mineIndex }));
+    } else if (this.#revealedCount === this.#safeCells) {
+      this.#status = 'won';
+      events.push(Object.freeze({ type: 'gameWon', t }));
+    } else {
+      this.#status = 'playing';
     }
     return this.#announce(events);
   }
@@ -228,22 +273,14 @@ export class Game {
    *
    * @param index - A valid cell index.
    * @param t - Milliseconds since the game started.
-   * @returns The events the reveal caused.
+   * @returns The events the reveal caused: `gameLost`, or `cellsRevealed`, followed by `gameWon` if that
+   * reveal opened the last safe cell.
    */
   #reveal(index: CellIndex, t: number): readonly GameEvent[] {
     const result = revealCell(this.#board, this.#cellStates, index);
     if (result.kind === 'none') return NO_EVENTS;
-
-    let event: GameEvent;
-    if (result.kind === 'mine') {
-      this.#status = 'lost';
-      event = Object.freeze({ type: 'gameLost', t, mineIndex: index });
-    } else {
-      this.#status = 'playing';
-      event = Object.freeze({ type: 'cellsRevealed', cells: result.cells });
-    }
-    this.#events.emit(event);
-    return Object.freeze([event]);
+    if (result.kind === 'mine') return this.#settle(NO_CELLS, index, t);
+    return this.#settle(result.cells, null, t);
   }
 
   /**

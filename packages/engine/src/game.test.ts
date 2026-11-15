@@ -154,7 +154,8 @@ describe('Game.apply: cascades', () => {
   it('opens the whole zero region in one cellsRevealed event', () => {
     const game = new Game(corner());
     const events = game.apply(reveal(0));
-    expect(events).toHaveLength(1);
+    // One cellsRevealed for the whole region. It opens every safe cell, so gameWon follows (M1-T06).
+    expect(events.map((e) => e.type)).toEqual(['cellsRevealed', 'gameWon']);
     const event = events[0];
     if (event?.type !== 'cellsRevealed') throw new Error('expected cellsRevealed');
     expect(event.cells).toHaveLength(15); // every cell but the mine
@@ -176,7 +177,7 @@ describe('Game.apply: cascades', () => {
       best = Math.min(best, Date.now() - started);
       const event = events[0];
       if (event?.type !== 'cellsRevealed') throw new Error('expected cellsRevealed');
-      expect(events).toHaveLength(1);
+      expect(events.map((e) => e.type)).toEqual(['cellsRevealed', 'gameWon']); // one cascade, then the win
       expect(event.cells).toHaveLength(480);
       expect(game.view().revealedCount).toBe(480);
     }
@@ -264,7 +265,7 @@ describe('Game.apply: commands that do nothing', () => {
   });
 
   it('returns [] for a reveal after the game is lost and leaves the view identical', () => {
-    // M1-T06 adds the full post-game suite; this is the minimal guard that a lost game stays lost.
+    // The full post-game suite (won and lost, every command type) is in `lifecycle.test.ts`.
     const game = new Game(corner());
     game.apply(reveal(15));
     const before = game.view();
@@ -453,7 +454,8 @@ describe('Game.apply: chord', () => {
   it('with the right flag opens every other neighbor in one cellsRevealed event', () => {
     const game = opened([15]);
     const events = game.apply(chord(10, 2_000));
-    expect(events).toHaveLength(1);
+    // It opens the last safe cells, so the game is won: cellsRevealed, then gameWon (M1-T06).
+    expect(events.map((e) => e.type)).toEqual(['cellsRevealed', 'gameWon']);
     const [event] = events;
     if (event?.type !== 'cellsRevealed')
       throw new Error(`expected cellsRevealed, got ${event?.type}`);
@@ -466,7 +468,7 @@ describe('Game.apply: chord', () => {
     const view = game.view();
     expect(view.revealedCount).toBe(15);
     expect(view.cells[15]).toEqual({ state: 'flagged' });
-    expect(view.status).toBe('playing'); // winning is detected from M1-T06
+    expect(view.status).toBe('won');
   });
 
   it('loses when a flag is wrong and a mine is left unflagged: safe cells first, then gameLost', () => {
