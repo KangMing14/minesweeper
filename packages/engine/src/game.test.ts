@@ -82,6 +82,12 @@ describe('Game.subscribe', () => {
 /** A reveal command. */
 const reveal = (index: number, t = 0): Command => ({ type: 'reveal', index, t });
 
+/** A flag command. */
+const flag = (index: number, t = 0): Command => ({ type: 'flag', index, t });
+
+/** A chord command. */
+const chord = (index: number, t = 0): Command => ({ type: 'chord', index, t });
+
 /** Everything a game announces, in order, while `action` runs. */
 function collect(game: Game, action: () => void): GameEvent[] {
   const heard: GameEvent[] = [];
@@ -246,16 +252,15 @@ describe('Game.apply: commands that do nothing', () => {
     expect(game.view()).toEqual(before);
   });
 
-  // TODO(M1-T05): once `flag` exists, add the Game-level check that a reveal on a flagged cell returns []
-  // and leaves the view identical. The cell-level rule is already tested through `revealCell`.
-
-  it('ignores flag and chord for now: [] and no change', () => {
-    // TODO(M1-T05): replace with the real flag and chord tests.
+  it('returns [] for a cell that is flagged and leaves the view identical', () => {
     const game = new Game(corner());
+    game.apply(flag(15)); // a flagged mine
+    game.apply(flag(3)); // a flagged safe cell
     const before = game.view();
-    expect(game.apply({ type: 'flag', index: 3, t: 0 })).toEqual([]);
-    expect(game.apply({ type: 'chord', index: 3, t: 0 })).toEqual([]);
+    expect(game.apply(reveal(15))).toEqual([]);
+    expect(game.apply(reveal(3))).toEqual([]);
     expect(game.view()).toEqual(before);
+    expect(game.view().status).toBe('playing');
   });
 
   it('returns [] for a reveal after the game is lost and leaves the view identical', () => {
@@ -266,6 +271,17 @@ describe('Game.apply: commands that do nothing', () => {
     expect(game.apply(reveal(0))).toEqual([]);
     expect(game.apply(reveal(15))).toEqual([]);
     expect(game.view()).toEqual(before);
+  });
+});
+
+describe('Game.apply: unknown command types', () => {
+  it('returns [] and changes nothing, for input that did not come from typed code', () => {
+    const game = new Game(corner());
+    const before = game.view();
+    const unknown = { type: 'question-mark', index: 3, t: 0 } as unknown as Command;
+    expect(game.apply(unknown)).toEqual([]);
+    expect(game.view()).toEqual(before);
+    expect(game.view().status).toBe('ready');
   });
 });
 
@@ -305,5 +321,298 @@ describe('Game.apply: determinism', () => {
     first.apply(reveal(0));
     expect(second.view().revealedCount).toBe(0);
     expect(second.view().status).toBe('ready');
+  });
+});
+
+describe('Game.apply: flag', () => {
+  it('flags a hidden cell: one flagToggled event, the cell shows as flagged, the counts follow', () => {
+    const game = new Game(corner());
+    const events = game.apply(flag(3, 700));
+    expect(events).toEqual([{ type: 'flagToggled', index: 3, flagged: true }]);
+    const view = game.view();
+    expect(view.cells[3]).toEqual({ state: 'flagged' });
+    expect(view.flagCount).toBe(1);
+    expect(view.minesRemaining).toBe(0);
+    expect(view.revealedCount).toBe(0);
+  });
+
+  it('takes the flag off again: flagged becomes hidden', () => {
+    const game = new Game(corner());
+    game.apply(flag(3));
+    const events = game.apply(flag(3));
+    expect(events).toEqual([{ type: 'flagToggled', index: 3, flagged: false }]);
+    expect(game.view().cells[3]).toEqual({ state: 'hidden' });
+    expect(game.view().flagCount).toBe(0);
+    expect(game.view().minesRemaining).toBe(1);
+  });
+
+  it('returns a frozen event array and frozen events', () => {
+    const events = new Game(corner()).apply(flag(3));
+    expect(Object.isFrozen(events)).toBe(true);
+    expect(Object.isFrozen(events[0])).toBe(true);
+  });
+
+  it('does nothing on a revealed cell: [] and an identical view', () => {
+    const game = new Game(corner());
+    game.apply(reveal(10));
+    const before = game.view();
+    expect(game.apply(flag(10))).toEqual([]);
+    expect(game.view()).toEqual(before);
+  });
+
+  it('does nothing on a cell that a cascade opened', () => {
+    const game = new Game(corner());
+    game.apply(reveal(0));
+    const before = game.view();
+    expect(game.apply(flag(5))).toEqual([]);
+    expect(game.view()).toEqual(before);
+  });
+
+  it('moves the game from ready to playing, like any command that takes effect', () => {
+    const game = new Game(corner());
+    expect(game.view().status).toBe('ready');
+    game.apply(flag(3));
+    expect(game.view().status).toBe('playing');
+  });
+
+  it('keeps a game ready when the flag command changes nothing', () => {
+    // Nothing is revealed yet, so the only no-op for `flag` is an out-of-range index, which throws.
+    // A chord on a hidden cell is the no-op that must not start the game (see the chord tests).
+    const game = new Game(corner());
+    game.apply(chord(3));
+    expect(game.view().status).toBe('ready');
+  });
+
+  it('lets a flag be placed on a mine or on a safe cell, and the two look the same', () => {
+    const mineAt15 = new Game(new Board({ width: 4, height: 4, mineCount: 1 }, [15]));
+    const mineAt14 = new Game(new Board({ width: 4, height: 4, mineCount: 1 }, [14]));
+    mineAt15.apply(flag(14)); // safe here
+    mineAt14.apply(flag(14)); // a mine here
+    expect(JSON.stringify(mineAt15.view())).toBe(JSON.stringify(mineAt14.view()));
+    expect(mineAt14.view().status).toBe('playing'); // flagging a mine does not hurt
+  });
+
+  it('allows more flags than mines: minesRemaining goes negative', () => {
+    const game = new Game(corner());
+    game.apply(flag(0));
+    game.apply(flag(1));
+    game.apply(flag(2));
+    expect(game.view().flagCount).toBe(3);
+    expect(game.view().minesRemaining).toBe(-2);
+  });
+
+  it('has no question-mark state: the third toggle is a flag again', () => {
+    const game = new Game(corner());
+    const states = [3, 3, 3].map(() => {
+      game.apply(flag(3));
+      return game.view().cells[3]?.state;
+    });
+    expect(states).toEqual(['flagged', 'hidden', 'flagged']);
+  });
+
+  it('lets a flagged cell be revealed after the flag is removed', () => {
+    const game = new Game(corner());
+    game.apply(flag(10));
+    expect(game.apply(reveal(10))).toEqual([]);
+    game.apply(flag(10));
+    expect(game.apply(reveal(10))).toEqual([
+      { type: 'cellsRevealed', cells: [{ index: 10, value: 1 }] },
+    ]);
+  });
+
+  it('delivers the event to subscribers', () => {
+    const game = new Game(corner());
+    const heard = collect(game, () => {
+      game.apply(flag(3));
+      game.apply(flag(3));
+    });
+    expect(heard).toEqual([
+      { type: 'flagToggled', index: 3, flagged: true },
+      { type: 'flagToggled', index: 3, flagged: false },
+    ]);
+  });
+
+  it('does nothing after the game is lost', () => {
+    const game = new Game(corner());
+    game.apply(reveal(15));
+    const before = game.view();
+    expect(game.apply(flag(3))).toEqual([]);
+    expect(game.view()).toEqual(before);
+  });
+});
+
+describe('Game.apply: chord', () => {
+  /** The 4x4 corner board with 10 (a 1) open and the given cells flagged. */
+  function opened(flags: readonly number[]): Game {
+    const game = new Game(corner());
+    game.apply(reveal(10));
+    for (const index of flags) game.apply(flag(index));
+    return game;
+  }
+
+  it('with the right flag opens every other neighbor in one cellsRevealed event', () => {
+    const game = opened([15]);
+    const events = game.apply(chord(10, 2_000));
+    expect(events).toHaveLength(1);
+    const [event] = events;
+    if (event?.type !== 'cellsRevealed')
+      throw new Error(`expected cellsRevealed, got ${event?.type}`);
+    // Every safe cell except 10, which was already open. The cascades from 5, 6, 7 and 9 overlap, and each
+    // cell is still listed once.
+    const indices = event.cells.map((cell) => cell.index);
+    expect(new Set(indices).size).toBe(14);
+    expect(indices).not.toContain(10);
+    expect(indices).not.toContain(15);
+    const view = game.view();
+    expect(view.revealedCount).toBe(15);
+    expect(view.cells[15]).toEqual({ state: 'flagged' });
+    expect(view.status).toBe('playing'); // winning is detected from M1-T06
+  });
+
+  it('loses when a flag is wrong and a mine is left unflagged: safe cells first, then gameLost', () => {
+    const game = opened([14]); // 14 is safe; the mine at 15 is not flagged
+    const events = game.apply(chord(10, 3_000));
+    expect(events.map((event) => event.type)).toEqual(['cellsRevealed', 'gameLost']);
+    expect(events[1]).toEqual({ type: 'gameLost', t: 3_000, mineIndex: 15 });
+    const view = game.view();
+    expect(view.status).toBe('lost');
+    expect(view.exposedMines).toEqual([15]);
+    expect(view.cells[14]).toEqual({ state: 'flagged' }); // the wrong flag stays where it was
+    expect(view.cells[15]).toEqual({ state: 'hidden' }); // a hit mine is not counted as revealed
+    expect(view.revealedCount).toBe(14); // the safe neighbors opened before the loss
+  });
+
+  it('names the lowest-index mine when it hits several', () => {
+    // 3x3 with mines at 0 and 2: the centre shows 2. Two wrong flags satisfy it and leave both mines open.
+    const game = new Game(new Board({ width: 3, height: 3, mineCount: 2 }, [0, 2]));
+    game.apply(reveal(4));
+    game.apply(flag(1));
+    game.apply(flag(3));
+    const events = game.apply(chord(4, 500));
+    expect(events).toEqual([
+      {
+        type: 'cellsRevealed',
+        cells: [
+          { index: 5, value: 1 },
+          { index: 6, value: 0 },
+          { index: 7, value: 0 },
+          { index: 8, value: 0 },
+        ],
+      },
+      { type: 'gameLost', t: 500, mineIndex: 0 },
+    ]);
+  });
+
+  it('emits only gameLost when the mine is the only cell left to open', () => {
+    const game = new Game(new Board({ width: 4, height: 1, mineCount: 1 }, [2]));
+    game.apply(reveal(1));
+    game.apply(flag(0)); // wrong
+    expect(game.apply(chord(1, 90))).toEqual([{ type: 'gameLost', t: 90, mineIndex: 2 }]);
+    expect(game.view().status).toBe('lost');
+  });
+
+  it('does nothing with too few flags: [] and an identical view', () => {
+    const game = opened([]);
+    const before = game.view();
+    expect(game.apply(chord(10))).toEqual([]);
+    expect(game.view()).toEqual(before);
+  });
+
+  it('does nothing with too many flags: [] and an identical view', () => {
+    const game = opened([14, 15]);
+    const before = game.view();
+    expect(game.apply(chord(10))).toEqual([]);
+    expect(game.view()).toEqual(before);
+  });
+
+  it('does nothing on a hidden cell, a flagged cell and a revealed zero', () => {
+    const game = new Game(corner());
+    game.apply(reveal(0)); // cascades; 0 shows 0, 15 stays hidden
+    game.apply(flag(15));
+    const before = game.view();
+    expect(game.apply(chord(15))).toEqual([]); // flagged mine
+    expect(game.apply(chord(11))).toEqual([]); // revealed 1 with no matching flag
+    expect(game.apply(chord(0))).toEqual([]); // revealed zero
+    expect(game.view()).toEqual(before);
+  });
+
+  it('does nothing on a revealed zero even when a hidden neighbor is left next to it', () => {
+    // A flag on a cell keeps a cascade out of it; taking the flag off leaves a hidden cell next to a zero.
+    const game = new Game(corner());
+    game.apply(flag(1));
+    game.apply(reveal(0)); // cascades around the flag; 0 shows 0
+    game.apply(flag(1)); // flag off: cell 1 is hidden again
+    expect(game.view().cells[1]).toEqual({ state: 'hidden' });
+    const before = game.view();
+    expect(game.apply(chord(0))).toEqual([]);
+    expect(game.view()).toEqual(before);
+  });
+
+  it('does nothing on a hidden cell, and does not start the game', () => {
+    const game = new Game(corner());
+    expect(game.apply(chord(10))).toEqual([]);
+    expect(game.view().status).toBe('ready');
+  });
+
+  it('does nothing the second time: the neighbors are already open', () => {
+    const game = opened([15]);
+    game.apply(chord(10));
+    const before = game.view();
+    expect(game.apply(chord(10))).toEqual([]);
+    expect(game.view()).toEqual(before);
+  });
+
+  it('counts flags, not mines: a right number of wrong flags is enough to chord', () => {
+    const game = opened([14]);
+    expect(game.apply(chord(10)).map((event) => event.type)).toEqual(['cellsRevealed', 'gameLost']);
+  });
+
+  it('does nothing after the game is lost', () => {
+    const game = opened([14]);
+    game.apply(chord(10));
+    const before = game.view();
+    expect(game.apply(chord(10))).toEqual([]);
+    expect(game.view()).toEqual(before);
+  });
+
+  it('delivers both events of a losing chord to every subscriber, in order', () => {
+    const game = opened([14]);
+    const first: GameEvent['type'][] = [];
+    const second: GameEvent['type'][] = [];
+    game.subscribe((event) => first.push(event.type));
+    game.subscribe((event) => second.push(event.type));
+    game.apply(chord(10));
+    expect(first).toEqual(['cellsRevealed', 'gameLost']);
+    expect(second).toEqual(['cellsRevealed', 'gameLost']);
+  });
+
+  it('still delivers gameLost when a subscriber throws on cellsRevealed, then rethrows the first error', () => {
+    const game = opened([14]);
+    const heard: GameEvent['type'][] = [];
+    game.subscribe((event) => {
+      if (event.type === 'cellsRevealed') throw new Error('boom');
+    });
+    game.subscribe((event) => heard.push(event.type));
+    expect(() => game.apply(chord(10))).toThrow('boom');
+    expect(heard).toEqual(['cellsRevealed', 'gameLost']);
+    expect(game.view().status).toBe('lost');
+  });
+
+  it('rethrows only the first error when a subscriber throws on both events of a chord', () => {
+    const game = opened([14]);
+    game.subscribe((event) => {
+      throw new Error(event.type);
+    });
+    expect(() => game.apply(chord(10))).toThrow('cellsRevealed');
+    expect(game.view().status).toBe('lost');
+  });
+
+  it('gives the same events and view for the same commands, twice', () => {
+    const run = (): { events: GameEvent[][]; view: unknown } => {
+      const game = new Game(corner());
+      const commands = [reveal(10, 1), flag(14, 2), chord(10, 3)];
+      return { events: commands.map((c) => [...game.apply(c)]), view: game.view() };
+    };
+    expect(run()).toEqual(run());
   });
 });

@@ -1,6 +1,6 @@
 # Architecture
 
-> Status after M1-T04: "Package layout", "Dependency rule", "TypeScript configuration", "Board configuration", "Board and neighbor math", "Game state, views and events" and "Reveal and flood fill" describe what exists in the repository today. The other sections are the approved design (spec section 4) and the canonical names from the master plan; that code is planned and not yet implemented. Engine code arrives task by task through M1 and M2. When an interface changes, the task that changes it updates this file.
+> Status after M1-T05: "Package layout", "Dependency rule", "TypeScript configuration", "Board configuration", "Board and neighbor math", "Game state, views and events", "Reveal and flood fill" and "Flags and chording" describe what exists in the repository today. The other sections are the approved design (spec section 4) and the canonical names from the master plan; that code is planned and not yet implemented. Engine code arrives task by task through M1 and M2. When an interface changes, the task that changes it updates this file.
 
 ## Principles
 
@@ -96,7 +96,7 @@ Spec section 4.8. Not used on purpose: Singleton, Visitor, Decorator, and a Fact
 
 ## Canonical names
 
-Copied from the master plan (section D), plus the additions listed below. Tasks use these names exactly. A rename requires updating this table and every consumer in the same task. **Status: partly implemented.** M1-T01 created `CellIndex`, `BoardConfig`, `PRESETS` and `InvalidBoardConfigError`, and the three helpers it added: `validateBoardConfig`, `cellCount` and `safeCellCount`. M1-T02 created `Board` and added no other name. M1-T03 created `Game`, `GameStatus`, `GameView`, `CellView`, `GameEvent` and its four variants `CellsRevealed`, `FlagToggled`, `GameWon` and `GameLost`, all names already in the table, and added no other public name. M1-T04 created `Command` (already in the table, with the shape the table gives) and added no other public name. The tasks of M1 to M8 create the rest. The throwaway `m0SampleAdd` in `engine` is not a canonical name; M1-T07 removes it.
+Copied from the master plan (section D), plus the additions listed below. Tasks use these names exactly. A rename requires updating this table and every consumer in the same task. **Status: partly implemented.** M1-T01 created `CellIndex`, `BoardConfig`, `PRESETS` and `InvalidBoardConfigError`, and the three helpers it added: `validateBoardConfig`, `cellCount` and `safeCellCount`. M1-T02 created `Board` and added no other name. M1-T03 created `Game`, `GameStatus`, `GameView`, `CellView`, `GameEvent` and its four variants `CellsRevealed`, `FlagToggled`, `GameWon` and `GameLost`, all names already in the table, and added no other public name. M1-T04 created `Command` (already in the table, with the shape the table gives) and added no other public name. M1-T05 added no public name; `chordCells` and `ChordResult` are internal. The tasks of M1 to M8 create the rest. The throwaway `m0SampleAdd` in `engine` is not a canonical name; M1-T07 removes it.
 
 **Additions to the master plan's table.** M1-T01 names three functions the plan's table lacks (`validateBoardConfig`, `cellCount`, `safeCellCount`); they are in the `engine` row below. The plan itself is unchanged.
 
@@ -111,7 +111,7 @@ Copied from the master plan (section D), plus the additions listed below. Tasks 
 
 | Package | Exports now | Arrives |
 |---|---|---|
-| `engine` | `CellIndex`, `BoardConfig`, `PRESETS`, `validateBoardConfig`, `cellCount`, `safeCellCount`, `InvalidBoardConfigError` (M1-T01); `Board` (M1-T02); `Game`, `GameStatus`, `GameView`, `CellView`, `GameEvent`, `CellsRevealed`, `FlagToggled`, `GameWon`, `GameLost` (M1-T03); `Command` (M1-T04); `m0SampleAdd` (M0 pipeline sample, not a canonical name) | rest of the surface from M1-T05; API-surface test in M1-T07 |
+| `engine` | `CellIndex`, `BoardConfig`, `PRESETS`, `validateBoardConfig`, `cellCount`, `safeCellCount`, `InvalidBoardConfigError` (M1-T01); `Board` (M1-T02); `Game`, `GameStatus`, `GameView`, `CellView`, `GameEvent`, `CellsRevealed`, `FlagToggled`, `GameWon`, `GameLost` (M1-T03); `Command` (M1-T04); `m0SampleAdd` (M0 pipeline sample, not a canonical name) | rest of the surface from M1-T06; API-surface test in M1-T07 |
 | `protocol` | nothing | M5-T01 |
 | `apps/server` | nothing | M5-T03 |
 | `apps/web` | nothing | M3-T01 |
@@ -142,7 +142,7 @@ Implemented in M1-T02 (`packages/engine/src/board.ts`).
 
 ## Game state, views and events
 
-Implemented in M1-T03 (`packages/engine/src/game.ts`, `view.ts`, `events.ts`). `Game.apply` arrived in M1-T04 for `reveal`; `flag` and `chord` follow in M1-T05, win detection and the full post-game rules in M1-T06. A new game is `'ready'` with every cell hidden.
+Implemented in M1-T03 (`packages/engine/src/game.ts`, `view.ts`, `events.ts`). `Game.apply` arrived in M1-T04 for `reveal` and in M1-T05 for `flag` and `chord`; win detection and the full post-game rules follow in M1-T06. A new game is `'ready'` with every cell hidden.
 
 - `new Game(board)` holds one state code per cell (hidden, revealed or flagged), the `GameStatus` and an event emitter. It shares the immutable `Board` and never exposes it, so reading a `Game` cannot reveal mines. Methods so far: `subscribe(listener)`, `view()` and `apply(command)`.
 - `GameView` is `{ width; height; status; cells; revealedCount; flagCount; minesRemaining; exposedMines? }`. `cells` is in index order. `CellView` is `{ state: 'hidden' }`, `{ state: 'flagged' }` or `{ state: 'revealed'; value }`. A hidden cell carries nothing about mines, and a flag looks the same on a mine and on a safe cell. `minesRemaining` is the mine count minus the flags and goes negative with too many flags.
@@ -156,12 +156,23 @@ Implemented in M1-T03 (`packages/engine/src/game.ts`, `view.ts`, `events.ts`). `
 Implemented in M1-T04 (`packages/engine/src/command.ts`, `reveal.ts`, `game.ts`).
 
 - `Command` is `{ type: 'reveal' | 'flag' | 'chord'; index: CellIndex; t: number }`, the canonical shape, exported from `index.ts`. `t` is milliseconds since the game started, supplied by the caller, and is not checked by the engine.
-- `game.apply(command)` returns a frozen `readonly GameEvent[]`. The order of checks is fixed: first the index (a value that is not a whole number inside the board throws `RangeError`, for every command type and even after the game is over), then the game status (after a loss, and from M1-T06 after a win, every command returns `[]`), then the command. `flag` and `chord` return `[]` until M1-T05 (`TODO(M1-T05)`), and so does any unknown `type`.
+- `game.apply(command)` returns a frozen `readonly GameEvent[]`. The order of checks is fixed: first the index (a value that is not a whole number inside the board throws `RangeError`, for every command type and even after the game is over), then the game status (after a loss, and from M1-T06 after a win, every command returns `[]`), then the command. `flag` and `chord` are described in "Flags and chording"; any unknown `type` (possible only from untyped input) returns `[]`.
 - **`reveal`.** A hidden, safe cell is revealed; if it shows 0 the reveal spreads to every hidden neighbor, and onward from each neighbor that also shows 0. Revealed cells are skipped, flagged cells are neither revealed nor passed through, and numbered cells stop the spread. All of it is **one** `cellsRevealed` event listing every newly revealed cell. A command on a revealed or flagged cell returns `[]` and changes nothing.
 - **Mines.** `reveal` on a mine sets the status to `'lost'` and returns one `gameLost { t, mineIndex }`; there is no `cellsRevealed` with it. The mine's cell stays hidden in the state array: `CellView` has no mine variant, and counting the mine as revealed would break `revealedCount === safeCellCount` (M1-T06). The player sees mines only through `exposedMines`, which the D-14 caveat above applies to.
 - **Status.** The first command that takes effect moves `'ready'` to `'playing'`, or straight to `'lost'` if it hits a mine; there is no safe opening before M2-T02. Winning is not detected yet: until M1-T06 a game with every safe cell revealed is still `'playing'`.
 - **Iterative flood fill.** `revealCell(board, cellStates, index)` is internal (`@internal`, not exported from `index.ts`). It works on the raw cell states, so flags could be tested before `Game` could place any, and it is the path M1-T05's chord reuses. It uses an explicit stack, never recursion; a cell is marked revealed when it is found, so each cell is visited once. The listing order is fixed because replays, ghosts and network updates must agree: the clicked cell first, then cells in discovery order, where the most recently found zero cell is expanded first and each cell's neighbors are taken in ascending index order. Tests pin that order and fail a recursive version on the 100x100 board (the largest legal one), which the 480-cell expert board does not.
 - **Events and listeners.** State changes before the event is delivered. If a subscriber throws, the others still hear the event and the first error is rethrown from `apply` (see "Game state, views and events"); the game has already changed by then. Events and the cell lists inside them are frozen, so one subscriber cannot alter what the next one sees.
+
+## Flags and chording
+
+Implemented in M1-T05 (`packages/engine/src/chord.ts`, `game.ts`). The rules are decision D-04, recorded in [ADR-009](docs/adr/ADR-009-cell-rules.md).
+
+- **`flag`.** Toggles a hidden cell to flagged and back to hidden, with one `flagToggled { index; flagged }` event. On a revealed cell it returns `[]`. Flags may be placed anywhere hidden, so `flagCount` can exceed the mine count and `minesRemaining` goes negative. A flag looks the same on a mine and on a safe cell. There are no question marks, and flags are never required to win. A flag that takes effect moves `'ready'` to `'playing'`, so a game can be `'playing'` with nothing revealed.
+- **`chord`.** Takes effect only on a revealed cell that shows 1 or more, when the number of flagged neighbors equals that number and at least one neighbor is hidden and unflagged. Anything else (a hidden or flagged cell, a zero, too few or too many flags, nothing left to open) returns `[]` and changes nothing. A revealed zero can still have a hidden neighbor, because a flag can be removed after a cascade; the zero rule keeps that chord a no-op.
+- **What a chord opens.** Every hidden unflagged neighbor, through `revealCell`, in ascending index order. A neighbor opened by an earlier neighbor's cascade is skipped, so each cell is listed once. All of it is **one** `cellsRevealed` event.
+- **A chord that reaches a mine.** Flags are counted, never checked against the mines, so a wrong flag leaves a mine to open. The safe neighbors are still opened first; then the status becomes `'lost'`. The events are `cellsRevealed` (only if a cell was opened) then one `gameLost` with the lowest-index mine reached as `mineIndex`. A chord sends at most two events, and `gameLost` is last. The mine cells stay hidden in the cell states, as after a plain `reveal`. `revealedCount` after such a chord includes the safe neighbors it opened, which matters for the D-02 tie-break (ADR-010).
+- **Delivery.** `Game` announces all events of a command through one internal step: each event reaches every subscriber, and if subscribers throw, the first error is rethrown after the last event has been delivered.
+- **Internal.** `chordCells(board, cellStates, index)` and `ChordResult` work on the raw cell states like `revealCell`, are `@internal` and are not exported from `index.ts`. Win detection is still M1-T06: a chord that opens the last safe cell leaves the game `'playing'` until then.
 
 ## Known limits
 
