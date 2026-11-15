@@ -34,7 +34,7 @@ Where decisions live: **architecture decision records (ADRs)** in `docs/adr/`, o
 
 ## ADR index
 
-Source: master plan, "ADR plan". ADR-001 to ADR-008 were written in M0-T06 and are `Accepted`. Every other row stays `Planned` until its task commits the file.
+Source: master plan, "ADR plan". ADR-001 to ADR-008 were written in M0-T06 and ADR-009 in M1-T05; all are `Accepted`. Every other row stays `Planned` until its task commits the file.
 
 | ADR | Decision | Task | Status |
 |---|---|---|---|
@@ -46,7 +46,7 @@ Source: master plan, "ADR plan". ADR-001 to ADR-008 were written in M0-T06 and a
 | [ADR-006](docs/adr/ADR-006-git-workflow.md) | Git workflow | M0-T06 | Accepted |
 | [ADR-007](docs/adr/ADR-007-code-documentation.md) | Code documentation | M0-T06 | Accepted |
 | [ADR-008](docs/adr/ADR-008-license.md) | License | M0-T06 | Accepted |
-| ADR-009 | Cell rules: chording and flags (D-04) | M1-T05 | Planned |
+| [ADR-009](docs/adr/ADR-009-cell-rules.md) | Cell rules: chording and flags (D-04) | M1-T05 | Accepted |
 | ADR-010 | Race rules, presets and mine release (D-01, D-02, D-14) | M4-T03 | Planned |
 | ADR-011 | Disconnect grace period (D-05) | M6-T03 | Planned |
 | ADR-012 | Auth methods (D-07) | M7-T02 | Planned |
@@ -80,7 +80,7 @@ D-01 to D-11 come from spec section 3, D-12 and D-13 from the master plan, D-14 
 | D-01 | Board presets | Classic three: beginner 9x9/10, intermediate 16x16/40, expert 30x16/99. Ranked race preset undecided. | M4-T03 (ADR-010); working values in M1-T01 | Open |
 | D-02 | Mine hit in a race | Hitting a mine ends your run (DNF). If both DNF, more safe cells revealed wins. Alternative: time penalty and continue. | M4-T03 (ADR-010) | Open |
 | D-03 | Match format | Single round for the first networked race; best-of-N as a configurable `MatchRules` value later. | M5-T04 (single round); revisited in M8-T06 | Open |
-| D-04 | Chording and flags | Chording allowed; flags allowed but never required to win; no question marks. | M1-T05 (ADR-009) | Open |
+| D-04 | Chording and flags | Chording allowed; flags allowed but never required to win; no question marks. Decided 2026-11-15. | M1-T05 (ADR-009) | Settled by [ADR-009](docs/adr/ADR-009-cell-rules.md) |
 | D-05 | Disconnect grace period | 30 seconds to resume before forfeit. | M6-T03 (ADR-011) | Open |
 | D-06 | Rating system | Glicko-2 behind a `RatingSystem` strategy; final choice at M8. | M8-T04 (ADR-013) | Open |
 | D-07 | Auth methods | Guests plus email/password at launch; OAuth providers undecided. | M7-T02 (ADR-012) | Open |
