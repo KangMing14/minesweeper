@@ -1,6 +1,12 @@
 import type { Board } from './board.js';
+import type { Command } from './command.js';
+import type { CellIndex } from './config.js';
 import { GameEventEmitter, type GameEvent } from './events.js';
+import { revealCell } from './reveal.js';
 import { buildGameView, CELL_HIDDEN, type GameStatus, type GameView } from './view.js';
+
+/** What a command that changes nothing returns. Shared, because it is frozen. */
+const NO_EVENTS: readonly GameEvent[] = Object.freeze([]);
 
 /**
  * One game of Minesweeper on a fixed mine layout: the mutable aggregate that players act on.
@@ -10,8 +16,8 @@ import { buildGameView, CELL_HIDDEN, type GameStatus, type GameView } from './vi
  * The mine layout lives in the immutable `Board`, so several games can share one board. Callers read the game
  * only through `view()`, which says nothing about hidden mines, and listen to it through `subscribe`.
  *
- * This task builds the state model. Commands (`apply`) arrive in M1-T04 to M1-T06, so a new game is
- * always `'ready'` with every cell hidden for now.
+ * Players act through `apply`. So far it understands `reveal` (M1-T04); `flag` and `chord` follow in
+ * M1-T05, and win detection and the full post-game rules in M1-T06.
  *
  * @example
  * ```ts
@@ -19,6 +25,8 @@ import { buildGameView, CELL_HIDDEN, type GameStatus, type GameView } from './vi
  * const game = new Game(board);
  * const stop = game.subscribe((event) => console.log(event.type));
  * game.view().status; // 'ready'
+ * game.apply({ type: 'reveal', index: 0, t: 350 }); // opens a corner of the board
+ * game.view().status; // 'playing'
  * stop();
  * ```
  */
@@ -26,11 +34,11 @@ export class Game {
   /** The mine layout. Never exposed: reading it would show the mines. */
   readonly #board: Board;
 
-  /** One state code per cell (hidden, revealed or flagged). Changed by commands from M1-T04. */
+  /** One state code per cell (hidden, revealed or flagged). Changed only by `apply`. */
   readonly #cellStates: Uint8Array;
 
-  /** Where the game stands. Changed by commands from M1-T04. */
-  readonly #status: GameStatus = 'ready';
+  /** Where the game stands. */
+  #status: GameStatus = 'ready';
 
   /** Delivers events to subscribers. */
   readonly #events = new GameEventEmitter();
@@ -71,6 +79,77 @@ export class Game {
    */
   subscribe(listener: (event: GameEvent) => void): () => void {
     return this.#events.subscribe(listener);
+  }
+
+  /**
+   * Applies one command to the game.
+   *
+   * @remarks
+   * A command that is not valid in the current state, or that changes nothing, returns `[]` and leaves the
+   * game untouched: revealing a cell that is already revealed or flagged, and any command after the game
+   * has been lost or won. Only an index outside the board is an error.
+   *
+   * `reveal` on a hidden, safe cell reveals it; if it shows 0 the reveal spreads to the cells around it
+   * (an iterative flood fill, see `revealCell`). All of that is one `cellsRevealed` event, listing every
+   * newly revealed cell. `reveal` on a mine loses the game with one `gameLost` event. The mine is not
+   * marked revealed: a player's view shows it through `exposedMines` once the game is over. The first
+   * command that takes effect moves the status from `'ready'` to `'playing'`, or straight to `'lost'` if it
+   * hits a mine.
+   *
+   * `flag` and `chord` are accepted and ignored until M1-T05. Winning (every safe cell revealed) is
+   * detected from M1-T06; until then a game with every safe cell open is still `'playing'`.
+   *
+   * The state is changed before the events are delivered to subscribers. If a subscriber throws, every
+   * other subscriber still hears the event, and the first error is rethrown from `apply`; the game has
+   * already changed by then.
+   *
+   * @param command - What to do and when (`t`, milliseconds since the game started).
+   * @returns The events the command caused, in order. A frozen array, empty if nothing happened.
+   * @throws `RangeError` if `command.index` is not a whole number inside the board, whatever the type of
+   * the command and the status of the game.
+   *
+   * @example
+   * ```ts
+   * const game = new Game(new Board({ width: 3, height: 3, mineCount: 1 }, [8]));
+   * game.apply({ type: 'reveal', index: 0, t: 400 });
+   * // [{ type: 'cellsRevealed', cells: [{ index: 0, value: 0 }, ...] }]
+   * game.apply({ type: 'reveal', index: 0, t: 900 }); // [] (already revealed)
+   * game.apply({ type: 'reveal', index: 8, t: 1_200 }); // [{ type: 'gameLost', t: 1200, mineIndex: 8 }]
+   * ```
+   */
+  apply(command: Command): readonly GameEvent[] {
+    const { index } = command;
+    const total = this.#cellStates.length;
+    if (!Number.isInteger(index) || index < 0 || index >= total) {
+      throw new RangeError(`index must be a whole number from 0 to ${total - 1}, got ${index}`);
+    }
+    if (this.#status === 'won' || this.#status === 'lost') return NO_EVENTS;
+    // TODO(M1-T05): `flag` and `chord`. Until then they, like any unknown type, change nothing.
+    if (command.type !== 'reveal') return NO_EVENTS;
+    return this.#reveal(index, command.t);
+  }
+
+  /**
+   * Reveals a cell, updates the status and announces what happened.
+   *
+   * @param index - A valid cell index.
+   * @param t - Milliseconds since the game started.
+   * @returns The events the reveal caused.
+   */
+  #reveal(index: CellIndex, t: number): readonly GameEvent[] {
+    const result = revealCell(this.#board, this.#cellStates, index);
+    if (result.kind === 'none') return NO_EVENTS;
+
+    let event: GameEvent;
+    if (result.kind === 'mine') {
+      this.#status = 'lost';
+      event = Object.freeze({ type: 'gameLost', t, mineIndex: index });
+    } else {
+      this.#status = 'playing';
+      event = Object.freeze({ type: 'cellsRevealed', cells: result.cells });
+    }
+    this.#events.emit(event);
+    return Object.freeze([event]);
   }
 
   /**
