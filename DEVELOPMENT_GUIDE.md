@@ -182,8 +182,8 @@ Add or change a fixture in `tools/lint-fixtures/cases/` and its entry in `tools/
 - `vitest.config.ts` defines one project per package. Workspace files (`vitest.workspace.ts`) were removed in Vitest 4, so projects are declared in `test.projects`.
 - Tests import workspace packages by name (`@minesweeper/engine`). Vitest resolves those names to the package **source**, so tests run on a fresh clone without `tsc -b`. TypeScript still reads types from the built output, which is why `typecheck` builds first.
 - `*.test.ts` files are excluded from the `tsc -b` build of `engine` and `protocol` (they are not shipped, and those packages compile without Node types). The `tsconfig.test.json` next to each checks them instead.
-- Coverage has no thresholds yet. M1 sets them once the engine has real code.
-- The M0 sample (`packages/engine/src/sample.ts` and its test) exists only to exercise the pipeline. M1-T07 removes it.
+- Coverage thresholds apply to `packages/engine` only (95% statements, functions and lines; 90% branches) and `index.ts` barrels are excluded (`vitest.config.ts`, M1-T07). `pnpm test:coverage` runs in CI, so they gate every pull request. Changing a number is a deliberate edit of that file, explained in the pull request.
+- The engine's public surface is locked by `packages/engine/src/api-surface.test.ts` against `packages/engine/src/__snapshots__/api-surface.txt`. A task that adds, renames or reshapes an export updates the snapshot with `pnpm exec vitest run --project engine -u`, reads the diff and explains it in the pull request. CI never writes snapshots.
 
 ### API reference (TypeDoc)
 - `typedoc.json` documents `packages/engine` and `packages/protocol` (spec section 7.2). `treatWarningsAsErrors` makes unresolved `{@link}`s, unknown tags and unexported references fail `pnpm docs:api`, locally and in CI.
