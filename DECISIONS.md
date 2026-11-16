@@ -161,6 +161,7 @@ Radix primitives are pinned per component when first used (M3, M10).
 | `vitest` | 5.0.5 | 2026-10-15 | 5.1.0 (2026-11-02) | **installed** in M0-T04. Peers: `vite ^6.4 \|\| ^7 \|\| ^8`, `@types/node ^22 \|\| >=24`. |
 | `@vitest/coverage-v8` | 5.0.5 | 2026-10-15 | 5.1.0 (2026-11-02) | **installed** in M0-T04. Must equal the `vitest` version. |
 | `typedoc` | 0.28.20 | 2026-07-05 | 0.28.20 | **installed** in M0-T04. Peer: `typescript <=6.0.x`; this is why TypeScript stays on 6.0.3. |
+| `fast-check` | 4.10.2 | 2026-09-19 | 4.10.2 | **installed** in M1-T06, at the root as a devDependency (property tests of `engine`; no runtime use). Its one dependency is `pure-rand` `^8`, resolved to 8.4.2 (2026-07-10). |
 | `@playwright/test` | 1.64.1 | 2026-10-14 | 1.64.1 | M3-T08 |
 
 ### M0-T03 verification notes
@@ -226,6 +227,13 @@ No ADR beyond ADR-001..008 was written in M0-T06 and no open decision other than
 - **ADR-012 (auth methods, D-07).** With `emailAndPassword` enabled, `requireEmailVerification` defaults to false. A May 2026 advisory showed that this lets an attacker register an unverified account for someone else's address before its owner. Decide the setting, and whether any OAuth provider is added, with that in mind. The 1.7.16 release also fixes an OAuth sign-in that could treat an unverified provider email as verified.
 - **ADR-016 (telemetry and privacy, D-13).** `better-auth` depends on a `@better-auth/telemetry` package. Its default behavior was not checked in M0-T06; check it before launch and record it.
 - **M9-T05 (security review).** Include the auth module and the advisory-watch routine: Better Auth has published advisory rounds in May and June, on 2026-09-29 and 09-30, and on 2026-11-03.
+
+### M1-T06 verification notes
+
+`fast-check` was not in the pin table before this task, although the M1-T06 task text requires it for the property tests. Looked up on the npm registry on **2026-11-15**: `latest` is 4.10.2, published 2026-09-19 (57 days old, so the 14-day rule is met), the same major line as before; the `legacy` tag is 2.x and `next` a 3.x alpha, neither eligible. Not deprecated; MIT; no peer dependencies; `engines.node >=12.17.0`. Installed with `pnpm add -D -w -E fast-check@4.10.2`; `pnpm audit:prod` reports no known vulnerabilities, and `pnpm audit` still shows only the `minimatch` advisory accepted above. `pnpm peers check` lists the same accepted `eslint-plugin-tsdoc` TypeScript peer warning and nothing from `fast-check`.
+
+- **Where it runs.** Test files only (`packages/engine/src/game.property.test.ts`). `engine` has no runtime dependency and keeps `types: []`; the purity lint rules are unchanged. Each property runs 1,000 cases with a random seed; on a failure fast-check prints the seed and the shrunk counterexample.
+- **Not checked.** The package's GitHub repository (archived flag, open issues) was not read; only the registry metadata and the audit endpoint were.
 
 ### M0-T06 inputs for the license (ADR-008)
 

@@ -53,8 +53,8 @@ File: `docs/milestones/M1-engine-core.md`. Tag when finished: `m1-complete`.
 | M1-T02 | Board and neighbor math                               | Done        |#11|e2decf7|2026-11-14|
 | M1-T03 | Game state, views and events                          | Done        |#12|f357725|2026-11-14|
 | M1-T04 | Reveal and iterative flood fill                       | Done        |#13|67159eb|2026-11-15|
-| M1-T05 | Flags and chording                                    | Done        |     |        |         |
-| M1-T06 | Win and loss, status transitions, post-game rejection | Not started |     |        |         |
+| M1-T05 | Flags and chording                                    | Done        |#14|f82d02f|2026-11-15|
+| M1-T06 | Win and loss, status transitions, post-game rejection | Done        |     |        |         |
 | M1-T07 | Public API surface                                    | Not started |     |        |         |
 
 ## M2 Deterministic Engine

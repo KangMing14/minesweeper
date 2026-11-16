@@ -36,6 +36,7 @@
     "eslint": "10.13.0",
     "eslint-plugin-jsdoc": "65.4.0",
     "eslint-plugin-tsdoc": "0.5.4",
+    "fast-check": "4.10.2",
     "husky": "9.1.7",
     "lint-staged": "17.6.0",
     "prettier": "3.9.10",
