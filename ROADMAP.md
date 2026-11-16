@@ -55,7 +55,7 @@ File: `docs/milestones/M1-engine-core.md`. Tag when finished: `m1-complete`.
 | M1-T04 | Reveal and iterative flood fill                       | Done        |#13|67159eb|2026-11-15|
 | M1-T05 | Flags and chording                                    | Done        |#14|f82d02f|2026-11-15|
 | M1-T06 | Win and loss, status transitions, post-game rejection | Done        |#15|143f05b|2026-11-16|
-| M1-T07 | Public API surface                                    | Not started |     |        |         |
+| M1-T07 | Public API surface                                    | Done        |     |        |         |
 
 ## M2 Deterministic Engine
 

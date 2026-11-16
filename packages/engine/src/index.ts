@@ -1,5 +1,8 @@
-// Public API of @minesweeper/engine. M1-T01 started the real surface (config), M1-T02 added Board, M1-T03 added
-// Game, its view and its events, M1-T04 adds Command (what `Game.apply` takes); M1-T07 locks the surface with a test.
+// Public API of @minesweeper/engine: the one entry point other packages import (`exports` in package.json).
+// Everything here is a canonical name (ARCHITECTURE.md, "Canonical names"); anything not listed is internal
+// to the engine. M1-T07 locked this surface: `api-surface.test.ts` compares it with the committed snapshot
+// `__snapshots__/api-surface.txt`, so adding, removing or reshaping an export is a visible change in review.
+// A new name is added here by the task that creates it, together with a snapshot update (`vitest -u`).
 // The engine must stay free of DOM, Node APIs, clocks and Math.random (spec section 4.1), which is why its
 // tsconfig has no DOM lib and no ambient @types.
 
@@ -11,6 +14,3 @@ export { InvalidBoardConfigError } from './errors.js';
 export type { CellsRevealed, FlagToggled, GameEvent, GameLost, GameWon } from './events.js';
 export { Game } from './game.js';
 export type { CellView, GameStatus, GameView } from './view.js';
-
-// TODO(M1-T07): remove the M0 sample together with `sample.ts` and `sample.test.ts`.
-export { m0SampleAdd } from './sample.js';

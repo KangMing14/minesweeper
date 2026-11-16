@@ -1,0 +1,75 @@
+# Public API of @minesweeper/engine, rendered from src/index.ts by api-surface.test.ts.
+# Only the names below are public. To accept an intended change: pnpm exec vitest run --project engine -u
+
+class Board
+  new (config: BoardConfig, mines: Iterable<CellIndex>): Board
+  adjacentMines(index: CellIndex): number
+  coordsOf(index: CellIndex): { readonly x: number; readonly y: number; }
+  indexOf(x: number, y: number): CellIndex
+  isMine(index: CellIndex): boolean
+  neighbors(index: CellIndex): readonly CellIndex[]
+  readonly config: BoardConfig
+
+interface BoardConfig
+  readonly height: number
+  readonly mineCount: number
+  readonly width: number
+
+type CellIndex = number
+
+type CellView = { readonly state: "hidden"; } | { readonly state: "flagged"; } | { readonly state: "revealed"; readonly value: number; }
+
+interface CellsRevealed
+  readonly cells: readonly { readonly index: CellIndex; readonly value: number; }[]
+  readonly type: "cellsRevealed"
+
+interface Command
+  readonly index: number
+  readonly t: number
+  readonly type: "reveal" | "flag" | "chord"
+
+interface FlagToggled
+  readonly flagged: boolean
+  readonly index: number
+  readonly type: "flagToggled"
+
+class Game
+  new (board: Board): Game
+  apply(command: Command): readonly GameEvent[]
+  subscribe(listener: (event: GameEvent) => void): () => void
+  view(): GameView
+
+type GameEvent = CellsRevealed | FlagToggled | GameWon | GameLost
+
+interface GameLost
+  readonly mineIndex: number
+  readonly t: number
+  readonly type: "gameLost"
+
+type GameStatus = "ready" | "playing" | "won" | "lost"
+
+interface GameView
+  readonly cells: readonly CellView[]
+  readonly exposedMines?: readonly number[]
+  readonly flagCount: number
+  readonly height: number
+  readonly minesRemaining: number
+  readonly revealedCount: number
+  readonly status: GameStatus
+  readonly width: number
+
+interface GameWon
+  readonly t: number
+  readonly type: "gameWon"
+
+class InvalidBoardConfigError extends Error
+  new (reason: string): InvalidBoardConfigError
+  readonly reason: string
+
+const PRESETS: Readonly<{ beginner: Readonly<{ width: 9; height: 9; mineCount: 10; }>; intermediate: Readonly<{ width: 16; height: 16; mineCount: 40; }>; expert: Readonly<{ width: 30; height: 16; mineCount: 99; }>; }>
+
+function cellCount(config: BoardConfig): number
+
+function safeCellCount(config: BoardConfig): number
+
+function validateBoardConfig(config: BoardConfig): void

@@ -1,6 +1,6 @@
 # Architecture
 
-> Status after M1-T06: "Package layout", "Dependency rule", "TypeScript configuration", "Board configuration", "Board and neighbor math", "Game state, views and events", "Reveal and flood fill", "Flags and chording" and "Win, loss and the end of a game" describe what exists in the repository today. The other sections are the approved design (spec section 4) and the canonical names from the master plan; that code is planned and not yet implemented. Engine code arrives task by task through M1 and M2. When an interface changes, the task that changes it updates this file.
+> Status after M1-T07: "Package layout", "Dependency rule", "TypeScript configuration", "Board configuration", "Board and neighbor math", "Game state, views and events", "Reveal and flood fill", "Flags and chording", "Win, loss and the end of a game" and "Public API of the engine" describe what exists in the repository today. The other sections are the approved design (spec section 4) and the canonical names from the master plan; that code is planned and not yet implemented. Engine code arrives task by task through M1 and M2. When an interface changes, the task that changes it updates this file.
 
 ## Principles
 
@@ -96,7 +96,7 @@ Spec section 4.8. Not used on purpose: Singleton, Visitor, Decorator, and a Fact
 
 ## Canonical names
 
-Copied from the master plan (section D), plus the additions listed below. Tasks use these names exactly. A rename requires updating this table and every consumer in the same task. **Status: partly implemented.** M1-T01 created `CellIndex`, `BoardConfig`, `PRESETS` and `InvalidBoardConfigError`, and the three helpers it added: `validateBoardConfig`, `cellCount` and `safeCellCount`. M1-T02 created `Board` and added no other name. M1-T03 created `Game`, `GameStatus`, `GameView`, `CellView`, `GameEvent` and its four variants `CellsRevealed`, `FlagToggled`, `GameWon` and `GameLost`, all names already in the table, and added no other public name. M1-T04 created `Command` (already in the table, with the shape the table gives) and added no other public name. M1-T05 added no public name; `chordCells` and `ChordResult` are internal. M1-T06 added no name at all, public or internal-exported; `GameWon` and the `'won'` status already existed. The tasks of M1 to M8 create the rest. The throwaway `m0SampleAdd` in `engine` is not a canonical name; M1-T07 removes it.
+Copied from the master plan (section D), plus the additions listed below. Tasks use these names exactly. A rename requires updating this table and every consumer in the same task. **Status: partly implemented.** M1-T01 created `CellIndex`, `BoardConfig`, `PRESETS` and `InvalidBoardConfigError`, and the three helpers it added: `validateBoardConfig`, `cellCount` and `safeCellCount`. M1-T02 created `Board` and added no other name. M1-T03 created `Game`, `GameStatus`, `GameView`, `CellView`, `GameEvent` and its four variants `CellsRevealed`, `FlagToggled`, `GameWon` and `GameLost`, all names already in the table, and added no other public name. M1-T04 created `Command` (already in the table, with the shape the table gives) and added no other public name. M1-T05 added no public name; `chordCells` and `ChordResult` are internal. M1-T06 added no name at all, public or internal-exported; `GameWon` and the `'won'` status already existed. M1-T07 added no name; it removed the throwaway `m0SampleAdd` (never a canonical name) and locked the surface of M1 (see "Public API of the engine"). The tasks of M2 to M8 create the rest.
 
 **Additions to the master plan's table.** M1-T01 names three functions the plan's table lacks (`validateBoardConfig`, `cellCount`, `safeCellCount`); they are in the `engine` row below. The plan itself is unchanged.
 
@@ -111,12 +111,12 @@ Copied from the master plan (section D), plus the additions listed below. Tasks 
 
 | Package | Exports now | Arrives |
 |---|---|---|
-| `engine` | `CellIndex`, `BoardConfig`, `PRESETS`, `validateBoardConfig`, `cellCount`, `safeCellCount`, `InvalidBoardConfigError` (M1-T01); `Board` (M1-T02); `Game`, `GameStatus`, `GameView`, `CellView`, `GameEvent`, `CellsRevealed`, `FlagToggled`, `GameWon`, `GameLost` (M1-T03); `Command` (M1-T04); `m0SampleAdd` (M0 pipeline sample, not a canonical name) | M1-T06 exported nothing new; the rest of the surface arrives from M2-T01 on; API-surface test in M1-T07 |
+| `engine` | `CellIndex`, `BoardConfig`, `PRESETS`, `validateBoardConfig`, `cellCount`, `safeCellCount`, `InvalidBoardConfigError` (M1-T01); `Board` (M1-T02); `Game`, `GameStatus`, `GameView`, `CellView`, `GameEvent`, `CellsRevealed`, `FlagToggled`, `GameWon`, `GameLost` (M1-T03); `Command` (M1-T04). That is all of M1: 7 values and 11 types, locked by the API-surface test (M1-T07) | The rest of the surface arrives from M2-T01 on |
 | `protocol` | nothing | M5-T01 |
 | `apps/server` | nothing | M5-T03 |
 | `apps/web` | nothing | M3-T01 |
 
-`engine` and `protocol` expose their public API from a single `index.ts` each, guarded by an API-surface test (M1-T07). Every exported symbol carries a TSDoc comment (spec section 7.2); the generated reference is a CI artifact, never committed.
+`engine` and `protocol` expose their public API from a single `index.ts` each, guarded by an API-surface test: the engine's exists since M1-T07, the protocol's arrives with M5-T01. Every exported symbol carries a TSDoc comment (spec section 7.2); the generated reference is a CI artifact, never committed.
 
 ## Board configuration
 
@@ -185,6 +185,17 @@ Implemented in M1-T06 (`packages/engine/src/game.ts`). No ADR and no new name: t
 - **Mines after the end.** A won game exposes its mines like a lost one: `exposedMines` lists every mine, ascending, because it is the player's own finished game (`CLAUDE.md`, rule 8). The D-14 caveat in "Game state, views and events" applies unchanged: in a race the server withholds it until the match result is final for both players (M5-T05).
 - **Not in the engine.** Rejecting commands "before the start signal" (Review Focus #2) is a match concern: the lobby and countdown live in `Match` (M5-T04, M6-T04). In the engine the only pre-start state is `'ready'`, and the first command that takes effect starts the game.
 - **Tests.** `lifecycle.test.ts` (examples, including every command type on every cell after a win and after a loss) and `game.property.test.ts` (fast-check, 1,000 cases per property): no throw for in-range indices, `revealedCount` never decreases and no cell is announced twice, no mine is ever revealed, the mine layout never changes, `'won'` exactly when every safe cell is revealed, status only moves forwards, finished games ignore everything, and revealing every safe cell in any order always wins.
+
+## Public API of the engine
+
+Implemented in M1-T07 (`packages/engine/src/index.ts`, `api-surface.test.ts`, `public-api.test.ts`, `__snapshots__/api-surface.txt`). No ADR and no new name: the surface is the canonical names that M1 created.
+
+- **What is public.** Exactly 18 names. Values: `Board`, `Game`, `InvalidBoardConfigError`, `PRESETS`, `cellCount`, `safeCellCount`, `validateBoardConfig`. Types: `BoardConfig`, `CellIndex`, `CellsRevealed`, `CellView`, `Command`, `FlagToggled`, `GameEvent`, `GameLost`, `GameStatus`, `GameView`, `GameWon`. Everything else in `packages/engine/src` is internal, even where a file exports it for other engine modules or for tests: `GameEventEmitter`, `buildGameView` and the `CELL_*` state codes, `revealCell` and `RevealResult`, `chordCells` and `ChordResult`. Consumers import the package name, never a file.
+- **The guard.** `api-surface.test.ts` reads `src/index.ts` with the TypeScript compiler API and renders every export (kind, constructor and method signatures, property types, the members of every interface, the right-hand side of every type alias) into text. The text must equal the committed `__snapshots__/api-surface.txt`, so adding, removing, renaming or reshaping an export, or changing the shape of `Command`, `GameEvent` or `GameView`, fails the test and shows up as a diff in review. Three more checks: the runtime export names equal the names the declarations call values; a denylist of internal names must stay out of `index.ts`; no exported name may carry `@internal`, because TypeDoc runs with `excludeInternal` and the lint rule for `@example` exempts `@internal`, so such a tag would hide a public name from the reference without any warning (finding N3 of the M0 re-review).
+- **Changing the surface on purpose.** The task that adds or reshapes an export edits `index.ts`, runs `pnpm exec vitest run --project engine -u`, reads the diff of the snapshot and explains it in the pull request. CI never writes a snapshot: a missing or different file fails.
+- **A consumer's view.** `public-api.test.ts` plays a won game (reveal with a cascade, flag, chord, final reveal), a lost game, unsubscribe and an out-of-range index, and checks the config helpers, importing only from `./index.js`.
+- **Coverage.** `vitest.config.ts` sets thresholds for `packages/engine` (95% statements, functions and lines; 90% branches) and excludes the `index.ts` barrels. `pnpm test:coverage` runs in CI, so a task that ships logic without tests turns CI red.
+- **Limits of the guard.** The renderer knows classes, functions, constants, interfaces and type aliases; an export of another kind (an enum, a namespace) fails the test until the renderer is extended. A type is shown as the compiler prints it, so an alias of a primitive can appear as the primitive (`CellIndex` is `number`). The test uses the `typescript` package, already a root devDependency, in a test only; the engine's own code imports nothing outside its package.
 
 ## Known limits
 

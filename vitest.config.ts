@@ -51,9 +51,22 @@ export default defineConfig({
       reporter: ['text', 'json-summary', 'lcov'],
       reportsDirectory: fromRoot('./coverage'),
       include: ['packages/*/src/**/*.ts', 'apps/*/src/**/*.{ts,tsx}'],
-      exclude: ['**/*.{test,spec}.{ts,tsx}', '**/*.d.ts', '**/dist/**'],
-      // No thresholds yet: there is no real code to measure. M1 sets them (its acceptance asks for high
-      // branch coverage of the engine).
+      // `index.ts` barrels only re-export: they hold no logic to cover. What they export is guarded by the
+      // API-surface test of each package (engine: M1-T07), which is a better check than a coverage number.
+      exclude: ['**/*.{test,spec}.{ts,tsx}', '**/*.d.ts', '**/dist/**', '**/src/index.ts'],
+      // Thresholds, set by M1-T07 as the M1 acceptance asks (high branch coverage of the engine). They apply
+      // to `packages/engine` only: the other packages have no real code yet, so add an entry for each when it
+      // does. Why these numbers: every engine file was at 100% when they were set, so 90% branches and 95% for
+      // the rest leave room for a defensive branch or two but fail a task that ships logic without a test.
+      // Changing a number is a deliberate edit of this file, explained in the pull request.
+      thresholds: {
+        'packages/engine/src/**/*.ts': {
+          statements: 95,
+          branches: 90,
+          functions: 95,
+          lines: 95,
+        },
+      },
     },
   },
 });
