@@ -1,0 +1,10 @@
+/** @internal */
+export function add(a: number, b: number): number {
+  return a + b;
+}
+/**
+ * @internal
+ */
+export class Counter {}
+/** @internal */
+export const LIMIT = 10;
