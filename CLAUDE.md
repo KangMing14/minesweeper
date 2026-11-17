@@ -7,7 +7,7 @@ Instructions for Claude (and any other AI assistant) working in this repository.
 At the start of every conversation, read these in this order, and stop reading when you have what the task needs:
 
 1. `CLAUDE.md` (this file).
-2. `ROADMAP.md`: the status of all 83 tasks. The next task is the first row that is not `Done`, unless the developer names another one.
+2. `ROADMAP.md`: the status of all 86 tasks. The next task is the first row that is not `Done`, unless the developer names another one.
 3. The milestone file for the task, `docs/milestones/Mn-*.md`. Its Conversation Handoff Package comes first; then the task itself.
 4. `ARCHITECTURE.md`: package layout, dependency rule, diagrams and the canonical names.
 5. `DECISIONS.md`: the ADR index, the open decisions and the dependency pins.

@@ -38,6 +38,18 @@ export const eslintCases = [
     expect: { clean: true },
   },
   {
+    name: '@internal exports in engine still need a summary (a tag alone is not a description)',
+    fixture: 'engine-internal-no-summary',
+    virtualPath: 'packages/engine/src/x.ts',
+    expect: { errors: ['jsdoc/require-description'], count: 3 },
+  },
+  {
+    name: '@internal exports in protocol still need a summary',
+    fixture: 'engine-internal-no-summary',
+    virtualPath: 'packages/protocol/src/x.ts',
+    expect: { errors: ['jsdoc/require-description'], count: 3 },
+  },
+  {
     name: 'an empty @example is rejected in engine',
     fixture: 'empty-example',
     virtualPath: 'packages/engine/src/x.ts',

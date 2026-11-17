@@ -46,7 +46,8 @@ export type CellView =
  *
  * In a race, a player's finished game may end before the match result is final for both players. Until
  * decision D-14 is settled (M4-T03), the server must not pass `exposedMines` on to a client before that
- * point, even though the engine fills it in.
+ * point, even though the engine fills it in. The `mineIndex` of the `GameLost` event is a mine position
+ * too and falls under the same rule.
  *
  * @example
  * ```ts

@@ -142,6 +142,7 @@ git config core.hooksPath      # must print .husky/_ ; if it prints nothing, run
 - Every exported class, function, interface, type alias, enum and constant needs a `/** ... */` comment. This is an **error** in `packages/engine` and `packages/protocol`, and a **warning** in `apps/*` until M5-T03 turns it into an error.
 - Comment syntax is checked everywhere by `tsdoc/syntax`: use `@param name - text` (with the hyphen), standard tags only (`@remarks`, `@example`, `@throws`, `@returns`, `@internal`, `@deprecated`), and close every `{@link ...}`.
 - In `packages/engine` and `packages/protocol` every exported symbol also needs an `@example` with content (error, `jsdoc/require-example`). Apps do not need one. Test files (`*.test.ts`) are exempt. A symbol that is exported only for other engine files or for tests, not through `index.ts`, is tagged `@internal`: it keeps its summary comment but needs no `@example`, and TypeDoc leaves it out. Declare and export in one statement (`export function ...`, `export const ...`): a symbol exported later with `export { name }` is only covered by the doc-comment rule, not the `@example` rule.
+- In `packages/engine` and `packages/protocol` every exported declaration also needs a summary line (error, `jsdoc/require-description`): a comment that holds only `/** @internal */` fails. Put `@internal` on its own line, below the summary; `/** Helper. @internal */` on one line is not recognized as the tag and still asks for an `@example` (M1-T08).
 - Not machine-enforced: `@param`/`@returns` completeness. Reviewers check it.
 - Every TODO, FIXME, XXX and HACK names a task: `// TODO(M6-T04): ...`. A bare one fails the commit and `pnpm check:todos`. The scan reads code, workflow and shell files (`.ts .tsx .mts .cts .js .jsx .mjs .cjs .yml .yaml .sh`), not Markdown.
 
@@ -215,7 +216,7 @@ The documents carry context between conversations, so a task is not done until t
 |---|---|---|
 | `README.md` | Setup, scripts, where everything is | A script or setup step changes |
 | `PROJECT_OVERVIEW.md` | Concept, MVP, scope, glossary | Scope or vocabulary changes (rare; scope changes need an ADR) |
-| `ROADMAP.md` | Milestone index and the status of all 83 tasks, the only status table | Every task close-out |
+| `ROADMAP.md` | Milestone index and the status of all 86 tasks, the only status table | Every task close-out |
 | `ARCHITECTURE.md` | Diagrams, canonical names, public interfaces, known limits | An interface, package or limit changes |
 | `DECISIONS.md` | ADR index, open decisions, dependency pins | A decision is made or a dependency is added |
 | `CHANGELOG.md` | What changed, by task | Every task close-out |

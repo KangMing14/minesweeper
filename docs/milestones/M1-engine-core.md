@@ -7,7 +7,7 @@
 ## Conversation Handoff Package
 
 1. **Project context.** Browser-based competitive Minesweeper in TypeScript, OOP, pnpm monorepo (`packages/engine`, `packages/protocol`, `apps/server`, `apps/web`). MVP: 1v1 race on an identical seeded board with a guaranteed shared safe opening, plus solo time-attack. The engine is pure and deterministic: no DOM, no Node APIs, no clocks, no `Math.random`; time enters only as `t` (ms since game start) on a `Command`. Docs in the repo are the source of truth.
-2. **Tasks:** M1-T01 to M1-T07, in order.
+2. **Tasks:** M1-T01 to M1-T10, in order. M1-T08 to M1-T10 came from the milestone review (`docs/reviews/M1-review.md`) and are not part of the original plan.
 3. **Prerequisites and baseline:** tag `m0-complete`. Working monorepo, lint rules that ban impure APIs in `engine`, CI, TSDoc rules. Engine currently exports nothing useful.
 4. **Locked decisions:** ADR-001..008; engine is deterministic and UI-free; canonical names in the roadmap plan (`CellIndex`, `BoardConfig`, `Board`, `Game`, `Command`, `GameEvent`, `GameView`, `GameStatus`); iterative (not recursive) flood fill; hidden-cell data never appears in `GameView`.
 5. **Deliverables:** `packages/engine` with config validation, `Board`, `Game`, commands, events, views, win/loss; unit and property tests; API-surface test; TypeDoc output; ADR-009 (cell rules).
@@ -102,3 +102,41 @@
 - **Acceptance criteria:** `pnpm docs:api` has zero warnings; `m1-complete` tagged after milestone review.
 - **Relevant skills:** baseline; `/requesting-code-review`.
 - **Documentation updates:** `ARCHITECTURE.md` (engine public API), `ROADMAP.md`, `CHANGELOG.md`.
+
+---
+
+### M1-T08 M1 close-out: tracker cells, CHANGELOG, `@internal` lint gaps
+
+- **Objective:** `main` records M1 as it is (review B1), and the two small `@internal` lint gaps left by the M0 re-review (N3, gaps 1 and 2) are closed.
+- **Description:** commit the tracker cells that were filled after the M1-T07 merge, add the M1 close-out entry to `CHANGELOG.md`, give the review its conventional file name, correct the two statements of the review that the later milestone files contradict, and make `/** @internal */` without a summary a lint error in `engine` and `protocol`.
+- **Prerequisites:** M1-T07 and `docs/reviews/1-review.md`.
+- **Implementation guidance:** fixture-first. Add `tools/lint-fixtures/cases/engine-internal-no-summary.fixture` (an `@internal` export whose comment has no description) and two manifest cases (engine and protocol) that expect one `jsdoc/require-description` error; watch them fail; then add `jsdoc/require-description` for the same contexts as `jsdoc/require-example` in `eslint.config.js` for `packages/engine` and `packages/protocol` (test files off, like `require-example`). `DEVELOPMENT_GUIDE.md` (doc-comment rules) says that `@internal` goes on its own line and that an internal export still needs a summary, now enforced. Commit the uncommitted `ROADMAP.md` cells for M1-T07 and its session log as they stand in the snapshot. `CHANGELOG.md` gets one "M1 close-out" line (review, merged together as an accepted exception like M0-T07 to T11) and the test count of M1-T07 (242 to 250). `git mv docs/reviews/1-review.md docs/reviews/M1-review.md`, and amend it where M1-T09 and the M2-T03 text show that two of its statements were too strong (I1 and M3; the review says what changed).
+- **Expected output:** `eslint.config.js`, one fixture, two manifest cases, a guide sentence, `CHANGELOG.md`, `ROADMAP.md`, the renamed and amended review.
+- **Testing requirements:** `pnpm test:lint-fixtures` (78 cases, the two new ones red before the config change); `pnpm lint` clean on the whole repository; `pnpm check:links`.
+- **Acceptance criteria:** the new fixtures pass; no existing file needs a new comment to satisfy the rule; `ROADMAP.md` shows M1-T07 with its PR and commit.
+- **Relevant skills:** baseline.
+- **Documentation updates:** `DEVELOPMENT_GUIDE.md`, `CHANGELOG.md`, `ROADMAP.md`, session log.
+
+### M1-T09 Carry `GameLost.mineIndex` into the D-14 docs
+
+- **Objective:** the mine-release rule names every engine output that carries a mine position, so the server author and ADR-010 cannot miss one (review I1).
+- **Description:** D-14 and the engine docs speak of `exposedMines` only. `GameLost.mineIndex` is also a mine position, and for a chord that loses it is the lowest-index mine among the neighbors the player did not click. M5-T05 sends the engine's events in a `delta` and also says a `delta` never carries mine data, so those two sentences conflict until someone decides which wins.
+- **Prerequisites:** M1-T08.
+- **Implementation guidance:** documentation and comments only, no behavior change. `ARCHITECTURE.md`: the race caveat names both `exposedMines` and `GameLost.mineIndex`. TSDoc of `GameView.exposedMines`, `GameLost` and `GameEvent`: same. `DECISIONS.md`: D-14 row names the event, and "Errata to accepted ADRs" gets one entry for ADR-009 (its Consequences say the layout leaves the engine only through `exposedMines`; `gameLost.mineIndex` is the second path). M4-T03: ADR-010 states what a race DNF frame carries (for example no mine index). M5-T01: the `delta` schema has a place for a DNF without a mine index. M5-T05: the leak test includes a chord that loses, and the `delta` carries the engine's events with `mineIndex` removed until the release rule allows it. The engine does not change; if ADR-010 prefers an engine change, it is a new ADR that supersedes the relevant lines of ADR-009.
+- **Expected output:** edits to `ARCHITECTURE.md`, `DECISIONS.md`, `view.ts`, `events.ts`, the M4 and M5 milestone files.
+- **Testing requirements:** `pnpm typecheck`, `pnpm lint`, `pnpm docs:api` (zero warnings), `pnpm check:links`, `pnpm test` (the API-surface snapshot is unchanged).
+- **Acceptance criteria:** a search for `mineIndex` in the docs finds it in the race caveat, D-14 and the three later tasks; no source behavior changed (the test suite is the same).
+- **Relevant skills:** baseline.
+- **Documentation updates:** as above, `CHANGELOG.md`, `ROADMAP.md`, session log.
+
+### M1-T10 Property tests that reach chords: guided play, differential check
+
+- **Objective:** the property tests exercise chording and long games, so M2's replay tests can rely on them (review I2).
+- **Description:** in 1,000 random games of the M1-T06 generators only 3 of 1,034 chord commands took effect and 455 games were lost. Add generators that reach chords, a pinned guard that they do, and a differential test against a simple reference.
+- **Prerequisites:** M1-T09.
+- **Implementation guidance:** tests only; no production code changes. Put the generators, the guard and the reference in one new test file, `game.differential.test.ts` (a separate helper file would be compiled into `dist`, linted as production code and counted in coverage), and keep the existing properties in `game.property.test.ts` unchanged. (1) Bound the mine density (up to 25% of the cells) for the guided boards and allow up to 16x16. (2) A guided command generator that mixes reveals with flags on revealed numbers' neighbors, flags of the true mines, and chords on revealed numbers. (3) A guard like the existing "generators reach win and loss": in a fixed-seed sample of 1,000 games, at least 300 chords take effect, at least 50 of them lose and at least 3 win the game (the blind generator gives 3 effective chords). (4) A differential test: a short, recursive reference implementation of reveal, flag, chord and win written from ADR-009 in the test file, compared with `Game` after every command on random boards (the set of newly revealed cells, the view, the status; the order of cells inside an event is pinned by the example tests and is not compared). (5) Add the marker "(Review Focus #1)" to the no-op `describe` titles in `game.test.ts` and "(Review Focus #4)" to the 1xN, Nx1 and 1x1 cases in `config.test.ts` (review M2).
+- **Expected output:** a new `game.differential.test.ts`, renamed titles in `game.test.ts` and `config.test.ts`.
+- **Testing requirements:** each new test is run against at least four mutations of `chord.ts` and `reveal.ts` and must fail on every one (mutation record in the session log); 1,000 generated cases per property in CI; the whole engine suite stays under about 10 seconds.
+- **Acceptance criteria:** all engine tests pass; coverage thresholds still met; the guard fails if the guided generator is replaced by the old one.
+- **Relevant skills:** baseline; `/systematic-debugging` on any disagreement with the reference (decide whether the engine or the reference is wrong against ADR-009 before touching either).
+- **Documentation updates:** `ARCHITECTURE.md` ("Win, loss and the end of a game": the tests paragraph), `CHANGELOG.md`, `ROADMAP.md`, session log.

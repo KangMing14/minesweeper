@@ -40,7 +40,7 @@ Project memory may remember some facts, but treat it as a convenience, never as 
 
 ```
 minesweeper/                      <- git repo root
-  ROADMAP.md                      status of all 83 tasks (you update after every task)
+  ROADMAP.md                      status of all 86 tasks (you update after every task)
   CLAUDE.md                       created in M0-T05: read-order and rules for Claude
   README.md, PROJECT_OVERVIEW.md, ARCHITECTURE.md, DEVELOPMENT_GUIDE.md,
   DECISIONS.md, CHANGELOG.md      created in M0-T05
