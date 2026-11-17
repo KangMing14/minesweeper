@@ -18,6 +18,12 @@ import type { GameView } from './view.js';
 /** How many generated cases every property runs (the task asks for at least 1,000 in CI). */
 const RUNS = 1_000;
 
+/**
+ * Timeout of the tests that play 1,000 games. The default of 5 s is too tight for a shared CI runner with
+ * coverage on (they take 2 to 4 s on a fast machine); the limit is there to catch a hang, not to time them.
+ */
+const SLOW_TEST_MS = 60_000;
+
 /** Reads `array[index]` and fails loudly if it is missing (the project has `noUncheckedIndexedAccess`). */
 function at<T>(array: readonly T[], index: number): T {
   const item = array[index];
@@ -180,41 +186,49 @@ function playGuided(
   game: Game,
   onStep: (step: Step) => void,
 ): void {
+  // A view is a frozen snapshot, so the one taken after a command is also the one before the next: build one
+  // per command, not two (the tests below play thousands of games, and CI runs them with coverage on).
+  let before = game.view();
   for (let i = 0; i + 1 < steer.length; i += 2) {
-    const before = game.view();
     const command = nextCommand(board, before, at(steer, i), at(steer, i + 1), i * 10);
     const events = game.apply(command);
-    onStep({ command, events, before, after: game.view() });
+    const after = game.view();
+    onStep({ command, events, before, after });
+    before = after;
   }
 }
 
 // --- The guard: the generators must reach what they are for -------------------------------------------------
 
 describe('guided play reaches chords (review I2)', () => {
-  it('makes hundreds of chords take effect in 1,000 games: some lose, some win the game', () => {
-    const stats = { games: 0, chords: 0, chordLost: 0, chordWon: 0, won: 0, lost: 0 };
-    for (const { board, steer } of fc.sample(guidedGame, { numRuns: RUNS, seed: 20_261_117 })) {
-      const game = new Game(board);
-      stats.games += 1;
-      playGuided(board, steer, game, ({ command, events }) => {
-        if (command.type !== 'chord' || events.length === 0) return;
-        stats.chords += 1;
-        if (events.some((event) => event.type === 'gameLost')) stats.chordLost += 1;
-        if (events.some((event) => event.type === 'gameWon')) stats.chordWon += 1;
-      });
-      const status = game.view().status;
-      if (status === 'won') stats.won += 1;
-      if (status === 'lost') stats.lost += 1;
-    }
-    // The blind generator of game.property.test.ts gave 3 effective chords in 1,034 tries, and no chord win.
-    // This sample (a fixed seed) gives about 650 effective chords, 260 losing ones and 11 winning ones.
-    expect(stats.chords).toBeGreaterThanOrEqual(300);
-    expect(stats.chordLost).toBeGreaterThanOrEqual(50);
-    expect(stats.chordWon).toBeGreaterThanOrEqual(3);
-    // Games must also reach both ends, not only die on the first click.
-    expect(stats.won).toBeGreaterThanOrEqual(200);
-    expect(stats.lost).toBeGreaterThanOrEqual(200);
-  });
+  it(
+    'makes hundreds of chords take effect in 1,000 games: some lose, some win the game',
+    () => {
+      const stats = { games: 0, chords: 0, chordLost: 0, chordWon: 0, won: 0, lost: 0 };
+      for (const { board, steer } of fc.sample(guidedGame, { numRuns: RUNS, seed: 20_261_117 })) {
+        const game = new Game(board);
+        stats.games += 1;
+        playGuided(board, steer, game, ({ command, events }) => {
+          if (command.type !== 'chord' || events.length === 0) return;
+          stats.chords += 1;
+          if (events.some((event) => event.type === 'gameLost')) stats.chordLost += 1;
+          if (events.some((event) => event.type === 'gameWon')) stats.chordWon += 1;
+        });
+        const status = game.view().status;
+        if (status === 'won') stats.won += 1;
+        if (status === 'lost') stats.lost += 1;
+      }
+      // The blind generator of game.property.test.ts gave 3 effective chords in 1,034 tries, and no chord win.
+      // This sample (a fixed seed) gives about 650 effective chords, 260 losing ones and 8 winning ones.
+      expect(stats.chords).toBeGreaterThanOrEqual(300);
+      expect(stats.chordLost).toBeGreaterThanOrEqual(50);
+      expect(stats.chordWon).toBeGreaterThanOrEqual(3);
+      // Games must also reach both ends, not only die on the first click.
+      expect(stats.won).toBeGreaterThanOrEqual(200);
+      expect(stats.lost).toBeGreaterThanOrEqual(200);
+    },
+    SLOW_TEST_MS,
+  );
 });
 
 // --- The reference ------------------------------------------------------------------------------------------
@@ -334,54 +348,62 @@ class Reference {
 }
 
 describe('Game against a simple recursive reference (review I2)', () => {
-  it('agrees on events, status and every cell after every command of a guided game', () => {
-    fc.assert(
-      fc.property(guidedGame, ({ board, steer }) => {
-        const game = new Game(board);
-        const reference = new Reference(board);
-        const mines: number[] = [];
-        for (let i = 0; i < cellCount(board.config); i++) if (board.isMine(i)) mines.push(i);
-        playGuided(board, steer, game, ({ command, events, after }) => {
-          const expected = reference.apply(command);
-          // One comparison of two strings per command: thousands of `expect` calls per game would be too slow.
-          const finished = reference.status === 'won' || reference.status === 'lost';
-          const engine = [
-            JSON.stringify(plain(events)),
-            after.status,
-            after.revealedCount,
-            boardText(after),
-            JSON.stringify(after.exposedMines ?? null),
-          ].join('|');
-          const wanted = [
-            JSON.stringify(expected),
-            reference.status,
-            reference.revealedCount,
-            reference.text(),
-            JSON.stringify(finished ? mines : null),
-          ].join('|');
-          if (engine !== wanted) expect(engine).toBe(wanted); // fast-check shows the command and the shrunk case
-        });
-      }),
-      { numRuns: RUNS },
-    );
-  });
+  it(
+    'agrees on events, status and every cell after every command of a guided game',
+    () => {
+      fc.assert(
+        fc.property(guidedGame, ({ board, steer }) => {
+          const game = new Game(board);
+          const reference = new Reference(board);
+          const mines: number[] = [];
+          for (let i = 0; i < cellCount(board.config); i++) if (board.isMine(i)) mines.push(i);
+          playGuided(board, steer, game, ({ command, events, after }) => {
+            const expected = reference.apply(command);
+            // One comparison of two strings per command: thousands of `expect` calls per game would be too slow.
+            const finished = reference.status === 'won' || reference.status === 'lost';
+            const engine = [
+              JSON.stringify(plain(events)),
+              after.status,
+              after.revealedCount,
+              boardText(after),
+              JSON.stringify(after.exposedMines ?? null),
+            ].join('|');
+            const wanted = [
+              JSON.stringify(expected),
+              reference.status,
+              reference.revealedCount,
+              reference.text(),
+              JSON.stringify(finished ? mines : null),
+            ].join('|');
+            if (engine !== wanted) expect(engine).toBe(wanted); // fast-check shows the command and the shrunk case
+          });
+        }),
+        { numRuns: RUNS },
+      );
+    },
+    SLOW_TEST_MS,
+  );
 
-  it('never loses a chord whose flags sit exactly on the real mines around the number', () => {
-    fc.assert(
-      fc.property(guidedGame, ({ board, steer }) => {
-        playGuided(board, steer, new Game(board), ({ command, events, before }) => {
-          if (command.type !== 'chord') return;
-          const around = board.neighbors(command.index);
-          const exact = around.every(
-            (n) => (at(before.cells, n).state === 'flagged') === board.isMine(n),
-          );
-          const number = at(before.cells, command.index);
-          if (exact && number.state === 'revealed') {
-            expect(events.some((event) => event.type === 'gameLost')).toBe(false);
-          }
-        });
-      }),
-      { numRuns: RUNS },
-    );
-  });
+  it(
+    'never loses a chord whose flags sit exactly on the real mines around the number',
+    () => {
+      fc.assert(
+        fc.property(guidedGame, ({ board, steer }) => {
+          playGuided(board, steer, new Game(board), ({ command, events, before }) => {
+            if (command.type !== 'chord') return;
+            const around = board.neighbors(command.index);
+            const exact = around.every(
+              (n) => (at(before.cells, n).state === 'flagged') === board.isMine(n),
+            );
+            const number = at(before.cells, command.index);
+            if (exact && number.state === 'revealed') {
+              expect(events.some((event) => event.type === 'gameLost')).toBe(false);
+            }
+          });
+        }),
+        { numRuns: RUNS },
+      );
+    },
+    SLOW_TEST_MS,
+  );
 });
