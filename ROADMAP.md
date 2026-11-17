@@ -8,12 +8,12 @@ Full task details live in `docs/milestones/`; the plan is `docs/superpowers/plan
 
 ## Milestone index
 
-Twelve milestones, 86 tasks. Tasks inside a milestone run in numeric order unless a task's prerequisites say otherwise. A milestone is finished when all its tasks are `Done` and its exit criteria hold; then it is reviewed and tagged (`docs/workflow/HOW_TO_USE.md`, section 7). Dependency graph: master plan, section E.
+Twelve milestones, 83 tasks. Tasks inside a milestone run in numeric order unless a task's prerequisites say otherwise. A milestone is finished when all its tasks are `Done` and its exit criteria hold; then it is reviewed and tagged (`docs/workflow/HOW_TO_USE.md`, section 7). Dependency graph: master plan, section E.
 
 | ID | Milestone | Tasks | Depends on | Exit criteria | File | Tag |
 | --- | --- | --- | --- | --- | --- | --- |
 | M0 | Foundations | 11 | spec approved | CI green on wired monorepo; docs and ADR-001..008 committed; tag `m0-complete` | [`M0-foundations.md`](docs/milestones/M0-foundations.md) | `m0-complete` |
-| M1 | Engine core | 10 | M0 | Playable-in-tests engine; public API exported and documented | [`M1-engine-core.md`](docs/milestones/M1-engine-core.md) | `m1-complete` |
+| M1 | Engine core | 7 | M0 | Playable-in-tests engine; public API exported and documented | [`M1-engine-core.md`](docs/milestones/M1-engine-core.md) | `m1-complete` |
 | M2 | Deterministic engine | 6 | M1 | Seeded boards, command log, replay; golden-seed tests pass in Node and a browser | [`M2-deterministic-engine.md`](docs/milestones/M2-deterministic-engine.md) | `m2-complete` |
 | M3 | Local solo client | 8 | M2 | Playable solo game in the browser; Playwright smoke test green | [`M3-local-solo-client.md`](docs/milestones/M3-local-solo-client.md) | `m3-complete` |
 | M4 | Mode framework and ghost race | 5 | M2, M3 | `GameMode` registry; race against your ghost; ADR-010 | [`M4-mode-framework-ghost-race.md`](docs/milestones/M4-mode-framework-ghost-race.md) | `m4-complete` |
@@ -55,10 +55,7 @@ File: `docs/milestones/M1-engine-core.md`. Tag when finished: `m1-complete`.
 | M1-T04 | Reveal and iterative flood fill                       | Done        |#13|67159eb|2026-11-15|
 | M1-T05 | Flags and chording                                    | Done        |#14|f82d02f|2026-11-15|
 | M1-T06 | Win and loss, status transitions, post-game rejection | Done        |#15|143f05b|2026-11-16|
-| M1-T07 | Public API surface                                    | Done        |#16|a514a0a|2026-11-16|
-| M1-T08 | M1 close-out: tracker cells, CHANGELOG, `@internal` lint gaps | Done |     |        |2026-11-17|
-| M1-T09 | Carry `GameLost.mineIndex` into the D-14 docs         | Done |     |        |2026-11-17|
-| M1-T10 | Property tests that reach chords: guided play, differential check | Done |     |        |2026-11-17|
+| M1-T07 | Public API surface                                    | Done        |     |        |         |
 
 ## M2 Deterministic Engine
 
@@ -195,4 +192,4 @@ File: `docs/milestones/M11-launch-readiness.md`. Tag when finished: `m11-complet
 | M11-T05 | Launch checklist and legal basics | Not started |     |        |         |
 | M11-T06 | Public launch and feedback loop   | Not started |     |        |         |
 
-_Total tasks: 86._
+_Total tasks: 83._

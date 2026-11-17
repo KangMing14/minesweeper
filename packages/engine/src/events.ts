@@ -60,12 +60,6 @@ export interface GameWon {
 /**
  * A mine was revealed: the game is lost.
  *
- * @remarks
- * `mineIndex` is the mine the losing command reached. After a `reveal` it is the cell the player chose. After
- * a `chord` it is the lowest-index mine among the neighbors the chord opened, which the player did not click.
- * In a race both players share one board, so the server must remove `mineIndex` from what it sends until the
- * match result is final for both players (decision D-14, M4-T03).
- *
  * @example
  * ```ts
  * const event: GameLost = { type: 'gameLost', t: 9_100, mineIndex: 33 };
@@ -87,9 +81,7 @@ export interface GameLost {
  * A union discriminated by `type`, so a `switch` on it can be checked for completeness. The docs name the
  * four variants (`CellsRevealed`, `FlagToggled`, `GameWon`, `GameLost`) but do not fix the `type` strings;
  * they are camel case here, like the `type` strings of commands are lower case. Events describe what
- * happened, never where the mines are, except `GameLost`, which names the one mine that was hit. That is
- * still a mine position: in a race the server must not forward it to a client before decision D-14 allows
- * (M4-T03).
+ * happened, never where the mines are, except `GameLost`, which names the one mine that was hit.
  *
  * @example
  * ```ts

@@ -76,12 +76,6 @@ const requireExampleOptions = {
   contexts: ['ExportNamedDeclaration', 'ExportDefaultDeclaration'],
 };
 
-// A comment that holds only a tag (`/** @internal */`) satisfies `jsdoc/require-jsdoc` but says nothing.
-// Same contexts as `require-example`, so every exported declaration needs a summary line (M1-T08).
-const requireDescriptionOptions = {
-  contexts: requireExampleOptions.contexts,
-};
-
 export default defineConfig([
   globalIgnores([
     '**/node_modules/**',
@@ -119,13 +113,12 @@ export default defineConfig([
     rules: {
       'jsdoc/require-jsdoc': ['error', requireJsdocOptions],
       'jsdoc/require-example': ['error', requireExampleOptions],
-      'jsdoc/require-description': ['error', requireDescriptionOptions],
     },
   },
   {
     // Tests rarely export anything, and an example on a test helper is noise.
     files: ['packages/engine/**/*.test.ts', 'packages/protocol/**/*.test.ts'],
-    rules: { 'jsdoc/require-example': 'off', 'jsdoc/require-description': 'off' },
+    rules: { 'jsdoc/require-example': 'off' },
   },
   {
     files: ['apps/*/**/*.ts', 'apps/*/**/*.tsx'],

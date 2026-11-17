@@ -61,7 +61,6 @@ Accepted ADRs are never edited (see above). Corrections of fact are listed here 
 
 - **ADR-005, Alternatives (Biome):** the sentence "the TSDoc and boundary rules of ADR-006 and ADR-007 rely on ESLint plugins" should cite ADR-001 and ADR-002 for the boundary rules (ADR-006 is the git workflow). Found in the M0 review (L6).
 - **ADR-007, Context:** it says spec 7.2 asked for Doxygen-style comments. Spec 7.2 and section 5 reject Doxygen; the request came from the original brief. The decision itself (TSDoc and TypeDoc) is unaffected. Found in the M0 review (L6).
-- **ADR-009, Consequences:** "the mine layout still leaves the engine only through `exposedMines` after a game ends" is incomplete: `gameLost.mineIndex` is a second path, and after a losing chord it names a mine the player did not click. The D-14 rule applies to both (M1 review, I1; M1-T09).
 - **ADR-002 and `DEVELOPMENT_GUIDE.md`:** "lint bans any import that leaves the package" is the combined effect of lint and the compiler, not of lint alone (M0 review, L3). The guide now says so.
 
 ## Dependency advisories
@@ -91,7 +90,7 @@ D-01 to D-11 come from spec section 3, D-12 and D-13 from the master plan, D-14 
 | D-11 | Capacity target | About 200 concurrent matches on one small instance. | Measured in M11-T02 | Open |
 | D-12 | License | All rights reserved until launch; revisit at `v1.0.0`. Decided 2026-11-09. | M0-T06 (ADR-008) | Settled by [ADR-008](docs/adr/ADR-008-license.md) |
 | D-13 | Telemetry and privacy | Working idea: the minimum useful set (errors, basic aggregate counts of matches and queue times). What, if anything, is measured is decided in M10-T07. | M10-T07 (ADR-016) | Open |
-| D-14 | Mine release in a race | Both players race the same seeded board, so the mine layout is released to a player only when the match result is final for both players; no mine data in any earlier frame, including a `delta` after a DNF. That covers `exposedMines` and the `mineIndex` of the engine's `gameLost` event (a losing chord names a mine the player did not click). A player's own finished game exposes its mines only then. | M4-T03 (ADR-010); leak test in M5-T05 | Open |
+| D-14 | Mine release in a race | Both players race the same seeded board, so the mine layout is released to a player only when the match result is final for both players; no mine data in any earlier frame, including a `delta` after a DNF. A player's own finished game exposes its mines only then. | M4-T03 (ADR-010); leak test in M5-T05 | Open |
 
 
 ## ADR-005 input: dependency pins

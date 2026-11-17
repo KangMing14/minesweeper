@@ -233,7 +233,7 @@ describe('Game.apply: revealing a mine', () => {
   });
 });
 
-describe('Game.apply: commands that do nothing (Review Focus #1)', () => {
+describe('Game.apply: commands that do nothing', () => {
   it('returns [] for a cell that is already revealed and leaves the view identical', () => {
     const game = new Game(corner());
     game.apply(reveal(10));
@@ -325,7 +325,7 @@ describe('Game.apply: determinism', () => {
   });
 });
 
-describe('Game.apply: flag (no-op cases are Review Focus #1)', () => {
+describe('Game.apply: flag', () => {
   it('flags a hidden cell: one flagToggled event, the cell shows as flagged, the counts follow', () => {
     const game = new Game(corner());
     const events = game.apply(flag(3, 700));
@@ -442,7 +442,7 @@ describe('Game.apply: flag (no-op cases are Review Focus #1)', () => {
   });
 });
 
-describe('Game.apply: chord (no-op cases are Review Focus #1)', () => {
+describe('Game.apply: chord', () => {
   /** The 4x4 corner board with 10 (a 1) open and the given cells flagged. */
   function opened(flags: readonly number[]): Game {
     const game = new Game(corner());

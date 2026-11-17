@@ -53,7 +53,7 @@ CI runs all of these on every pull request. Details, the git workflow and the do
 | Read this | For |
 |---|---|
 | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) | The concept, the MVP, what is out of scope, a glossary |
-| [ROADMAP.md](ROADMAP.md) | Milestone index and the status of all 86 tasks |
+| [ROADMAP.md](ROADMAP.md) | Milestone index and the status of all 83 tasks |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Diagrams, package layout, dependency rule, canonical names |
 | [DECISIONS.md](DECISIONS.md) | ADR index, open decisions, dependency pins |
 | [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) | Git workflow, tooling, tests, CI, the task loop |

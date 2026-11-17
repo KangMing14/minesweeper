@@ -60,7 +60,7 @@ describe('PRESETS', () => {
   });
 });
 
-describe('validateBoardConfig: accepted configs (Review Focus #4: 1x1, 1xN and Nx1 are legal)', () => {
+describe('validateBoardConfig: accepted configs', () => {
   it('accepts a 1x1 board with 0 mines', () => {
     expect(() => validateBoardConfig({ width: 1, height: 1, mineCount: 0 })).not.toThrow();
   });
