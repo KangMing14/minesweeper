@@ -95,7 +95,7 @@ write_git_state() {
     git rev-list --merges --count HEAD 2>/dev/null || echo unknown
     echo
     echo "== tags (newest first)"
-    git tag -l --sort=-creatordate --format='%(refname:short) %(objectname:short) %(creatordate:short)' 2>/dev/null || true
+    git tag -l --sort=-creatordate --format='%(refname:short) %(objectname:short) %(creatordate:short) %(*objectname:short)' 2>/dev/null || true
     echo
     echo "== working tree (git status --short, first 40 lines)"
     git status --short 2>/dev/null | head -40 || true

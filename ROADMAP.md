@@ -56,9 +56,9 @@ File: `docs/milestones/M1-engine-core.md`. Tag when finished: `m1-complete`.
 | M1-T05 | Flags and chording                                    | Done        |#14|f82d02f|2026-11-15|
 | M1-T06 | Win and loss, status transitions, post-game rejection | Done        |#15|143f05b|2026-11-16|
 | M1-T07 | Public API surface                                    | Done        |#16|a514a0a|2026-11-16|
-| M1-T08 | M1 close-out: tracker cells, CHANGELOG, `@internal` lint gaps | Done |     |        |2026-11-17|
-| M1-T09 | Carry `GameLost.mineIndex` into the D-14 docs         | Done |     |        |2026-11-17|
-| M1-T10 | Property tests that reach chords: guided play, differential check | Done |     |        |2026-11-17|
+| M1-T08 | M1 close-out: tracker cells, CHANGELOG, `@internal` lint gaps | Done |#17|d5ceee0|2026-11-17|
+| M1-T09 | Carry `GameLost.mineIndex` into the D-14 docs         | Done |#17|d5ceee0|2026-11-17|
+| M1-T10 | Property tests that reach chords: guided play, differential check | Done |#17|d5ceee0|2026-11-17|
 
 ## M2 Deterministic Engine
 
