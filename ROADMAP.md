@@ -66,8 +66,8 @@ File: `docs/milestones/M2-deterministic-engine.md`. Tag when finished: `m2-compl
 
 | Task   | Title                                   | Status      | PR  | Commit | Done on |
 | ------ | --------------------------------------- | ----------- | --- | ------ | ------- |
-| M2-T01 | In-engine PRNG                          | Done        |     |        |         |
-| M2-T02 | Seeded board generator and safe opening | Not started |     |        |         |
+| M2-T01 | In-engine PRNG                          | Done        |#22|aa412cf|2026-11-18|
+| M2-T02 | Seeded board generator and safe opening | Done        |     |        |         |
 | M2-T03 | `createGame` and the command log        | Not started |     |        |         |
 | M2-T04 | `ReplayLog` and `replay`                | Not started |     |        |         |
 | M2-T05 | Results and scoring                     | Not started |     |        |         |
