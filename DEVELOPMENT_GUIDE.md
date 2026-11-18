@@ -179,6 +179,7 @@ Add or change a fixture in `tools/lint-fixtures/cases/` and its entry in `tools/
 
 ### Where tests live
 - Unit tests sit next to the code: `src/**/*.test.ts` (or `.spec.ts`). Shared and integration tests go in a package's `test/` directory (`engine` determinism suite in M2, server fault tests in M6).
+- Golden data (known-good outputs that pin a contract, such as `prng-vectors.json`) sits in `packages/<name>/fixtures/` and is imported from tests with `import data from '../fixtures/x.json' with { type: 'json' }`; the package's `tsconfig.test.json` sets `resolveJsonModule` for it, and engine code may not read files with `node:fs`. A fixture says in its own `generatedBy` field how it was produced, and it must not be produced by the code it checks. Editing a golden value is a contract change (ADR-002), not a test fix.
 - Playwright specs live in `e2e/` (M3-T08) and are never picked up by Vitest.
 - `vitest.config.ts` defines one project per package. Workspace files (`vitest.workspace.ts`) were removed in Vitest 4, so projects are declared in `test.projects`.
 - Tests import workspace packages by name (`@minesweeper/engine`). Vitest resolves those names to the package **source**, so tests run on a fresh clone without `tsc -b`. TypeScript still reads types from the built output, which is why `typecheck` builds first.
