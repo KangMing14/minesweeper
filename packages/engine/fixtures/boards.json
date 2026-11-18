@@ -1,7 +1,7 @@
 {
   "description": "Golden boards of SeededBoardGenerator (M2-T02). A change here means stored replays break (ADR-002).",
   "hashInput": "ascending mine indices joined by a comma",
-  "generatedBy": "M2-T02 scratch script (not in the repository): ran SeededBoardGenerator from the built engine and hashed the mine list with Node crypto SHA-256. These pin the current behavior (a characterization); correctness is covered by the property tests and the plain reference in generator.test.ts.",
+  "generatedBy": "M2-T02 scratch script (not in the repository): a plain reference implementation of the generator contract (coordinates and arrays, no Board and no SafeOpeningPolicy) drawing from the engine's createPrng, with the mine list hashed by Node crypto SHA-256. Not produced by SeededBoardGenerator: the generator was compared with these values afterwards and agrees on all entries. The PRNG underneath is pinned by prng-vectors.json (third-party sfc32).",
   "boards": [
     {
       "name": "beginner",
