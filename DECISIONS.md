@@ -94,6 +94,10 @@ D-01 to D-11 come from spec section 3, D-12 and D-13 from the master plan, D-14 
 | D-14 | Mine release in a race | Both players race the same seeded board, so the mine layout is released to a player only when the match result is final for both players; no mine data in any earlier frame, including a `delta` after a DNF. That covers `exposedMines` and the `mineIndex` of the engine's `gameLost` event (a losing chord names a mine the player did not click). A player's own finished game exposes its mines only then. | M4-T03 (ADR-010); leak test in M5-T05 | Open |
 
 
+## Generator stability (M2-T02)
+
+No ADR and no open decision. A note for the ADRs that will follow: the board and opening that `SeededBoardGenerator` gives for a `(config, seed)` are a stable contract, like the `Prng` sequence (ADR-002). The draw order, the opening rule and the mine placement are written in the TSDoc of `SeededBoardGenerator` and `SafeOpeningPolicy` and in `ARCHITECTURE.md`, "Board generation", and `packages/engine/fixtures/boards.json` pins 22 boards. Changing the output needs a new generator version (carried by `ReplayLog.version`, M2-T04) and an ADR that supersedes this note; old versions must stay replayable. Also recorded here: a config whose mines do not fit around any opening zone is rejected by the generator, whatever the seed (D-01 working presets are unaffected; the densest classic board, expert 99 of 480, has a large margin).
+
 ## ADR-005 input: dependency pins
 
 Versions were looked up on the npm registry on **2026-11-05**. Rule: the newest stable release at least 14 days old (published on or before 2026-10-22), within the major line of the registry's `latest`, unless a compatibility note says otherwise. A security fix is a second exception (added in M0-T06, ADR-005): a version below the first patched release of a published security advisory is not eligible, however old it is, and the 14-day wait does not apply to the patched version. Every version is exact (no `^` or `~`). "Latest" is what the registry tagged `latest` on that day.

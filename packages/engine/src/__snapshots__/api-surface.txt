@@ -15,6 +15,9 @@ interface BoardConfig
   readonly mineCount: number
   readonly width: number
 
+interface BoardGenerator
+  generate(config: BoardConfig, seed: number): GeneratedBoard
+
 type CellIndex = number
 
 type CellView = { readonly state: "hidden"; } | { readonly state: "flagged"; } | { readonly state: "revealed"; readonly value: number; }
@@ -62,6 +65,10 @@ interface GameWon
   readonly t: number
   readonly type: "gameWon"
 
+interface GeneratedBoard
+  readonly board: Board
+  readonly opening: readonly number[]
+
 class InvalidBoardConfigError extends Error
   new (reason: string): InvalidBoardConfigError
   readonly reason: string
@@ -71,6 +78,14 @@ const PRESETS: Readonly<{ beginner: Readonly<{ width: 9; height: 9; mineCount: 1
 interface Prng
   nextInt(maxExclusive: number): number
   nextUint32(): number
+
+class SafeOpeningPolicy
+  new (): SafeOpeningPolicy
+  select(config: BoardConfig, prng: Prng): readonly CellIndex[]
+
+class SeededBoardGenerator
+  new (policy?: SafeOpeningPolicy): SeededBoardGenerator
+  generate(config: BoardConfig, seed: number): GeneratedBoard
 
 function cellCount(config: BoardConfig): number
 

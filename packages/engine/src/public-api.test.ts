@@ -4,12 +4,21 @@ import {
   Game,
   InvalidBoardConfigError,
   PRESETS,
+  SafeOpeningPolicy,
+  SeededBoardGenerator,
   cellCount,
   createPrng,
   safeCellCount,
   validateBoardConfig,
 } from './index.js';
-import type { Command, GameEvent, GameView, Prng } from './index.js';
+import type {
+  BoardGenerator,
+  Command,
+  GameEvent,
+  GameView,
+  GeneratedBoard,
+  Prng,
+} from './index.js';
 
 // M1-T07: a consumer's view of the engine. Everything this file touches comes from `./index.js` and nothing
 // else, exactly as `apps/web`, `apps/server` and `protocol` will import it, so a name that is needed to play
@@ -157,5 +166,29 @@ describe('seeded randomness through the public entry point only (M2-T01)', () =>
     expect([a.nextUint32(), a.nextUint32()]).toEqual([3825871779, 1851418855]);
     expect([b.nextInt(1000), b.nextInt(1000)]).toEqual([779, 855]);
     expect(() => createPrng(-1)).toThrow(RangeError);
+  });
+});
+
+// M2-T02: a consumer generates a seeded board and opens it, using only the public entry point.
+describe('public API: seeded boards', () => {
+  it('generates the same board for a seed and opens it with a cascade', () => {
+    const generator: BoardGenerator = new SeededBoardGenerator(new SafeOpeningPolicy());
+    const generated: GeneratedBoard = generator.generate(PRESETS.beginner, 42);
+    const again = generator.generate(PRESETS.beginner, 42);
+    expect(again.opening).toEqual(generated.opening);
+
+    const [cell] = generated.opening;
+    expect(cell).toBeDefined();
+    const game = new Game(generated.board);
+    const events = game.apply({ type: 'reveal', index: cell as number, t: 0 });
+    expect(events[0]?.type).toBe('cellsRevealed');
+    expect(game.view().revealedCount).toBeGreaterThan(1);
+    expect(game.view().status).toBe('playing');
+  });
+
+  it('rejects a config with no room for the opening', () => {
+    expect(() =>
+      new SeededBoardGenerator().generate({ width: 9, height: 9, mineCount: 78 }, 1),
+    ).toThrow(InvalidBoardConfigError);
   });
 });

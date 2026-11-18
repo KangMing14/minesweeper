@@ -13,6 +13,9 @@ export { PRESETS, cellCount, safeCellCount, validateBoardConfig } from './config
 export { InvalidBoardConfigError } from './errors.js';
 export type { CellsRevealed, FlagToggled, GameEvent, GameLost, GameWon } from './events.js';
 export { Game } from './game.js';
+export type { BoardGenerator, GeneratedBoard } from './generator.js';
+export { SeededBoardGenerator } from './generator.js';
+export { SafeOpeningPolicy } from './opening.js';
 export type { Prng } from './prng.js';
 export { createPrng } from './prng.js';
 export type { CellView, GameStatus, GameView } from './view.js';

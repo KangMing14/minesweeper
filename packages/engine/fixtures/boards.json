@@ -1,0 +1,249 @@
+{
+  "description": "Golden boards of SeededBoardGenerator (M2-T02). A change here means stored replays break (ADR-002).",
+  "hashInput": "ascending mine indices joined by a comma",
+  "generatedBy": "M2-T02 scratch script (not in the repository): ran SeededBoardGenerator from the built engine and hashed the mine list with Node crypto SHA-256. These pin the current behavior (a characterization); correctness is covered by the property tests and the plain reference in generator.test.ts.",
+  "boards": [
+    {
+      "name": "beginner",
+      "seed": 0,
+      "config": {
+        "width": 9,
+        "height": 9,
+        "mineCount": 10
+      },
+      "opening": [24],
+      "minesSha256": "5da9ab3a72d009456cfea22e935d7242fbef20c229d6a1cf981d06025fcc991b"
+    },
+    {
+      "name": "beginner",
+      "seed": 1,
+      "config": {
+        "width": 9,
+        "height": 9,
+        "mineCount": 10
+      },
+      "opening": [76],
+      "minesSha256": "4b39f407c9308592df6b3943bf3caf52eb8bf123d21f50eeef24895ed38011ab"
+    },
+    {
+      "name": "beginner",
+      "seed": 42,
+      "config": {
+        "width": 9,
+        "height": 9,
+        "mineCount": 10
+      },
+      "opening": [75],
+      "minesSha256": "498b5352efd3e10852ec2c84cd68c6af5729a26ed1385934405e9ffdcbe52ee7"
+    },
+    {
+      "name": "beginner",
+      "seed": 2026,
+      "config": {
+        "width": 9,
+        "height": 9,
+        "mineCount": 10
+      },
+      "opening": [18],
+      "minesSha256": "632b9f74e5454b2076439474e62e61b47b8f86f15d2ffe1e168d64c14fb91e2e"
+    },
+    {
+      "name": "beginner",
+      "seed": 123456789,
+      "config": {
+        "width": 9,
+        "height": 9,
+        "mineCount": 10
+      },
+      "opening": [74],
+      "minesSha256": "069c6a3be0a21fc532c6e53ce9f1290e4e12448b74cce2bd647eeaf1065d0260"
+    },
+    {
+      "name": "beginner",
+      "seed": 4294967295,
+      "config": {
+        "width": 9,
+        "height": 9,
+        "mineCount": 10
+      },
+      "opening": [33],
+      "minesSha256": "6ab0cce20ca8b370e4e7cda2213fedbcef2a5f9e7f61786a89984dc2b282c7a2"
+    },
+    {
+      "name": "intermediate",
+      "seed": 0,
+      "config": {
+        "width": 16,
+        "height": 16,
+        "mineCount": 40
+      },
+      "opening": [78],
+      "minesSha256": "b2581776d0842832d8df49deaccb1b792dc50c0565f2f594f02f85fa2187ef42"
+    },
+    {
+      "name": "intermediate",
+      "seed": 1,
+      "config": {
+        "width": 16,
+        "height": 16,
+        "mineCount": 40
+      },
+      "opening": [188],
+      "minesSha256": "beb98f705e51ea19cc76bc5e8155cbd9b360cfb83f819889e7835ed5d73022ce"
+    },
+    {
+      "name": "intermediate",
+      "seed": 42,
+      "config": {
+        "width": 16,
+        "height": 16,
+        "mineCount": 40
+      },
+      "opening": [163],
+      "minesSha256": "3f0a201b1602fc010ecb4b81410c49cb41e9f9c7f396c28c3fede665b46578ad"
+    },
+    {
+      "name": "intermediate",
+      "seed": 2026,
+      "config": {
+        "width": 16,
+        "height": 16,
+        "mineCount": 40
+      },
+      "opening": [196],
+      "minesSha256": "1b7908ab12acf02743a78199153a5eb4cba73c1215f57ec0e9fa1f273ff73645"
+    },
+    {
+      "name": "intermediate",
+      "seed": 123456789,
+      "config": {
+        "width": 16,
+        "height": 16,
+        "mineCount": 40
+      },
+      "opening": [0],
+      "minesSha256": "606fd8cf75a58e45ab85a9cee5d43938a871a1f10d1443d3240df73d05295459"
+    },
+    {
+      "name": "intermediate",
+      "seed": 4294967295,
+      "config": {
+        "width": 16,
+        "height": 16,
+        "mineCount": 40
+      },
+      "opening": [192],
+      "minesSha256": "f3a9d192624f9b5d3a525b7b9b56f3befbe0bacb88e7da545b857f56f46dc77d"
+    },
+    {
+      "name": "expert",
+      "seed": 0,
+      "config": {
+        "width": 30,
+        "height": 16,
+        "mineCount": 99
+      },
+      "opening": [366],
+      "minesSha256": "bcabd07e27b8262b7d4400639a328923285cb155e22c831f6881e3c67fa850c6"
+    },
+    {
+      "name": "expert",
+      "seed": 1,
+      "config": {
+        "width": 30,
+        "height": 16,
+        "mineCount": 99
+      },
+      "opening": [124],
+      "minesSha256": "e231be38891970e1f6dddc83cb9737174965df8900145ed60463f8548455a9c1"
+    },
+    {
+      "name": "expert",
+      "seed": 42,
+      "config": {
+        "width": 30,
+        "height": 16,
+        "mineCount": 99
+      },
+      "opening": [99],
+      "minesSha256": "ce10a6a95dd93715698629514bc1dc3f1e86902accf39b33dfbcc3d737bdcd76"
+    },
+    {
+      "name": "expert",
+      "seed": 2026,
+      "config": {
+        "width": 30,
+        "height": 16,
+        "mineCount": 99
+      },
+      "opening": [324],
+      "minesSha256": "2d0493bf77b9d9f6f5d4a8d218c2c2a2c08875b940a52da70b006289aaff5beb"
+    },
+    {
+      "name": "expert",
+      "seed": 123456789,
+      "config": {
+        "width": 30,
+        "height": 16,
+        "mineCount": 99
+      },
+      "opening": [128],
+      "minesSha256": "f948f00ff9b8583e824e30ab746c8dcf946bca6ac9155621aec28320ee65c9e9"
+    },
+    {
+      "name": "expert",
+      "seed": 4294967295,
+      "config": {
+        "width": 30,
+        "height": 16,
+        "mineCount": 99
+      },
+      "opening": [96],
+      "minesSha256": "b1f06508b4ae819148d7dad66ebd44a7155b8723ee9dc167b291043f21906329"
+    },
+    {
+      "name": "dense-9x9-77",
+      "seed": 7,
+      "config": {
+        "width": 9,
+        "height": 9,
+        "mineCount": 77
+      },
+      "opening": [8],
+      "minesSha256": "6979810420abf8237a98aeb1def767fee8ae53ad54c21b080614416f4b789600"
+    },
+    {
+      "name": "row-5x1-3",
+      "seed": 3,
+      "config": {
+        "width": 5,
+        "height": 1,
+        "mineCount": 3
+      },
+      "opening": [4],
+      "minesSha256": "c0be322c1ad6af50f418b96232d98fe25a36d5d0a557291833f8248f2084b8ef"
+    },
+    {
+      "name": "column-1x5-3",
+      "seed": 3,
+      "config": {
+        "width": 1,
+        "height": 5,
+        "mineCount": 3
+      },
+      "opening": [4],
+      "minesSha256": "c0be322c1ad6af50f418b96232d98fe25a36d5d0a557291833f8248f2084b8ef"
+    },
+    {
+      "name": "single-cell",
+      "seed": 0,
+      "config": {
+        "width": 1,
+        "height": 1,
+        "mineCount": 0
+      },
+      "opening": [0],
+      "minesSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

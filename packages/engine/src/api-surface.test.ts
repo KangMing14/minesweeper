@@ -32,6 +32,7 @@ const NOT_PUBLIC = [
   'RevealResult',
   'chordCells',
   'ChordResult',
+  'openingZone',
 ] as const;
 
 const FORMAT =
