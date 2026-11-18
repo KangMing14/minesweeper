@@ -5,10 +5,11 @@ import {
   InvalidBoardConfigError,
   PRESETS,
   cellCount,
+  createPrng,
   safeCellCount,
   validateBoardConfig,
 } from './index.js';
-import type { Command, GameEvent, GameView } from './index.js';
+import type { Command, GameEvent, GameView, Prng } from './index.js';
 
 // M1-T07: a consumer's view of the engine. Everything this file touches comes from `./index.js` and nothing
 // else, exactly as `apps/web`, `apps/server` and `protocol` will import it, so a name that is needed to play
@@ -145,5 +146,16 @@ describe('configuration through the public entry point only', () => {
       expect(error).toBeInstanceOf(InvalidBoardConfigError);
       expect((error as InvalidBoardConfigError).reason.startsWith('mineCount')).toBe(true);
     }
+  });
+});
+
+describe('seeded randomness through the public entry point only (M2-T01)', () => {
+  it('gives a reproducible sequence for a seed and refuses a seed that is not a uint32', () => {
+    const a: Prng = createPrng(42);
+    const b: Prng = createPrng(42);
+    // Seed 42, first two draws: the committed golden vectors (fixtures/prng-vectors.json).
+    expect([a.nextUint32(), a.nextUint32()]).toEqual([3825871779, 1851418855]);
+    expect([b.nextInt(1000), b.nextInt(1000)]).toEqual([779, 855]);
+    expect(() => createPrng(-1)).toThrow(RangeError);
   });
 });
