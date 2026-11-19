@@ -3,6 +3,8 @@ import type { CellIndex } from './config.js';
 
 /**
  * Where a game stands: `'ready'` before the first command, `'playing'` after it, `'won'` or `'lost'` at the end.
+ * A game made by `createGame` already has its opening open while it is `'ready'`; if that opening clears the
+ * board it is `'won'` from the start.
  *
  * @remarks
  * `'won'` and `'lost'` are final: no command changes a finished game.

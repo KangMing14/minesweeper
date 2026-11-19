@@ -37,8 +37,9 @@ interface FlagToggled
   readonly type: "flagToggled"
 
 class Game
-  new (board: Board): Game
+  new (board: Board, opening?: readonly CellIndex[]): Game
   apply(command: Command): readonly GameEvent[]
+  log(): readonly Command[]
   subscribe(listener: (event: GameEvent) => void): () => void
   view(): GameView
 
@@ -88,6 +89,8 @@ class SeededBoardGenerator
   generate(config: BoardConfig, seed: number): GeneratedBoard
 
 function cellCount(config: BoardConfig): number
+
+function createGame(config: BoardConfig, seed: number, generator?: BoardGenerator): Game
 
 function createPrng(seed: number): Prng
 

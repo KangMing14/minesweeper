@@ -34,12 +34,21 @@ const playArbitrary: fc.Arbitrary<{ board: Board; commands: Command[] }> = board
     const cells = cellCount(board.config);
     // Reveals are the most common command, as in real play; flags and chords are mixed in.
     const type = fc.constantFrom<Command['type']>('reveal', 'reveal', 'reveal', 'flag', 'chord');
+    // `t` only moves forwards (M2-T03): the engine rejects a command that is earlier than the last accepted
+    // one, so each command gets a small step on top of the time before it, as a real clock would give.
     const command = fc.record({
       type,
       index: fc.integer({ min: 0, max: cells - 1 }),
-      t: fc.nat({ max: 600_000 }),
+      step: fc.nat({ max: 4_000 }),
     });
-    return fc.array(command, { maxLength: 150 }).map((commands) => ({ board, commands }));
+    return fc.array(command, { maxLength: 150 }).map((steps) => {
+      let t = 0;
+      const commands: Command[] = steps.map(({ type: kind, index, step }) => {
+        t += step;
+        return { type: kind, index, t };
+      });
+      return { board, commands };
+    });
   },
 );
 
