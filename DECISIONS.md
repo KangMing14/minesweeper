@@ -106,6 +106,14 @@ No ADR and no open decision. A note for the ADRs that will follow. `createGame` 
 - **M2-T04 (replay):** a log with no commands replays to `'ready'`, except on such a board, where it replays to `'won'`.
 - **Changing this later** needs a new generator or engine version and an ADR that supersedes this note, because stored replays depend on how a game starts (ADR-002).
 
+## Replay and versioning (M2-T04)
+
+No ADR and no open decision. A note for the ADRs that will follow. A `ReplayLog` with `version: 1` is a promise that the `Prng` sequence, the board and opening of `SeededBoardGenerator`, the way `createGame` starts a game and the rules of `Game.apply` stay as they are; the log carries no generator id, the version is that id. A change that gives a different game for the same log needs a new version number and an ADR that supersedes the generator-stability and game-creation notes above, and `replay` must keep playing every older version. `replay` throws on a command the game does not accept instead of skipping it, because a log holds only accepted commands. Choices the task left open (a config with no room for an opening is an `InvalidReplayError` with a `cause`; the 100,000-command limit is fixed, not a parameter; `type` is validated) are in `ARCHITECTURE.md`, "Replay and validation".
+
+- **M2-T06 (determinism tests):** the round trip over fuzzed games runs in Node and in a browser; `replay.test.ts` holds the Node-only version.
+- **M5-T01 (protocol):** the Zod schema for a replay log must enforce the same limits as `validateReplayLog` (version 1, uint32 seed, at most 100,000 commands) and must not be looser, so that anything it lets through is also valid here.
+- **M8-T01 (`ReplayValidator`):** treat `InvalidReplayError` as "log rejected" and any other error as a server fault.
+
 ## ADR-005 input: dependency pins
 
 Versions were looked up on the npm registry on **2026-11-05**. Rule: the newest stable release at least 14 days old (published on or before 2026-10-22), within the major line of the registry's `latest`, unless a compatibility note says otherwise. A security fix is a second exception (added in M0-T06, ADR-005): a version below the first patched release of a published security advisory is not eligible, however old it is, and the 14-day wait does not apply to the patched version. Every version is exact (no `^` or `~`). "Latest" is what the registry tagged `latest` on that day.
