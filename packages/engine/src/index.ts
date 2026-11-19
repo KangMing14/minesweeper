@@ -10,6 +10,7 @@ export { Board } from './board.js';
 export type { Command } from './command.js';
 export type { BoardConfig, CellIndex } from './config.js';
 export { PRESETS, cellCount, safeCellCount, validateBoardConfig } from './config.js';
+export { createGame } from './create-game.js';
 export { InvalidBoardConfigError } from './errors.js';
 export type { CellsRevealed, FlagToggled, GameEvent, GameLost, GameWon } from './events.js';
 export { Game } from './game.js';

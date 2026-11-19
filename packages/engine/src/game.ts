@@ -28,7 +28,10 @@ const NO_CELLS: CellsRevealed['cells'] = Object.freeze([]);
  *
  * Players act through `apply`. It understands `reveal`, `flag` and `chord`. The game is won when every safe
  * cell is revealed and lost when a mine is revealed; both are final, and a finished game ignores every
- * further command.
+ * further command. Every command that takes effect is written to the command log (`log()`), which is the
+ * game's history: the same board and the same log give the same game again (ADR-002).
+ *
+ * Games are normally made by `createGame`, which also reveals the safe opening.
  *
  * @example
  * ```ts
@@ -60,21 +63,44 @@ export class Game {
   /** Delivers events to subscribers. */
   readonly #events = new GameEventEmitter();
 
+  /** The commands that took effect, in order. Each entry is a frozen copy of what the caller passed. */
+  readonly #log: Command[] = [];
+
+  /** The `t` of the last command that took effect; 0 before any, which is the time of the opening. */
+  #lastT = 0;
+
   /**
-   * Starts a new game: every cell hidden, status `'ready'`.
+   * Starts a new game: status `'ready'`, every cell hidden except the opening, if one is given.
+   *
+   * @remarks
+   * The opening is how `createGame` starts a game on a generated board. Its cells are revealed (with the
+   * usual cascade) as part of creating the game, at `t = 0`: no event is announced, nothing is logged, and
+   * the status stays `'ready'`. If that opening already reveals every safe cell, the status is `'won'`
+   * instead, because a game that is finished cannot be `'ready'`. Without an opening nothing is revealed.
    *
    * @param board - The mine layout to play on. It is shared, not copied; a `Board` never changes.
+   * @param opening - The cells to reveal at the start. Each must be a safe cell inside the board.
+   * @throws `RangeError` if an opening cell is not a whole number inside the board, or is a mine.
    *
    * @example
    * ```ts
-   * const game = new Game(new Board({ width: 9, height: 9, mineCount: 10 }, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
-   * game.view().cells.length; // 81
+   * const board = new Board({ width: 9, height: 9, mineCount: 10 }, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+   * new Game(board).view().cells.length; // 81, all hidden
+   * new Game(board, [80]).view().status; // 'ready', with the cells around 80 already open
    * ```
    */
-  constructor(board: Board) {
+  constructor(board: Board, opening: readonly CellIndex[] = []) {
     this.#board = board;
     this.#cellStates = new Uint8Array(board.config.width * board.config.height).fill(CELL_HIDDEN);
     this.#safeCells = safeCellCount(board.config);
+    for (const cell of opening) {
+      const result = revealCell(board, this.#cellStates, cell);
+      if (result.kind === 'mine') {
+        throw new RangeError(`opening cell ${String(cell)} is a mine`);
+      }
+      if (result.kind === 'cells') this.#revealedCount += result.cells.length;
+    }
+    if (this.#revealedCount === this.#safeCells) this.#status = 'won';
   }
 
   /**
@@ -106,6 +132,15 @@ export class Game {
    * A command that is not valid in the current state, or that changes nothing, returns `[]` and leaves the
    * game untouched: revealing a cell that is already revealed or flagged, and any command after the game
    * has been lost or won (the status is final). Only an index outside the board is an error.
+   *
+   * **Time.** `command.t` must be a non-negative safe integer that is not lower than the `t` of the last
+   * command that took effect (the opening counts as `t = 0`). Any other `t` makes the command invalid, so
+   * it returns `[]` and changes nothing, like any other invalid command. The checks run in a fixed order:
+   * the index (throws), then whether the game is over, then `t`, then the command itself. Only a command
+   * that takes effect moves the last `t` forward, so a no-op or a rejected command does not.
+   *
+   * **The log.** A command that takes effect is appended to `log()` before its events are delivered, so
+   * a subscriber that throws cannot lose it. Invalid and no-op commands are never logged.
    *
    * `reveal` on a hidden, safe cell reveals it; if it shows 0 the reveal spreads to the cells around it
    * (an iterative flood fill, see `revealCell`). All of that is one `cellsRevealed` event, listing every
@@ -142,7 +177,7 @@ export class Game {
    * @param command - What to do and when (`t`, milliseconds since the game started).
    * @returns The events the command caused, in order. A frozen array, empty if nothing happened.
    * @throws `RangeError` if `command.index` is not a whole number inside the board, whatever the type of
-   * the command and the status of the game.
+   * the command, its `t` and the status of the game.
    *
    * @example
    * ```ts
@@ -151,6 +186,11 @@ export class Game {
    * // [{ type: 'cellsRevealed', cells: [{ index: 0, value: 0 }, ...] }]
    * game.apply({ type: 'reveal', index: 0, t: 900 }); // [] (already revealed)
    * game.apply({ type: 'reveal', index: 8, t: 1_200 }); // [{ type: 'gameLost', t: 1200, mineIndex: 8 }]
+   *
+   * const other = new Game(new Board({ width: 3, height: 3, mineCount: 1 }, [8]));
+   * other.apply({ type: 'flag', index: 1, t: 500 }); // [{ type: 'flagToggled', ... }]
+   * other.apply({ type: 'flag', index: 2, t: 499 }); // [] (earlier than 500: rejected)
+   * other.log(); // [{ type: 'flag', index: 1, t: 500 }]
    * ```
    */
   apply(command: Command): readonly GameEvent[] {
@@ -160,13 +200,16 @@ export class Game {
       throw new RangeError(`index must be a whole number from 0 to ${total - 1}, got ${index}`);
     }
     if (this.#status === 'won' || this.#status === 'lost') return NO_EVENTS;
+    // Time never goes backwards, and only whole milliseconds count; `Number.isSafeInteger` is false for
+    // NaN, the infinities and fractions, and keeps every logged `t` exact in JSON.
+    if (!Number.isSafeInteger(command.t) || command.t < this.#lastT) return NO_EVENTS;
     switch (command.type) {
       case 'reveal':
-        return this.#reveal(index, command.t);
+        return this.#reveal(command, index);
       case 'flag':
-        return this.#flag(index);
+        return this.#flag(command, index);
       case 'chord':
-        return this.#chord(index, command.t);
+        return this.#chord(command, index);
       default:
         // An unknown `type` (only possible from untyped input, such as a message from the network) changes nothing.
         return NO_EVENTS;
@@ -176,31 +219,32 @@ export class Game {
   /**
    * Toggles the flag on a cell and announces it.
    *
+   * @param command - The command being applied, for the log.
    * @param index - A valid cell index.
    * @returns One `flagToggled` event, or none if the cell is revealed.
    */
-  #flag(index: CellIndex): readonly GameEvent[] {
+  #flag(command: Command, index: CellIndex): readonly GameEvent[] {
     const state = this.#cellStates[index];
     if (state !== CELL_HIDDEN && state !== CELL_FLAGGED) return NO_EVENTS;
 
     const flagged = state === CELL_HIDDEN;
     this.#cellStates[index] = flagged ? CELL_FLAGGED : CELL_HIDDEN;
     this.#status = 'playing';
-    return this.#announce([Object.freeze({ type: 'flagToggled', index, flagged })]);
+    return this.#announce(command, [Object.freeze({ type: 'flagToggled', index, flagged })]);
   }
 
   /**
    * Chords on a cell, updates the status and announces what happened.
    *
+   * @param command - The command being applied; its `t` is the time of the events.
    * @param index - A valid cell index.
-   * @param t - Milliseconds since the game started.
    * @returns The events the chord caused: nothing, `cellsRevealed`, `gameLost`, `cellsRevealed` then
    * `gameLost`, or `cellsRevealed` then `gameWon`.
    */
-  #chord(index: CellIndex, t: number): readonly GameEvent[] {
+  #chord(command: Command, index: CellIndex): readonly GameEvent[] {
     const result = chordCells(this.#board, this.#cellStates, index);
     if (result.kind === 'none') return NO_EVENTS;
-    return this.#settle(result.cells, result.mineIndex, t);
+    return this.#settle(command, result.cells, result.mineIndex);
   }
 
   /**
@@ -214,16 +258,17 @@ export class Game {
    *
    * The events are `cellsRevealed` (only if a cell was opened), then at most one of `gameLost` and `gameWon`.
    *
+   * @param command - The command being applied; its `t` is the time of a win or a loss.
    * @param cells - The cells the command revealed, possibly none.
    * @param mineIndex - The mine the command reached, or `null` if it reached none.
-   * @param t - Milliseconds since the game started, taken from the command.
    * @returns The announced events, a frozen array.
    */
   #settle(
+    command: Command,
     cells: CellsRevealed['cells'],
     mineIndex: CellIndex | null,
-    t: number,
   ): readonly GameEvent[] {
+    const { t } = command;
     const events: GameEvent[] = [];
     if (cells.length > 0) {
       this.#revealedCount += cells.length;
@@ -238,20 +283,26 @@ export class Game {
     } else {
       this.#status = 'playing';
     }
-    return this.#announce(events);
+    return this.#announce(command, events);
   }
 
   /**
-   * Delivers a command's events to the subscribers, in order, and returns them.
+   * Logs a command that took effect, then delivers its events to the subscribers, in order, and returns them.
    *
    * @remarks
    * Every event reaches every subscriber even if one of them throws; the first error is rethrown once the
-   * last event has been delivered.
+   * last event has been delivered. The command is logged first, because the game has already changed and
+   * the log must say so even if a subscriber fails. Every command that reaches this step took effect: a
+   * command with no events is returned as `[]` earlier and never gets here.
    *
+   * @param command - The command that took effect. A frozen copy of it goes into the log.
    * @param events - The events to deliver, in order. Not empty.
    * @returns The same events as a frozen array.
    */
-  #announce(events: readonly GameEvent[]): readonly GameEvent[] {
+  #announce(command: Command, events: readonly GameEvent[]): readonly GameEvent[] {
+    // Copy only the three fields: the caller keeps its own object and may change it (or have added fields).
+    this.#log.push(Object.freeze({ type: command.type, index: command.index, t: command.t }));
+    this.#lastT = command.t;
     let failed = false;
     let firstError: unknown;
     for (const event of events) {
@@ -271,16 +322,44 @@ export class Game {
   /**
    * Reveals a cell, updates the status and announces what happened.
    *
+   * @param command - The command being applied; its `t` is the time of the events.
    * @param index - A valid cell index.
-   * @param t - Milliseconds since the game started.
    * @returns The events the reveal caused: `gameLost`, or `cellsRevealed`, followed by `gameWon` if that
    * reveal opened the last safe cell.
    */
-  #reveal(index: CellIndex, t: number): readonly GameEvent[] {
+  #reveal(command: Command, index: CellIndex): readonly GameEvent[] {
     const result = revealCell(this.#board, this.#cellStates, index);
     if (result.kind === 'none') return NO_EVENTS;
-    if (result.kind === 'mine') return this.#settle(NO_CELLS, index, t);
-    return this.#settle(result.cells, null, t);
+    if (result.kind === 'mine') return this.#settle(command, NO_CELLS, index);
+    return this.#settle(command, result.cells, null);
+  }
+
+  /**
+   * The commands that took effect, in the order they were applied: the game's history.
+   *
+   * @remarks
+   * Together with the board (`config` and `seed`) this is everything needed to play the game again: applying
+   * the log to a new game made by `createGame` gives the same view and the same events (ADR-002; replay and
+   * validation arrive in M2-T04). The opening is not in the log, because `createGame` makes it. A command
+   * that was invalid, changed nothing, came after the end of the game, or had a bad `t` is not in it, and
+   * neither is one that threw `RangeError`. The `t` values never decrease.
+   *
+   * Each call returns a new frozen list of frozen commands holding only `type`, `index` and `t`, copied when
+   * the command was applied: later commands do not change a list you already hold, and neither can the
+   * caller's own command objects. The log holds no information about mines.
+   *
+   * @returns The accepted commands, oldest first.
+   *
+   * @example
+   * ```ts
+   * const game = new Game(new Board({ width: 3, height: 3, mineCount: 1 }, [8]));
+   * game.apply({ type: 'reveal', index: 0, t: 400 });
+   * game.apply({ type: 'reveal', index: 0, t: 900 }); // already revealed: not logged
+   * game.log(); // [{ type: 'reveal', index: 0, t: 400 }]
+   * ```
+   */
+  log(): readonly Command[] {
+    return Object.freeze([...this.#log]);
   }
 
   /**

@@ -9,7 +9,8 @@ import type { CellIndex } from './config.js';
  * clock. A game's command log is its history, which replay and ranked validation rely on.
  *
  * `index` must be a whole number inside the board; `Game.apply` throws `RangeError` otherwise. `t` is taken
- * as given and not checked here.
+ * as given by this type, but `Game.apply` accepts it only if it is a non-negative safe integer that is not lower
+ * than the `t` of the last accepted command (M2-T03); a command with any other `t` is invalid and returns `[]`.
  *
  * @example
  * ```ts

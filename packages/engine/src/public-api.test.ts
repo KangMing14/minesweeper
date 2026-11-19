@@ -7,6 +7,7 @@ import {
   SafeOpeningPolicy,
   SeededBoardGenerator,
   cellCount,
+  createGame,
   createPrng,
   safeCellCount,
   validateBoardConfig,
@@ -190,5 +191,30 @@ describe('public API: seeded boards', () => {
     expect(() =>
       new SeededBoardGenerator().generate({ width: 9, height: 9, mineCount: 78 }, 1),
     ).toThrow(InvalidBoardConfigError);
+  });
+});
+
+describe('starting a game with createGame, through the public entry point only (M2-T03)', () => {
+  it('gives a ready game with the opening open, logs only what the player does, and ends in a win or loss', () => {
+    const game = createGame(PRESETS.beginner, 42);
+    const start: GameView = game.view();
+    expect(start.status).toBe('ready');
+    expect(start.revealedCount).toBeGreaterThan(0);
+    expect(game.log()).toEqual([]);
+
+    const hidden = start.cells.findIndex((cell) => cell.state === 'hidden');
+    game.apply({ type: 'flag', index: hidden, t: 250 });
+    game.apply({ type: 'flag', index: hidden, t: 100 }); // earlier than 250: rejected
+    expect(game.view().status).toBe('playing');
+    expect(game.log()).toEqual([{ type: 'flag', index: hidden, t: 250 }]);
+  });
+
+  it('accepts a generator of your own and passes the seed on', () => {
+    const own: BoardGenerator = {
+      generate: (config, seed) => new SeededBoardGenerator().generate(config, seed + 1),
+    };
+    expect(createGame(PRESETS.beginner, 1, own).view()).toEqual(
+      createGame(PRESETS.beginner, 2).view(),
+    );
   });
 });
