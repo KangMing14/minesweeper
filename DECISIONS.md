@@ -98,6 +98,14 @@ D-01 to D-11 come from spec section 3, D-12 and D-13 from the master plan, D-14 
 
 No ADR and no open decision. A note for the ADRs that will follow: the board and opening that `SeededBoardGenerator` gives for a `(config, seed)` are a stable contract, like the `Prng` sequence (ADR-002). The draw order, the opening rule and the mine placement are written in the TSDoc of `SeededBoardGenerator` and `SafeOpeningPolicy` and in `ARCHITECTURE.md`, "Board generation", and `packages/engine/fixtures/boards.json` pins 22 boards. Changing the output needs a new generator version (carried by `ReplayLog.version`, M2-T04) and an ADR that supersedes this note; old versions must stay replayable. Also recorded here: a config whose mines do not fit around any opening zone is rejected by the generator, whatever the seed (D-01 working presets are unaffected; the densest classic board, expert 99 of 480, has a large margin).
 
+## Game creation and the opening (M2-T03)
+
+No ADR and no open decision. A note for the ADRs that will follow. `createGame` reveals the safe opening at `t = 0` as part of creating a game; it is not a command and is not in `Game.log()`. A created game is `'ready'` until the first accepted player command, and it is `'won'` from the start if the opening already clears the board (a 1x1 board, a board with no mines, a small board whose cascade reaches everything, and, for some seeds, a preset board). The developer chose this on 2026-11-19 over making a created game `'playing'`. The engine also rejects, silently, a command whose `t` is not a non-negative safe integer or is lower than the last accepted one. Details are in `ARCHITECTURE.md`, "Game creation and the command log".
+
+- **ADR-010 (D-02, race tie-break):** a seed whose opening clears the board gives both players a win at `t = 0`, so the tie-break must say what happens then (the working assumption "more safe cells revealed wins" cannot separate them).
+- **M2-T04 (replay):** a log with no commands replays to `'ready'`, except on such a board, where it replays to `'won'`.
+- **Changing this later** needs a new generator or engine version and an ADR that supersedes this note, because stored replays depend on how a game starts (ADR-002).
+
 ## ADR-005 input: dependency pins
 
 Versions were looked up on the npm registry on **2026-11-05**. Rule: the newest stable release at least 14 days old (published on or before 2026-10-22), within the major line of the registry's `latest`, unless a compatibility note says otherwise. A security fix is a second exception (added in M0-T06, ADR-005): a version below the first patched release of a published security advisory is not eligible, however old it is, and the 14-day wait does not apply to the patched version. Every version is exact (no `^` or `~`). "Latest" is what the registry tagged `latest` on that day.

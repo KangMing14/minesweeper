@@ -221,7 +221,7 @@ Implemented in M2-T02 (`packages/engine/src/generator.ts`, `opening.ts`, `fixtur
 
 ## Game creation and the command log
 
-Implemented in M2-T03 (`packages/engine/src/create-game.ts`, `game.ts`, `create-game.test.ts`, `game.log.test.ts`). No ADR and no open decision: the rules follow the task text, ADR-002 and the developer's decision of 2026-11-18 on the status after the opening (option A1, recorded here).
+Implemented in M2-T03 (`packages/engine/src/create-game.ts`, `game.ts`, `create-game.test.ts`, `game.log.test.ts`). No ADR and no open decision: the rules follow the task text, ADR-002 and the developer's decision of 2026-11-19 on the status after the opening (option A1, recorded here).
 
 - **`createGame(config, seed, generator?)`** asks the generator (default `new SeededBoardGenerator()`) for `{ board, opening }` and returns `new Game(board, opening)`. Errors from the generator pass through unchanged: `InvalidBoardConfigError` for a config, `RangeError` for a seed.
 - **The opening is part of creating the game.** The `Game` constructor takes an optional `opening: readonly CellIndex[]`, reveals those cells with the usual cascade, announces no event, writes nothing to the log and does not move the status. An opening cell that is a mine, or not a whole number inside the board, throws `RangeError`. Without an opening (`new Game(board)`) nothing is revealed, exactly as in M1.
