@@ -74,11 +74,21 @@ class InvalidBoardConfigError extends Error
   new (reason: string): InvalidBoardConfigError
   readonly reason: string
 
+class InvalidReplayError extends Error
+  new (reason: string, options?: ErrorOptions): InvalidReplayError
+  readonly reason: string
+
 const PRESETS: Readonly<{ beginner: Readonly<{ width: 9; height: 9; mineCount: 10; }>; intermediate: Readonly<{ width: 16; height: 16; mineCount: 40; }>; expert: Readonly<{ width: 30; height: 16; mineCount: 99; }>; }>
 
 interface Prng
   nextInt(maxExclusive: number): number
   nextUint32(): number
+
+interface ReplayLog
+  readonly commands: readonly Command[]
+  readonly config: BoardConfig
+  readonly seed: number
+  readonly version: 1
 
 class SafeOpeningPolicy
   new (): SafeOpeningPolicy
@@ -94,6 +104,10 @@ function createGame(config: BoardConfig, seed: number, generator?: BoardGenerato
 
 function createPrng(seed: number): Prng
 
+function replay(log: ReplayLog, generator?: BoardGenerator): Game
+
 function safeCellCount(config: BoardConfig): number
 
 function validateBoardConfig(config: BoardConfig): void
+
+function validateReplayLog(log: ReplayLog): void

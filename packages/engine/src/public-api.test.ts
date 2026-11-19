@@ -3,14 +3,17 @@ import {
   Board,
   Game,
   InvalidBoardConfigError,
+  InvalidReplayError,
   PRESETS,
   SafeOpeningPolicy,
   SeededBoardGenerator,
   cellCount,
   createGame,
   createPrng,
+  replay,
   safeCellCount,
   validateBoardConfig,
+  validateReplayLog,
 } from './index.js';
 import type {
   BoardGenerator,
@@ -19,6 +22,7 @@ import type {
   GameView,
   GeneratedBoard,
   Prng,
+  ReplayLog,
 } from './index.js';
 
 // M1-T07: a consumer's view of the engine. Everything this file touches comes from `./index.js` and nothing
@@ -216,5 +220,41 @@ describe('starting a game with createGame, through the public entry point only (
     expect(createGame(PRESETS.beginner, 1, own).view()).toEqual(
       createGame(PRESETS.beginner, 2).view(),
     );
+  });
+});
+
+describe('replaying a game with replay, through the public entry point only (M2-T04)', () => {
+  it('plays a log made from a live game to the same view and the same log', () => {
+    const live = createGame(PRESETS.beginner, 42);
+    const hidden = live.view().cells.findIndex((cell) => cell.state === 'hidden');
+    live.apply({ type: 'flag', index: hidden, t: 300 });
+    live.apply({ type: 'flag', index: hidden, t: 450 }); // takes the flag off again
+    const log: ReplayLog = { version: 1, config: PRESETS.beginner, seed: 42, commands: live.log() };
+
+    expect(() => validateReplayLog(log)).not.toThrow();
+    const again = replay(log);
+    expect(again.view()).toEqual(live.view());
+    expect(again.log()).toEqual(live.log());
+  });
+
+  it('survives JSON, and rejects a bad log with an InvalidReplayError that says where', () => {
+    const live = createGame(PRESETS.beginner, 7);
+    live.apply({ type: 'flag', index: 0, t: 10 });
+    const stored = JSON.parse(
+      JSON.stringify({ version: 1, config: PRESETS.beginner, seed: 7, commands: live.log() }),
+    ) as ReplayLog;
+    expect(replay(stored).view()).toEqual(live.view());
+
+    const bad = {
+      ...stored,
+      commands: [...stored.commands, { type: 'flag', index: 1, t: 5 }],
+    } as ReplayLog;
+    try {
+      replay(bad);
+      expect.unreachable('a t that goes down must be rejected');
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidReplayError);
+      expect((error as InvalidReplayError).reason).toMatch(/^commands\[1\]\.t /);
+    }
   });
 });

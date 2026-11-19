@@ -33,6 +33,7 @@ const NOT_PUBLIC = [
   'chordCells',
   'ChordResult',
   'openingZone',
+  'MAX_REPLAY_COMMANDS',
 ] as const;
 
 const FORMAT =
