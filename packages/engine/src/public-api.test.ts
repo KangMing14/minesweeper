@@ -19,6 +19,7 @@ import type {
   BoardGenerator,
   Command,
   GameEvent,
+  GameResult,
   GameView,
   GeneratedBoard,
   Prng,
@@ -256,5 +257,39 @@ describe('replaying a game with replay, through the public entry point only (M2-
       expect(error).toBeInstanceOf(InvalidReplayError);
       expect((error as InvalidReplayError).reason).toMatch(/^commands\[1\]\.t /);
     }
+  });
+});
+
+describe('reading the result of a game with Game.result, through the public entry point only (M2-T05)', () => {
+  it('is undefined until the game ends, then a record of the finished game', () => {
+    const game = new Game(new Board({ width: 3, height: 3, mineCount: 1 }, [4]));
+    expect(game.result()).toBeUndefined();
+
+    game.apply({ type: 'reveal', index: 0, t: 400 });
+    expect(game.result()).toBeUndefined();
+
+    game.apply({ type: 'reveal', index: 4, t: 900 }); // the mine
+    const result: GameResult | undefined = game.result();
+    expect(result).toEqual({
+      outcome: 'lost',
+      timeMs: 900,
+      safeCellsRevealed: 1,
+      totalSafeCells: 8,
+      effectiveCommands: 2,
+      threeBV: 8,
+      threeBVPerSecond: 8000 / 900,
+    });
+  });
+
+  it('is the same for a game that is replayed from its log', () => {
+    const live = createGame({ width: 1, height: 1, mineCount: 0 }, 5); // the opening clears it at t = 0
+    const log: ReplayLog = {
+      version: 1,
+      config: { width: 1, height: 1, mineCount: 0 },
+      seed: 5,
+      commands: live.log(),
+    };
+    expect(live.result()).toMatchObject({ outcome: 'won', timeMs: 0, threeBVPerSecond: 0 });
+    expect(replay(log).result()).toEqual(live.result());
   });
 });

@@ -3,7 +3,9 @@ import { chordCells } from './chord.js';
 import type { Command } from './command.js';
 import { safeCellCount, type CellIndex } from './config.js';
 import { GameEventEmitter, type CellsRevealed, type GameEvent } from './events.js';
+import { buildGameResult, type GameResult } from './result.js';
 import { revealCell } from './reveal.js';
+import { computeThreeBV } from './threebv.js';
 import {
   buildGameView,
   CELL_FLAGGED,
@@ -29,7 +31,8 @@ const NO_CELLS: CellsRevealed['cells'] = Object.freeze([]);
  * Players act through `apply`. It understands `reveal`, `flag` and `chord`. The game is won when every safe
  * cell is revealed and lost when a mine is revealed; both are final, and a finished game ignores every
  * further command. Every command that takes effect is written to the command log (`log()`), which is the
- * game's history: the same board and the same log give the same game again (ADR-002).
+ * game's history: the same board and the same log give the same game again (ADR-002). When the game is over,
+ * `result()` reports how it went.
  *
  * Games are normally made by `createGame`, which also reveals the safe opening.
  *
@@ -68,6 +71,9 @@ export class Game {
 
   /** The `t` of the last command that took effect; 0 before any, which is the time of the opening. */
   #lastT = 0;
+
+  /** The result, built the first time it is asked for after the game ends. A finished game never changes. */
+  #result: GameResult | undefined;
 
   /**
    * Starts a new game: status `'ready'`, every cell hidden except the opening, if one is given.
@@ -360,6 +366,52 @@ export class Game {
    */
   log(): readonly Command[] {
     return Object.freeze([...this.#log]);
+  }
+
+  /**
+   * The record of the finished game, or `undefined` while it is still going.
+   *
+   * @remarks
+   * A game is finished when it is `'won'` or `'lost'`; before that there is nothing to report, so a game
+   * that is `'ready'` or `'playing'` returns `undefined`, however close it is to the end. Once the game is
+   * over the result never changes and every call returns the same frozen object.
+   *
+   * `timeMs` is the `t` of the command that ended the game: the last accepted command, because nothing is
+   * accepted after the end. A game that the opening cleared at creation (see `createGame`) has no such
+   * command and `timeMs` is 0, with `effectiveCommands` 0. `safeCellsRevealed` is the number of revealed
+   * cells, the opening included; `effectiveCommands` is the length of `log()`. The 3BV is worked out from
+   * the board the first time the result is asked for.
+   *
+   * The result is derived from the commands alone, so `replay(log).result()` equals the result of the game
+   * that made the log (ADR-002). Its `threeBV` is computed from the whole mine layout. That is an aggregate
+   * and not a position, but it is still information about the mines: in a race it falls under the same
+   * release rule as `exposedMines` and `GameLost.mineIndex`, and the server decides when a client may see it
+   * (D-14, M4-T03, M5-T05).
+   *
+   * @returns The result of the finished game, or `undefined` if it has not ended.
+   *
+   * @example
+   * ```ts
+   * const game = new Game(new Board({ width: 3, height: 3, mineCount: 1 }, [4]));
+   * game.result(); // undefined
+   * game.apply({ type: 'reveal', index: 0, t: 400 });
+   * game.apply({ type: 'reveal', index: 4, t: 900 }); // the mine
+   * game.result();
+   * // { outcome: 'lost', timeMs: 900, safeCellsRevealed: 1, totalSafeCells: 8,
+   * //   effectiveCommands: 2, threeBV: 8, threeBVPerSecond: 8000 / 900 }
+   * ```
+   */
+  result(): GameResult | undefined {
+    if (this.#status !== 'won' && this.#status !== 'lost') return undefined;
+    this.#result ??= buildGameResult({
+      outcome: this.#status,
+      timeMs: this.#lastT,
+      safeCellsRevealed: this.#revealedCount,
+      totalSafeCells: this.#safeCells,
+      effectiveCommands: this.#log.length,
+      threeBV: computeThreeBV(this.#board),
+    });
+    return this.#result;
   }
 
   /**

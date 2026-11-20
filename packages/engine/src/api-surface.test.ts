@@ -34,6 +34,8 @@ const NOT_PUBLIC = [
   'ChordResult',
   'openingZone',
   'MAX_REPLAY_COMMANDS',
+  'computeThreeBV',
+  'buildGameResult',
 ] as const;
 
 const FORMAT =
