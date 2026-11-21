@@ -41,6 +41,7 @@ Progress is tracked in one place: [ROADMAP.md](ROADMAP.md) (12 milestones, 86 ta
 
 ## Glossary
 
+- **3BV** (Bechtel's Board Benchmark Value): the fewest plain reveals that clear a board when every mine is known, with no flags and no chords: one click for each opening (a connected group of cells that touch no mine) plus one for each numbered cell that no opening reaches. It describes the board, not how well it was played; the free opening of a game counts like any other. **3BV/s** is the 3BV divided by the time in seconds, the usual speed measure that lets boards of different difficulty be compared. Both are in the `GameResult` of a finished game (M2-T05).
 - **ADR** (architecture decision record): a short, append-only document that records one decision with its context, consequences and alternatives. Superseded, never edited.
 - **Canonical names:** the exact names of the main types and classes, fixed in the master plan and copied into `ARCHITECTURE.md`. Tasks use them verbatim.
 - **Chord:** revealing all hidden neighbors of a revealed number at once, allowed only when the number of adjacent flags equals that number. A wrong flag count changes nothing. The final rules are recorded in ADR-009 (M1-T05).

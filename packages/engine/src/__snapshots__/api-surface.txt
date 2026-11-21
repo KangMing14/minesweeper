@@ -40,6 +40,7 @@ class Game
   new (board: Board, opening?: readonly CellIndex[]): Game
   apply(command: Command): readonly GameEvent[]
   log(): readonly Command[]
+  result(): GameResult | undefined
   subscribe(listener: (event: GameEvent) => void): () => void
   view(): GameView
 
@@ -50,7 +51,16 @@ interface GameLost
   readonly t: number
   readonly type: "gameLost"
 
-type GameStatus = "ready" | "playing" | "won" | "lost"
+interface GameResult
+  readonly effectiveCommands: number
+  readonly outcome: "won" | "lost"
+  readonly safeCellsRevealed: number
+  readonly threeBV: number
+  readonly threeBVPerSecond: number
+  readonly timeMs: number
+  readonly totalSafeCells: number
+
+type GameStatus = "won" | "lost" | "ready" | "playing"
 
 interface GameView
   readonly cells: readonly CellView[]

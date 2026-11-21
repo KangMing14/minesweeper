@@ -114,6 +114,15 @@ No ADR and no open decision. A note for the ADRs that will follow. A `ReplayLog`
 - **M5-T01 (protocol):** the Zod schema for a replay log must enforce the same limits as `validateReplayLog` (version 1, uint32 seed, at most 100,000 commands) and must not be looser, so that anything it lets through is also valid here.
 - **M8-T01 (`ReplayValidator`):** treat `InvalidReplayError` as "log rejected" and any other error as a server fault.
 
+## Results and scoring (M2-T05)
+
+No ADR and no open decision. A note for the ADRs that will follow. `Game.result()` returns a `GameResult` once a game is won or lost: the outcome, `timeMs` (the `t` of the finishing command, 0 for a game that the opening cleared at creation), `safeCellsRevealed`, `totalSafeCells`, `effectiveCommands` (the length of the command log, flags included), the board's `threeBV` (openings plus isolated numbers, counting the free opening) and `threeBVPerSecond` (`threeBV * 1000 / timeMs`, 0 when `timeMs` is 0). The record is derived data: the log is the truth, and `replay(log).result()` equals the live result. Choices the task left open (the meaning of `effectiveCommands`, the free opening in the 3BV, which names are public) are in `ARCHITECTURE.md`, "Results and scoring".
+
+- **ADR-010 (D-14, mine release in a race):** `GameResult.threeBV` is computed from the whole mine layout. It is not a position, but it is information about the layout, and the engine fills it in as soon as a player's own game ends. Say whether the server releases it with the same timing as `exposedMines` and `GameLost.mineIndex` (working assumption: yes, only when the match result is final for both players) or earlier. M5-T05's leak test should then cover the record as well as the view and the `delta`.
+- **ADR-010 (D-02, race tie-break):** `safeCellsRevealed` is the progress that the "both DNF" rule compares. After a losing chord it includes the safe neighbors that chord opened before it reached a mine, and it includes the opening, which both players of a race share. A win at creation (M2-T03) has `timeMs` 0 for both players.
+- **M4-T01 (`GameMode.playerResult`):** an unfinished game has no `result()`. `safeCellsRevealed` is available as `view().revealedCount`; `threeBV` is not, because `Game` exposes no board. That task decides how to reach it.
+- **M7 and M8 (stored results):** the record is derived from the log. Store the log as the truth; if the definition of a field ever changes, bump the replay version (ADR-002) or recompute from the log, and write it down here.
+
 ## ADR-005 input: dependency pins
 
 Versions were looked up on the npm registry on **2026-11-05**. Rule: the newest stable release at least 14 days old (published on or before 2026-10-22), within the major line of the registry's `latest`, unless a compatibility note says otherwise. A security fix is a second exception (added in M0-T06, ADR-005): a version below the first patched release of a published security advisory is not eligible, however old it is, and the 14-day wait does not apply to the patched version. Every version is exact (no `^` or `~`). "Latest" is what the registry tagged `latest` on that day.

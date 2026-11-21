@@ -21,4 +21,5 @@ export type { Prng } from './prng.js';
 export { createPrng } from './prng.js';
 export type { ReplayLog } from './replay.js';
 export { replay, validateReplayLog } from './replay.js';
+export type { GameResult } from './result.js';
 export type { CellView, GameStatus, GameView } from './view.js';
