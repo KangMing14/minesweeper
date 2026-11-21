@@ -169,23 +169,31 @@ Add or change a fixture in `tools/lint-fixtures/cases/` and its entry in `tools/
 
 | Command | What it does |
 |---|---|
-| `pnpm test` | Vitest, all four projects (`engine`, `protocol`, `server`, `web`), once, no watch |
+| `pnpm test` | Vitest, all four projects (`engine`, `protocol`, `server`, `web`), once, no watch; never needs a browser (`*.browser.test.ts` files are excluded) |
 | `pnpm test:coverage` | The same with v8 coverage: terminal table plus `coverage/` (`lcov.info`, `coverage-summary.json`) |
+| `pnpm test:browser` | The determinism suite in Chromium (Vitest browser mode, `vitest.browser.config.ts`); needs the browser installed once (see "Running the browser tests") |
 | `pnpm test:affected` | Only tests affected by changes since `origin/main` (what `pre-push` runs); the whole suite if `origin/main` is missing |
 | `pnpm typecheck` | `tsc -b` for the packages, then `pnpm typecheck:tests` |
-| `pnpm typecheck:tests` | Type-checks test files (`packages/*/tsconfig.test.json`) and `vitest.config.ts` (`tsconfig.tooling.json`) |
+| `pnpm typecheck:tests` | Type-checks test files (`packages/*/tsconfig.test.json`) and `vitest.config.ts` and `vitest.browser.config.ts` (`tsconfig.tooling.json`) |
 | `pnpm docs:api` | TypeDoc API reference for `engine` and `protocol` into `docs/api/` (ignored by git); any warning is an error |
 | `pnpm exec vitest --project engine` | Run one project; add `--watch` while developing |
 
 ### Where tests live
-- Unit tests sit next to the code: `src/**/*.test.ts` (or `.spec.ts`). Shared and integration tests go in a package's `test/` directory (`engine` determinism suite in M2, server fault tests in M6).
+- Unit tests sit next to the code: `src/**/*.test.ts` (or `.spec.ts`). Shared and integration tests go in a package's `test/` directory (the `engine` determinism suite since M2-T06, server fault tests in M6). A module there that is not named `*.test.ts` is not collected by itself and is linted like source code; the runners are the `*.test.ts` files that call it.
 - Golden data (known-good outputs that pin a contract, such as `prng-vectors.json`) sits in `packages/<name>/fixtures/` and is imported from tests with `import data from '../fixtures/x.json' with { type: 'json' }`; the package's `tsconfig.test.json` sets `resolveJsonModule` for it, and engine code may not read files with `node:fs`. A fixture says in its own `generatedBy` field how it was produced, and it must not be produced by the code it checks. Editing a golden value is a contract change (ADR-002), not a test fix.
-- Playwright specs live in `e2e/` (M3-T08) and are never picked up by Vitest.
+- Playwright end-to-end specs live in `e2e/` (M3-T08) and are never picked up by Vitest. Browser-mode Vitest tests are different: they are `packages/*/test/**/*.browser.test.ts` files, run by `pnpm test:browser`.
 - `vitest.config.ts` defines one project per package. Workspace files (`vitest.workspace.ts`) were removed in Vitest 4, so projects are declared in `test.projects`.
 - Tests import workspace packages by name (`@minesweeper/engine`). Vitest resolves those names to the package **source**, so tests run on a fresh clone without `tsc -b`. TypeScript still reads types from the built output, which is why `typecheck` builds first.
 - `*.test.ts` files are excluded from the `tsc -b` build of `engine` and `protocol` (they are not shipped, and those packages compile without Node types). The `tsconfig.test.json` next to each checks them instead.
 - Coverage thresholds apply to `packages/engine` only (95% statements, functions and lines; 90% branches) and `index.ts` barrels are excluded (`vitest.config.ts`, M1-T07). `pnpm test:coverage` runs in CI, so they gate every pull request. Changing a number is a deliberate edit of that file, explained in the pull request.
 - The engine's public surface is locked by `packages/engine/src/api-surface.test.ts` against `packages/engine/src/__snapshots__/api-surface.txt`. A task that adds, renames or reshapes an export updates the snapshot with `pnpm exec vitest run --project engine -u`, reads the diff and explains it in the pull request. CI never writes snapshots.
+
+### Running the browser tests
+- One-time per machine, and again after `playwright` changes version: `pnpm exec playwright install chromium`. On a bare Linux machine or container use `pnpm exec playwright install --with-deps chromium` (CI does), which also installs the system libraries.
+- Run: `pnpm test:browser`. It starts Chromium headless, runs `packages/engine/test/determinism.browser.test.ts` (the same suite as the Node runner, `determinism.shared.ts`) and prints the usual Vitest report. Run only the Node side with `pnpm exec vitest run --project engine packages/engine/test/determinism.node`.
+- "Executable doesn't exist" means the browser is not installed (or is the revision of another `playwright` version): run the install command above. A failure in the browser run only means a real difference between Node and Chromium (or a stub that Chromium will not let the test install, which is reported by name), so read the first failing test before changing anything; never edit a golden fixture to turn it green (ADR-002).
+- The browser tests run the TypeScript source through Vite, not the built `dist/`. They are not part of `pnpm test`, `pnpm test:coverage` or the `pre-push` hook, so a machine without Chromium can still do everything else.
+- Changing the suite: the checks live in `packages/engine/test/determinism.shared.ts` (one file for both environments), the stubs and the fuzz player in `determinism.support.ts`. The module is subject to the engine's purity lint, so the names `Date`, `performance` and `Math.random` may only appear as strings there.
 
 ### API reference (TypeDoc)
 - `typedoc.json` documents `packages/engine` and `packages/protocol` (spec section 7.2). `treatWarningsAsErrors` makes unresolved `{@link}`s, unknown tags and unexported references fail `pnpm docs:api`, locally and in CI.
@@ -194,9 +202,9 @@ Add or change a fixture in `tools/lint-fixtures/cases/` and its entry in `tools/
 
 ### Continuous integration
 - Workflow: `.github/workflows/ci.yml`, one job named `ci`, on every pull request to `main` and every push to `main`.
-- Steps, in order: install with `--frozen-lockfile` (pnpm store cached), `typecheck`, `lint`, `format:check`, `check:todos`, `check:links` (added in M0-T05), `test:lint-fixtures`, `test:coverage`, `docs:api`, and on pull requests a commitlint check of the **PR title**. Coverage and `docs/api` are uploaded as the `ci-reports` artifact (7 days).
+- Steps, in order: install with `--frozen-lockfile` (pnpm store cached), `typecheck`, `lint`, `format:check`, `check:todos`, `check:links` (added in M0-T05), `test:lint-fixtures`, `test:coverage`, `playwright install --with-deps chromium` and `test:browser` (added in M2-T06), `docs:api`, and on pull requests a commitlint check of the **PR title**. Coverage and `docs/api` are uploaded as the `ci-reports` artifact (7 days).
 - Third-party actions are pinned to full commit SHAs (tag in a comment). Versions and dates are in `DECISIONS.md`. Update them on purpose, one at a time.
-- Running everything CI runs, locally: `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:todos && pnpm check:links && pnpm test:lint-fixtures && pnpm test:coverage && pnpm docs:api`.
+- Running everything CI runs, locally: `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:todos && pnpm check:links && pnpm test:lint-fixtures && pnpm test:coverage && pnpm test:browser && pnpm docs:api` (run `pnpm exec playwright install chromium` once before `pnpm test:browser`).
 - Checking a PR title locally: `printf '%s\n' 'ci: add test tooling [M0-T04]' | pnpm exec commitlint`.
 
 ### Making CI a required check

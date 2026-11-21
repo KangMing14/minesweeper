@@ -23,6 +23,7 @@
     "test:lint-fixtures": "node --test tools/lint-fixtures/lint-fixtures.test.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:browser": "vitest run --config vitest.browser.config.ts",
     "test:affected": "node scripts/test-affected.mjs",
     "docs:api": "typedoc",
     "prepare": "husky"
@@ -32,6 +33,7 @@
     "@commitlint/config-conventional": "21.2.4",
     "@eslint/js": "10.0.1",
     "@types/node": "24.19.2",
+    "@vitest/browser-playwright": "5.0.5",
     "@vitest/coverage-v8": "5.0.5",
     "eslint": "10.13.0",
     "eslint-plugin-jsdoc": "65.4.0",
@@ -39,6 +41,7 @@
     "fast-check": "4.10.2",
     "husky": "9.1.7",
     "lint-staged": "17.6.0",
+    "playwright": "1.65.0",
     "prettier": "3.9.10",
     "typedoc": "0.28.20",
     "typescript": "6.0.3",

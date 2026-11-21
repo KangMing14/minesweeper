@@ -4,7 +4,7 @@
 
 A browser-based competitive Minesweeper: 1v1 races on an identical seeded board with a guaranteed safe opening, plus solo time-attack with leaderboards. TypeScript, pnpm monorepo, a deterministic engine and a server-authoritative backend. Inspired by the competitive feel of TETR.IO, not a copy of it.
 
-**Status:** M0 Foundations is done (the `m0-complete` tag follows its review); the game itself starts with the engine in M1. [ROADMAP.md](ROADMAP.md) has the status of every task. License: all rights reserved until launch ([ADR-008](docs/adr/ADR-008-license.md), [LICENSE](LICENSE)).
+**Status:** M0 Foundations and M1 Engine core are done and tagged. M2 Deterministic engine has all six tasks done; the `m2-complete` tag follows its review. The first playable client arrives in M3. [ROADMAP.md](ROADMAP.md) has the status of every task. License: all rights reserved until launch ([ADR-008](docs/adr/ADR-008-license.md), [LICENSE](LICENSE)).
 
 ## Setup
 
@@ -30,6 +30,7 @@ On Windows, if pnpm fails to start after `npm i -g pnpm`, see the Windows note i
 | `pnpm check:links` | Fails on a broken relative link or anchor in any Markdown file |
 | `pnpm test:lint-fixtures` | Proves each lint, TODO, branch-name and commit-message rule fires for the intended reason |
 | `pnpm test` | Vitest, once |
+| `pnpm test:browser` | The determinism suite in Chromium (Vitest browser mode); run `pnpm exec playwright install chromium` once first |
 | `pnpm test:affected` | Vitest on tests affected since `origin/main` (the pre-push hook) |
 | `pnpm audit:prod` / `pnpm audit:all` | Dependency advisories: moderate or higher in production dependencies (CI) / high or higher anywhere (weekly workflow) |
 | `pnpm test:coverage` | Vitest with coverage reports in `coverage/` |

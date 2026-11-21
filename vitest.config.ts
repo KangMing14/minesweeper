@@ -2,7 +2,7 @@
 // Why `test.projects` and not a `vitest.workspace.ts` file: workspace files were removed in Vitest 4, and
 // this repository pins Vitest 5. Run `pnpm test` (all projects), `pnpm test:coverage` or `pnpm test:affected`.
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 /** Absolute path of a repository-relative file, independent of the directory Vitest is started in. */
 const fromRoot = (relative: string): string => fileURLToPath(new URL(relative, import.meta.url));
@@ -43,6 +43,9 @@ export default defineConfig({
         // Playwright specs live in `e2e/` (M3-T08) and are deliberately not matched here.
         include: ['src/**/*.{test,spec}.{ts,tsx}', 'test/**/*.{test,spec}.{ts,tsx}'],
         environment: 'node',
+        // The browser runner of the determinism suite (M2-T06) needs Chromium, so it has its own config and
+        // script (`pnpm test:browser`, `vitest.browser.config.ts`) and stays out of `pnpm test` and `pre-push`.
+        exclude: [...configDefaults.exclude, '**/*.browser.test.ts'],
       },
     })),
     coverage: {
