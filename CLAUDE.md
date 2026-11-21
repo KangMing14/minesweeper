@@ -42,6 +42,7 @@ pnpm check:todos      # every TODO names a task
 pnpm check:links      # relative links and anchors in Markdown files resolve
 pnpm test:lint-fixtures
 pnpm test             # Vitest, all four projects
+pnpm test:browser     # determinism suite in Chromium (first run: pnpm exec playwright install chromium)
 pnpm docs:api         # TypeDoc for engine and protocol, warnings are errors
 ```
 

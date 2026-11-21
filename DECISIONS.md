@@ -62,6 +62,7 @@ Accepted ADRs are never edited (see above). Corrections of fact are listed here 
 - **ADR-005, Alternatives (Biome):** the sentence "the TSDoc and boundary rules of ADR-006 and ADR-007 rely on ESLint plugins" should cite ADR-001 and ADR-002 for the boundary rules (ADR-006 is the git workflow). Found in the M0 review (L6).
 - **ADR-007, Context:** it says spec 7.2 asked for Doxygen-style comments. Spec 7.2 and section 5 reject Doxygen; the request came from the original brief. The decision itself (TSDoc and TypeDoc) is unaffected. Found in the M0 review (L6).
 - **ADR-009, Consequences:** "the mine layout still leaves the engine only through `exposedMines` after a game ends" is incomplete: `gameLost.mineIndex` is a second path, and after a losing chord it names a mine the player did not click. The D-14 rule applies to both (M1 review, I1; M1-T09).
+- **ADR-005, Decision table (Testing):** "Playwright from M3-T08" holds for end-to-end specs; `playwright` and `@vitest/browser-playwright` are devDependencies from M2-T06, where Vitest browser mode needs them (developer decision of 2026-11-21; M2-T06).
 - **ADR-002 and `DEVELOPMENT_GUIDE.md`:** "lint bans any import that leaves the package" is the combined effect of lint and the compiler, not of lint alone (M0 review, L3). The guide now says so.
 
 ## Dependency advisories
@@ -122,6 +123,22 @@ No ADR and no open decision. A note for the ADRs that will follow. `Game.result(
 - **ADR-010 (D-02, race tie-break):** `safeCellsRevealed` is the progress that the "both DNF" rule compares. After a losing chord it includes the safe neighbors that chord opened before it reached a mine, and it includes the opening, which both players of a race share. A win at creation (M2-T03) has `timeMs` 0 for both players.
 - **M4-T01 (`GameMode.playerResult`):** an unfinished game has no `result()`. `safeCellsRevealed` is available as `view().revealedCount`; `threeBV` is not, because `Game` exposes no board. That task decides how to reach it.
 - **M7 and M8 (stored results):** the record is derived from the log. Store the log as the truth; if the definition of a field ever changes, bump the replay version (ADR-002) or recompute from the log, and write it down here.
+
+## Determinism suite and the browser run (M2-T06)
+
+No ADR and no open decision. A note for the ADRs that will follow. `packages/engine/test/determinism.shared.ts` runs in Node (part of `pnpm test`) and in Chromium (`pnpm test:browser`, Vitest browser mode), with every check repeated under stubs that throw on any use of `Date`, `performance`, `Math.random` and `Intl.DateTimeFormat`. The golden boards and PRNG vectors are the ones committed in M2-T01 and M2-T02 and were not touched. Details and choices are in `ARCHITECTURE.md`, "Determinism tests".
+
+- **Playwright earlier than ADR-005 says.** ADR-005 lists "Playwright from M3-T08", and M0-T04 deferred it to M3-T08. M2-T06 needs a real browser, and Vitest browser mode with Chromium needs `playwright` and `@vitest/browser-playwright`. The developer approved adding both in M2-T06 on 2026-11-21 and chose `playwright` 1.65.0. The stack choice of ADR-005 (Vitest, then Playwright for end-to-end) is unchanged; only the date moved, so there is no new ADR, and the clarification is in the errata below. End-to-end specs in `e2e/` still start in M3-T08.
+- **M3-T08.** `@playwright/test` must equal `playwright` (1.65.0, installed). Its pin row moved from 1.64.1 to 1.65.0.
+- **CI.** The browser run is two steps of the single job `ci` (the required check keeps its name): `pnpm exec playwright install --with-deps chromium`, then `pnpm test:browser`. Browsers are not cached; if the download time matters, `actions/cache` (already pinned) can cache `~/.cache/ms-playwright` keyed by the `playwright` version.
+- **Revisit.** Chromium moves with `playwright`: a `playwright` bump changes the browser that runs the suite, so bump it on purpose and read the first run.
+
+### M2-T06 verification notes
+
+Looked up on the npm registry on **2026-11-21**: `playwright` `latest` is 1.65.1 (2026-11-13, 8 days old, under the two-week rule); 1.65.0 (2026-11-05, 16 days old) is the newest version that meets the rule, within the same major line, and the developer chose it. `@vitest/browser-playwright` 5.0.5 (2026-10-15) equals the installed `vitest` and `@vitest/coverage-v8`. 5.1.0 (2026-11-02) is old enough today, but the three Vitest packages must move together and `vitest` is pinned at 5.0.5 (M0-T04), so that bump is its own task. Neither version is deprecated, and `pnpm audit:prod` reports no known vulnerabilities after the install. `pnpm add` reported +19 −2; compared with the committed lockfile, its package list gained 17 entries and lost none (`@vitest/browser`, `@vitest/ui`, `@vitest/utils`, `@vitest/pretty-format`, `playwright-core`, `sirv`, `ws` 8.23.0 and a few small helpers), all development-only. The `ws` 8.23.0 there is a transitive dependency of the browser provider and is unrelated to the server's `ws` pin (8.22.0, M5-T03); `pnpm peers check` still lists only the accepted `eslint-plugin-tsdoc` TypeScript warning.
+
+- **Compatibility, as far as it could be checked.** `@vitest/browser-playwright` 5.0.5 type-checks against `vitest` 5.0.5 (`vitest.browser.config.ts` is part of `pnpm typecheck`), and the suite passed in a Chromium 153 of an older Playwright revision. Playwright 1.65.0 with its own Chromium was run by the developer, not by me.
+- **Not checked.** The GitHub repository state of `playwright` (archived flag, open issues) was not read; only registry metadata and the audit endpoint were.
 
 ## ADR-005 input: dependency pins
 
@@ -192,7 +209,9 @@ Radix primitives are pinned per component when first used (M3, M10).
 | `@vitest/coverage-v8` | 5.0.5 | 2026-10-15 | 5.1.0 (2026-11-02) | **installed** in M0-T04. Must equal the `vitest` version. |
 | `typedoc` | 0.28.20 | 2026-07-05 | 0.28.20 | **installed** in M0-T04. Peer: `typescript <=6.0.x`; this is why TypeScript stays on 6.0.3. |
 | `fast-check` | 4.10.2 | 2026-09-19 | 4.10.2 | **installed** in M1-T06, at the root as a devDependency (property tests of `engine`; no runtime use). Its one dependency is `pure-rand` `^8`, resolved to 8.4.2 (2026-07-10). |
-| `@playwright/test` | 1.64.1 | 2026-10-14 | 1.64.1 | M3-T08 |
+| `@playwright/test` | 1.65.0 | 2026-11-05 | 1.65.1 (2026-11-13), looked up 2026-11-21 | M3-T08. Must equal `playwright` below; the pin moved from 1.64.1 when `playwright` 1.65.0 was installed in M2-T06. |
+| `playwright` | 1.65.0 | 2026-11-05 | 1.65.1 (2026-11-13), looked up 2026-11-21 | **installed** in M2-T06, at the root as a devDependency (Chromium for `pnpm test:browser`; the browser comes from `playwright install`). 1.65.1 is under 14 days old. Chosen by the developer on 2026-11-21. |
+| `@vitest/browser-playwright` | 5.0.5 | 2026-10-15 | 5.1.1, looked up 2026-11-21 | **installed** in M2-T06. Must equal `vitest` (5.0.5); move the three Vitest packages together. |
 
 ### M0-T03 verification notes
 
