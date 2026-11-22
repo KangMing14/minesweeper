@@ -225,7 +225,7 @@ The documents carry context between conversations, so a task is not done until t
 |---|---|---|
 | `README.md` | Setup, scripts, where everything is | A script or setup step changes |
 | `PROJECT_OVERVIEW.md` | Concept, MVP, scope, glossary | Scope or vocabulary changes (rare; scope changes need an ADR) |
-| `ROADMAP.md` | Milestone index and the status of all 86 tasks, the only status table | Every task close-out |
+| `ROADMAP.md` | Milestone index and the status of all 90 tasks, the only status table | Every task close-out |
 | `ARCHITECTURE.md` | Diagrams, canonical names, public interfaces, known limits | An interface, package or limit changes |
 | `DECISIONS.md` | ADR index, open decisions, dependency pins | A decision is made or a dependency is added |
 | `CHANGELOG.md` | What changed, by task | Every task close-out |

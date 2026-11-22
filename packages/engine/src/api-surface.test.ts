@@ -33,7 +33,6 @@ const NOT_PUBLIC = [
   'chordCells',
   'ChordResult',
   'openingZone',
-  'MAX_REPLAY_COMMANDS',
   'computeThreeBV',
   'buildGameResult',
 ] as const;

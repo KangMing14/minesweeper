@@ -29,9 +29,11 @@ import { cellCount } from './config.js';
  * not a position). `Game.result()` carries it only once a game is over; see the D-14 note there.
  *
  * Reference: Bechtel's Board Benchmark Value, the standard difficulty measure of Minesweeper speed-solving,
- * reported by Minesweeper Arbiter and used on the Authoritative Minesweeper site (minesweepergame.com). The
- * definition above, openings plus isolated numbers, is the one public explanations of 3BV agree on. It was
- * checked against such explanations, not against the original text.
+ * reported by Minesweeper Arbiter and used on the Authoritative Minesweeper site (minesweepergame.com). One
+ * source a reader can follow, read on 2026-11-21: https://minesweeper.online/help (section "3BV": the
+ * minimum number of clicks that completes a board without flags). The decomposition above, openings plus
+ * isolated numbers, is the one public explanations of 3BV agree on. It was checked against such explanations,
+ * not against the original text.
  *
  * Not part of the public API; `Game.result()` is the way to read it.
  *

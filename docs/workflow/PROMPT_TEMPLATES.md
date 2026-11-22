@@ -83,21 +83,36 @@ Treat the checkpoint as authoritative for progress, but verify it against the sn
 ## Prompt F: Milestone review
 
 ```
-Milestone <Mn> is complete. Attached: the milestone file, a whole-repo snapshot, ARCHITECTURE.md, DECISIONS.md, ROADMAP.md.
+Milestone <Mn> is complete. Attached: the milestone file, a whole-repo snapshot with GIT_STATE.txt, ARCHITECTURE.md, DECISIONS.md, ROADMAP.md.
 
 Use /requesting-code-review to review the whole milestone against its acceptance criteria and the Global Constraints in the master plan. Check: package boundaries, canonical names, test quality and coverage of the "Review Focus" cases, documentation and TSDoc coverage, leftover TODOs without task IDs, and consistency between code and ARCHITECTURE.md.
 
-Output docs/reviews/<Mn>-review.md with findings grouped by severity (blocking, important, minor). Do not change code; propose fixes as new tasks I can add to ROADMAP.md.
+Output docs/reviews/<Mn>-review.md with findings grouped by severity (blocking, important, minor). Do not change code in this step; propose fixes as new tasks I can add to ROADMAP.md, and say which of them are small enough to be done in this conversation (Prompt F1).
 ```
 
 Take the snapshot with `git fetch && tools/snapshot.sh --git-state`, so the review can see history, tags and branch protection (`GIT_STATE.txt`).
+
+## Prompt F1: Apply the review follow-ups (same conversation as the review)
+
+Paste it in the conversation that wrote the review, after you have read the review. It is the one exception to "one task per conversation" (`CLAUDE.md`, rule 1).
+
+```
+The review is accepted. Follow-ups to apply: <all | the finding IDs or task IDs>. <My decisions on anything the review left open, for example "B1: option A, export the constant">.
+
+Do this like Prompt A, for all of them in one conversation:
+1. Append the tasks to ROADMAP.md (rows, the milestone's count in the index, the total) and to the milestone file (handoff item 2 and one section per task, in the usual format). Update the task count wherever it is written (README.md, CLAUDE.md, PROJECT_OVERVIEW.md, DEVELOPMENT_GUIDE.md, docs/workflow/HOW_TO_USE.md, CHANGELOG.md).
+2. Check whether finishing all of them here is feasible: about five tasks or fewer, each small, each verifiable in your sandbox, none needing a decision I have not made, none needing a tool you cannot run (a real browser, a database). Say plainly which are feasible. Do those; leave the others `Not started` in ROADMAP.md and tell me, so I can run them in their own conversations. If none is feasible, stop after step 1 and say so.
+3. For each task you do, in order: compare the real code with what the docs say and report any disagreement before changing anything; write the failing test first and watch it fail for the right reason (/test-driven-development); implement; mutate the new code or tests to show they bite when the task asks for it. Stop and ask me if a task conflicts with an ADR, an open decision or the canonical names.
+4. Run a clean install and the full check suite (typecheck, lint, format:check, check:todos, check:links, test:lint-fixtures, test with coverage, docs:api, audit:prod) after the last edit and show the real output (/verification-before-completion). Say which checks you could not run.
+5. Deliver every new or changed file as ONE zip with repo-relative paths, plus the exact commands for me: branch chore/<mn>-review-followups, the commit and the pull request title `chore: apply <Mn> review follow-ups (<Mn-Tnn> to <Mn-Tnn>) [chore]`, the pull request description with the acceptance criteria of every task as a checklist, a session log entry (docs/workflow/sessions/, one entry for the batch), the Project-knowledge files I must re-upload, and what to do next (PR and commit cells in ROADMAP.md after the merge, the re-review F2, the tag).
+```
 
 ## Prompt F2: Re-review after the review follow-ups
 
 Use a **new** conversation, not the one that made the fixes. Attach a fresh snapshot (`git fetch && tools/snapshot.sh --git-state`), the milestone file, `ARCHITECTURE.md`, `DECISIONS.md`, `ROADMAP.md`, and the first review (`docs/reviews/<Mn>-review.md`).
 
 ```
-Milestone <Mn> had a review (attached) and its follow-up tasks (<list of task IDs>) are merged. Attached: the first review, the milestone file, a whole-repo snapshot with GIT_STATE.txt, ARCHITECTURE.md, DECISIONS.md, ROADMAP.md.
+Milestone <Mn> had a review (attached) and its follow-up tasks (<list of task IDs>) are merged (done in the review conversation with Prompt F1 or in their own conversations). Attached: the first review, the milestone file, a whole-repo snapshot with GIT_STATE.txt, ARCHITECTURE.md, DECISIONS.md, ROADMAP.md.
 
 Use /requesting-code-review for a re-review. (1) For every finding in the first review, say whether it is resolved, partly resolved or open, with the evidence (file, line, command output). (2) Review the follow-up changes themselves for new problems, including whether each task met its own acceptance criteria. (3) Use GIT_STATE.txt to check the blocking items about history, tags and branch protection. (4) Re-run the full check suite from a clean install and show the output.
 

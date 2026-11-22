@@ -88,6 +88,8 @@ class InvalidReplayError extends Error
   new (reason: string, options?: ErrorOptions): InvalidReplayError
   readonly reason: string
 
+const MAX_REPLAY_COMMANDS: 100000
+
 const PRESETS: Readonly<{ beginner: Readonly<{ width: 9; height: 9; mineCount: 10; }>; intermediate: Readonly<{ width: 16; height: 16; mineCount: 40; }>; expert: Readonly<{ width: 30; height: 16; mineCount: 99; }>; }>
 
 interface Prng

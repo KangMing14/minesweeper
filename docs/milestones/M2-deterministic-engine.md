@@ -7,7 +7,7 @@
 ## Conversation Handoff Package
 
 1. **Project context.** Browser-based competitive Minesweeper in TypeScript, OOP, pnpm monorepo (`packages/engine`, `packages/protocol`, `apps/server`, `apps/web`). MVP: 1v1 race on an identical seeded board with a guaranteed shared safe opening, plus solo time-attack with replay-validated leaderboards. The engine is pure and deterministic: no DOM, Node APIs, clocks or `Math.random`; time is the `t` field (ms since game start) on each `Command`. Server will later replay command logs to validate results, so identical inputs must give identical outputs everywhere.
-2. **Tasks:** M2-T01 to M2-T06, in order.
+2. **Tasks:** M2-T01 to M2-T10, in order. M2-T07 to M2-T10 came from the milestone review (`docs/reviews/M2-review.md`) and are not part of the original plan.
 3. **Prerequisites and baseline:** tag `m1-complete`. Copy the actual exported signatures of `BoardConfig`, `Board`, `Game`, `Command`, `GameEvent`, `GameView` from `packages/engine/src/index.ts` before starting.
 4. **Locked decisions:** ADR-001..009; guaranteed shared opening (spec 2.3); `BoardGenerator` is an interface so a no-guess generator can be added later; the opening reveal is part of game initialization, not a logged command; seeds are unsigned 32-bit integers for the MVP.
 5. **Deliverables:** `Prng`, `SeededBoardGenerator`, `SafeOpeningPolicy`, `createGame`, command log, `ReplayLog` and `replay`, `GameResult` with scoring (including 3BV), golden-seed fixtures and cross-environment tests.
@@ -90,3 +90,54 @@
 - **Acceptance criteria:** both environments pass in CI; tag `m2-complete` after review.
 - **Relevant skills:** baseline; `/testing-strategy`; `/requesting-code-review`.
 - **Documentation updates:** `ARCHITECTURE.md`, `DEVELOPMENT_GUIDE.md` (running the browser tests), `ROADMAP.md`, `CHANGELOG.md`.
+
+---
+
+### M2-T07 Bound the command log so every live game replays
+
+- **Objective:** `replay(log)` reproduces every game that was played, not only the ones below 100,000 commands (review B1).
+- **Description:** flag toggles are accepted for ever, so a legal game could log more commands than `validateReplayLog` accepts (100,000); the M2 review reproduced it with 100,001 toggles. `Game.apply` now stops at the same number, and the number is public.
+- **Prerequisites:** M2-T06 and `docs/reviews/M2-review.md`.
+- **Implementation guidance:** tests first (`game.limit.test.ts`). Move `MAX_REPLAY_COMMANDS` from `replay.ts` to a new `limits.ts` (so that `game.ts` and `replay.ts` share it without an import cycle) and export it from `index.ts` as a public value with `@example` (canonical names: one row added; the surface is 31 names; `api-surface.txt` updated on purpose with `vitest -u`). `Game.apply` returns `[]` when `log().length` has reached the limit; the order of checks becomes index, game over, size, `t`, command. The command that makes the log that long is accepted and can win; the next one is refused and not logged. No new `ReplayLog` version and no ADR, because no stored log can exceed the limit; say so in `DECISIONS.md`. Correct the TSDoc that called the limit "far below any real game". Add the stuck-game rule to the handoffs of M3-T02 and M5-T05 and the shared limit to M5-T01.
+- **Expected output:** `limits.ts`, `game.ts`, `replay.ts`, `index.ts`, `game.limit.test.ts`, small edits in `replay.test.ts` and `api-surface.test.ts`, the updated API snapshot, docs.
+- **Testing requirements:** 100,000 commands accepted and the next refused and not logged; the last allowed command can win; a bad index still throws at the limit; a game stopped at the limit has a log that `validateReplayLog` accepts and `replay` plays to the same view; mutation record (`>=` to `>`, the check removed, off by one, check before the index check) in the session log.
+- **Acceptance criteria:** the 100,001-toggle probe of the review no longer produces a log that `replay` rejects; golden fixtures unchanged; the API-surface diff is exactly one constant.
+- **Relevant skills:** baseline.
+- **Documentation updates:** TSDoc, `ARCHITECTURE.md` (canonical names, public API, game creation and the log, replay), `DECISIONS.md`, `CHANGELOG.md`, `ROADMAP.md`, session log.
+
+### M2-T08 M2 close-out: tracker, CHANGELOG, review on record
+
+- **Objective:** `main` records M2 as it is (review I1, I2).
+- **Description:** commit what is pending in the working tree (the M2-T06 row of `ROADMAP.md` and its session log), add the M2 close-out entry to `CHANGELOG.md`, put the review on record, and correct the one statement in `ARCHITECTURE.md` that the green CI run of #27 made out of date.
+- **Prerequisites:** M2-T07.
+- **Implementation guidance:** documentation only. `ROADMAP.md`: the four new rows, the M2 index row (6 to 10 tasks), total 86 to 90, the counts in the other docs. `CHANGELOG.md`: M2-T07 to M2-T09 entries, one "M2 close-out" entry, the new task count. `docs/reviews/M2-review.md`: add the review to git with a status note at the top (what was applied; I1 corrected, see the note there). `ARCHITECTURE.md` "Determinism tests", "Verified where": the CI result of #27 instead of "had not run" (I2). The tag `m2-complete` is not part of this task; the developer sets it after the follow-ups are merged and M2-T10 is `Done` or deliberately moved.
+- **Expected output:** `ROADMAP.md`, `CHANGELOG.md`, `docs/reviews/M2-review.md`, `ARCHITECTURE.md`, count edits, session log.
+- **Testing requirements:** `pnpm check:links`, `pnpm check:todos`.
+- **Acceptance criteria:** `git status` is clean after the commit; `ROADMAP.md` shows M2-T06 with its PR and commit.
+- **Relevant skills:** baseline.
+- **Documentation updates:** as above.
+
+### M2-T09 M2 review minors
+
+- **Objective:** close the minor findings M1 to M4 and M6 of the review.
+- **Description:** a garbled sentence in `ARCHITECTURE.md` (M1); unknown properties on a log or command are accepted by validation and dropped by the game, so `replay(log).log()` equals `log.commands` only without them (M2); two untested branches of the error-message helper in `replay.ts` (M3); a source for the 3BV definition that a reader can follow (M4); two handoff sentences for M5-T01 and M8-T01 (M6).
+- **Prerequisites:** M2-T07.
+- **Implementation guidance:** tests first for M2 and M3 (they describe existing behavior, so they pass at once; prove they bite by mutating `show()`). M2 and M6 are docs: `ARCHITECTURE.md`, `DECISIONS.md` (the M5-T01 and M8-T01 notes of "Replay and versioning"), and the milestone files of M5 and M8. M4: the TSDoc of `computeThreeBV` cites https://minesweeper.online/help (read on 2026-11-21); the original text of Bechtel is still not read, and the TSDoc says so.
+- **Expected output:** four tests in `replay.test.ts`, TSDoc of `threebv.ts`, docs.
+- **Testing requirements:** the new tests fail on two mutants of `show()` (the 24-character cut, the array/object branch); `pnpm lint`, `pnpm docs:api`.
+- **Acceptance criteria:** branch coverage of `replay.ts` is 100%; no source behavior changed.
+- **Relevant skills:** baseline.
+- **Documentation updates:** as above, `CHANGELOG.md`, `ROADMAP.md`, session log.
+
+### M2-T10 Cross-environment digest of the fuzz outcomes (optional)
+
+- **Objective:** evidence that the fuzz games end the same in Node and in Chromium, not only that each environment agrees with itself (review M5).
+- **Description:** each runner computes a SHA-256 of the JSON of its 500 fuzz outcomes (`determinism.shared.ts`) and reports it; CI compares the two values. The digest is computed in the run and is never committed, so no fixture is produced by the code it checks (`DEVELOPMENT_GUIDE.md`).
+- **Prerequisites:** M2-T07.
+- **Implementation guidance:** needs a real Chromium to write and to check, so it is a task for the developer's machine or for a conversation that has a browser; it was not done in the review conversation for that reason (a CI change that cannot be run before it is pushed risks the required check `ci`). Decide how the browser runner hands its digest to the job (for example a Vitest browser command that writes a file) and keep the step inside the single job `ci`. Low priority: do it when a task next changes `Game.apply`, the generator or `Prng`, or at M10. If the developer prefers to defer it, move the row to M10 (and say so in `ROADMAP.md`) so that M2 can be tagged.
+- **Expected output:** changes to `determinism.shared.ts`, the two runners, `ci.yml`, docs.
+- **Testing requirements:** a deliberate difference (an environment-dependent branch in a scratch copy) makes the comparison fail.
+- **Acceptance criteria:** CI green with the comparison step; `pnpm test` and `pnpm test:browser` still pass locally.
+- **Relevant skills:** baseline; `/testing-strategy`.
+- **Documentation updates:** `ARCHITECTURE.md` ("Determinism tests"), `DEVELOPMENT_GUIDE.md`, `CHANGELOG.md`, `ROADMAP.md`, session log.
+
