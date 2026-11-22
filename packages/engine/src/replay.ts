@@ -170,7 +170,8 @@ export function validateReplayLog(log: ReplayLog): void {
  * @remarks
  * The log is validated first (`validateReplayLog`), then the game is made with
  * `createGame(config, seed, generator)` and every command is applied in order. The result is the same game
- * that was played live: the same `view()`, the same `log()`, in every environment (ADR-002).
+ * that was played live: the same `view()`, the same `log()` as long as the commands carry no properties besides
+ * `type`, `index` and `t` (the game drops others), in every environment (ADR-002).
  *
  * **A log holds only accepted commands.** `Game.log()` never contains a command that changed nothing, came
  * after the end of the game, or had a bad `t`, so a command that the game answers with `[]` means the log
