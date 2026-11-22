@@ -8,13 +8,13 @@ Full task details live in `docs/milestones/`; the plan is `docs/superpowers/plan
 
 ## Milestone index
 
-Twelve milestones, 86 tasks. Tasks inside a milestone run in numeric order unless a task's prerequisites say otherwise. A milestone is finished when all its tasks are `Done` and its exit criteria hold; then it is reviewed and tagged (`docs/workflow/HOW_TO_USE.md`, section 7). Dependency graph: master plan, section E.
+Twelve milestones, 90 tasks. Tasks inside a milestone run in numeric order unless a task's prerequisites say otherwise. A milestone is finished when all its tasks are `Done` and its exit criteria hold; then it is reviewed and tagged (`docs/workflow/HOW_TO_USE.md`, section 7). Dependency graph: master plan, section E.
 
 | ID | Milestone | Tasks | Depends on | Exit criteria | File | Tag |
 | --- | --- | --- | --- | --- | --- | --- |
 | M0 | Foundations | 11 | spec approved | CI green on wired monorepo; docs and ADR-001..008 committed; tag `m0-complete` | [`M0-foundations.md`](docs/milestones/M0-foundations.md) | `m0-complete` |
 | M1 | Engine core | 10 | M0 | Playable-in-tests engine; public API exported and documented | [`M1-engine-core.md`](docs/milestones/M1-engine-core.md) | `m1-complete` |
-| M2 | Deterministic engine | 6 | M1 | Seeded boards, command log, replay; golden-seed tests pass in Node and a browser | [`M2-deterministic-engine.md`](docs/milestones/M2-deterministic-engine.md) | `m2-complete` |
+| M2 | Deterministic engine | 10 | M1 | Seeded boards, command log, replay; golden-seed tests pass in Node and a browser | [`M2-deterministic-engine.md`](docs/milestones/M2-deterministic-engine.md) | `m2-complete` |
 | M3 | Local solo client | 8 | M2 | Playable solo game in the browser; Playwright smoke test green | [`M3-local-solo-client.md`](docs/milestones/M3-local-solo-client.md) | `m3-complete` |
 | M4 | Mode framework and ghost race | 5 | M2, M3 | `GameMode` registry; race against your ghost; ADR-010 | [`M4-mode-framework-ghost-race.md`](docs/milestones/M4-mode-framework-ghost-race.md) | `m4-complete` |
 | M5 | First networked race | 8 | M4 | Two browsers race on localhost and a second LAN device | [`M5-first-networked-race.md`](docs/milestones/M5-first-networked-race.md) | `m5-complete` |
@@ -71,7 +71,11 @@ File: `docs/milestones/M2-deterministic-engine.md`. Tag when finished: `m2-compl
 | M2-T03 | `createGame` and the command log        | Done        |#24|c21bee8|2026-11-19|
 | M2-T04 | `ReplayLog` and `replay`                | Done        |#25|6262635|2026-11-19|
 | M2-T05 | Results and scoring                     | Done        |#26|6b499bf|2026-11-19|
-| M2-T06 | Determinism and cross-environment tests | Done        |     |        |         |
+| M2-T06 | Determinism and cross-environment tests | Done        |#27|6cdc41d|2026-11-21|
+| M2-T07 | Bound the command log so every live game replays (review B1) | Done |  |  |  |
+| M2-T08 | M2 close-out: tracker, CHANGELOG, review on record (review I1, I2) | Done |  |  |  |
+| M2-T09 | M2 review minors (review M1 to M4, M6) | Done |  |  |  |
+| M2-T10 | Cross-environment digest of the fuzz outcomes (optional, review M5) | Not started |  |  |  |
 
 ## M3 Local Solo Client
 
@@ -195,4 +199,4 @@ File: `docs/milestones/M11-launch-readiness.md`. Tag when finished: `m11-complet
 | M11-T05 | Launch checklist and legal basics | Not started |     |        |         |
 | M11-T06 | Public launch and feedback loop   | Not started |     |        |         |
 
-_Total tasks: 86._
+_Total tasks: 90._

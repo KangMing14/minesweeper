@@ -9,7 +9,8 @@ import { InvalidBoardConfigError, InvalidReplayError } from './errors.js';
 import type { Game } from './game.js';
 import { SeededBoardGenerator } from './generator.js';
 import type { BoardGenerator } from './generator.js';
-import { MAX_REPLAY_COMMANDS, replay, validateReplayLog } from './replay.js';
+import { MAX_REPLAY_COMMANDS } from './limits.js';
+import { replay, validateReplayLog } from './replay.js';
 import type { ReplayLog } from './replay.js';
 
 // Replay (M2-T04): a `ReplayLog` is `(config, seed, commands)`, and `replay` plays it again on a fresh game.
@@ -270,6 +271,43 @@ describe('validateReplayLog: each command', () => {
     for (const log of [null, undefined, 5, 'log']) {
       expect(() => validateReplayLog(log as unknown as ReplayLog)).toThrow(InvalidReplayError);
     }
+  });
+});
+
+describe('validateReplayLog: how a bad value is shown in the reason (M2-T09, review M3)', () => {
+  it('cuts a long text to 24 characters and marks the cut', () => {
+    expect(
+      reasonOf(() => validateReplayLog(broken({ version: 'abcdefghijklmnopqrstuvwxyz0123' }))),
+    ).toBe('version must be 1, got "abcdefghijklmnopqrstuvwx..."');
+  });
+
+  it('shows a short text whole, in quotes', () => {
+    expect(reasonOf(() => validateReplayLog(broken({ version: '1' })))).toBe(
+      'version must be 1, got "1"',
+    );
+  });
+
+  it('names an array and an object instead of printing them', () => {
+    expect(reasonOf(() => validateReplayLog(broken({ seed: [1, 2, 3] })))).toBe(
+      'seed must be an integer from 0 to 4294967295, got an array',
+    );
+    expect(reasonOf(() => validateReplayLog(broken({ seed: { value: 1 } })))).toBe(
+      'seed must be an integer from 0 to 4294967295, got an object',
+    );
+  });
+});
+
+describe('replay: unknown properties (M2-T09, review M2)', () => {
+  it('are ignored by validation and dropped by the game, so replay(log).log() keeps only type, index and t', () => {
+    const log = {
+      ...valid(),
+      note: 'extra on the log',
+      commands: [{ ...reveal(0, 100), who: 'extra on a command' }],
+    } as unknown as ReplayLog;
+    expect(() => validateReplayLog(log)).not.toThrow();
+    const again = replay(log);
+    expect(again.log()).toEqual([reveal(0, 100)]);
+    expect(again.log()).not.toEqual(log.commands);
   });
 });
 

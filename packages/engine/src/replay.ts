@@ -5,24 +5,13 @@ import { createGame } from './create-game.js';
 import { InvalidBoardConfigError, InvalidReplayError } from './errors.js';
 import type { Game } from './game.js';
 import type { BoardGenerator } from './generator.js';
+import { MAX_REPLAY_COMMANDS } from './limits.js';
 
 /** The largest seed: an unsigned 32-bit integer (ADR-002). */
 const MAX_SEED = 4294967295;
 
 /** The command types the engine understands. */
 const COMMAND_TYPES: ReadonlySet<unknown> = new Set(['reveal', 'flag', 'chord']);
-
-/**
- * The most commands a `ReplayLog` may hold: 100,000.
- *
- * @remarks
- * A log is replayed command by command, so its size is the cost of validating it. The longest real game
- * (100x100, every cell touched twice) stays far below this. Not exported from `index.ts`; the limit is
- * documented in the TSDoc of `validateReplayLog`.
- *
- * @internal
- */
-export const MAX_REPLAY_COMMANDS = 100_000;
 
 /**
  * Everything needed to play a game again: the board (`config` and `seed`) and every command that took effect.
@@ -82,8 +71,8 @@ function show(value: unknown): string {
  * @remarks
  * The checks run in this order and stop at the first problem, so the reason names one place: `version`
  * (must be `1`), `config` (an object that passes `validateBoardConfig`), `seed` (an integer from 0 to
- * 4294967295), `commands` (an array of at most 100,000 entries; the count is checked before any entry, so a
- * huge list costs nothing), then each command in order: `type` (`'reveal'`, `'flag'` or `'chord'`), `index`
+ * 4294967295), `commands` (an array of at most `MAX_REPLAY_COMMANDS`, 100,000, entries; the count is checked before any
+ * entry, so a huge list costs nothing; `Game.apply` stops at the same number, so every game that was played fits), then each command in order: `type` (`'reveal'`, `'flag'` or `'chord'`), `index`
  * (a whole number inside the board of this log) and `t` (a non-negative safe integer that is not lower than
  * the `t` before it; equal is fine, as in `Game.apply`).
  *

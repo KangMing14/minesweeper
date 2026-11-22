@@ -4,7 +4,7 @@ You are the hands; Claude is the engineer who cannot see your computer. Claude c
 
 Four rules make this work:
 
-1. **One task per conversation.** Task IDs look like `M1-T04`. Do not combine tasks.
+1. **One task per conversation.** Task IDs look like `M1-T04`. Do not combine tasks. The one exception is the follow-up batch of a milestone review (section 7): when the review's follow-up tasks are all small, the conversation that wrote the review can do them, in one pull request.
 2. **The docs are the memory.** Claude does not remember earlier conversations reliably. Never explain a decision by "we talked about it"; make sure it is in `DECISIONS.md`, `ARCHITECTURE.md` or the milestone file.
 3. **Claude hands you files, not snippets.** Ask for a zip that keeps repo paths, so you extract it at the repo root instead of copy-pasting pieces.
 4. **Nothing is done until it is green on your machine.** You run the checks, paste real output back, and only then close the task.
@@ -40,7 +40,7 @@ Project memory may remember some facts, but treat it as a convenience, never as 
 
 ```
 minesweeper/                      <- git repo root
-  ROADMAP.md                      status of all 86 tasks (you update after every task)
+  ROADMAP.md                      status of all 90 tasks (you update after every task)
   CLAUDE.md                       created in M0-T05: read-order and rules for Claude
   README.md, PROJECT_OVERVIEW.md, ARCHITECTURE.md, DEVELOPMENT_GUIDE.md,
   DECISIONS.md, CHANGELOG.md      created in M0-T05
@@ -153,8 +153,10 @@ If a task produced no code (for example an ADR-only task), skip steps that do no
 When the last task of a milestone is `Done`:
 
 1. Run `git fetch`, then take a whole-repo snapshot with git state: `tools/snapshot.sh --git-state`.
-2. New conversation, attach the milestone file, snapshot, `ARCHITECTURE.md`, `DECISIONS.md`, and paste **Prompt F** (milestone review with `/requesting-code-review`). Save the report as `docs/reviews/Mn-review.md`. After the follow-up tasks are merged, run a re-review in a **new** conversation with **Prompt F2** and save it as `docs/reviews/Mn-review-2.md`; tag only after it is clean.
-3. Fix blocking findings as extra tasks (add rows to `ROADMAP.md`), through the normal loop.
+2. New conversation, attach the milestone file, snapshot, `ARCHITECTURE.md`, `DECISIONS.md`, `ROADMAP.md`, and paste **Prompt F** (milestone review with `/requesting-code-review`). Save the report as `docs/reviews/Mn-review.md`. After the follow-up tasks are merged, run a re-review in a **new** conversation with **Prompt F2** and save it as `docs/reviews/Mn-review-2.md`; tag only after it is clean.
+3. **Follow-ups.** Read the review, then choose one of two ways:
+   - **Small follow-ups, same conversation (usual).** In the conversation that wrote the review, paste **Prompt F1**. Claude appends the tasks to `ROADMAP.md` and the milestone file, checks whether all of them can be finished in that conversation, does the ones that can (test first, real check output) and delivers one zip, with the close-out. A follow-up counts as small when: there are about five or fewer; each can be verified in Claude's sandbox; none needs a decision you have not made; none needs a tool Claude cannot run (a real browser, a database). Anything else is added to the roadmap as `Not started` and done later in its own conversation, as in section 3. Merge the batch as one pull request, `chore: apply Mn review follow-ups (Mn-Tnn to Mn-Tnn) [chore]`, on a branch `chore/mn-review-followups`, then do the usual tidy-up (section 6, steps 5 to 9).
+   - **Large or risky follow-ups, one conversation each.** Add the rows to `ROADMAP.md` and run them through the normal loop (sections 3 to 6).
 4. Tag and push: `git tag m1-complete && git push --tags`.
 5. Check that the next milestone's "Prerequisites and baseline" matches what you now have. The next milestone's first conversation will ask Claude to copy the real exported signatures from your code.
 

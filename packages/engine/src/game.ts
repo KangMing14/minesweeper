@@ -3,6 +3,7 @@ import { chordCells } from './chord.js';
 import type { Command } from './command.js';
 import { safeCellCount, type CellIndex } from './config.js';
 import { GameEventEmitter, type CellsRevealed, type GameEvent } from './events.js';
+import { MAX_REPLAY_COMMANDS } from './limits.js';
 import { buildGameResult, type GameResult } from './result.js';
 import { revealCell } from './reveal.js';
 import { computeThreeBV } from './threebv.js';
@@ -139,10 +140,16 @@ export class Game {
    * game untouched: revealing a cell that is already revealed or flagged, and any command after the game
    * has been lost or won (the status is final). Only an index outside the board is an error.
    *
+   * **Size.** A game accepts at most `MAX_REPLAY_COMMANDS` (100,000) commands. Once `log()` holds that many,
+   * every further command returns `[]`, whatever it is, so the game stays as it is (usually `'playing'`, and
+   * the caller should treat it as stuck and start another). The command that makes the log that long is still
+   * accepted and can still win the game. The limit is what `validateReplayLog` allows, so a game that was
+   * played can always be replayed.
+   *
    * **Time.** `command.t` must be a non-negative safe integer that is not lower than the `t` of the last
    * command that took effect (the opening counts as `t = 0`). Any other `t` makes the command invalid, so
    * it returns `[]` and changes nothing, like any other invalid command. The checks run in a fixed order:
-   * the index (throws), then whether the game is over, then `t`, then the command itself. Only a command
+   * the index (throws), then whether the game is over, then the size limit, then `t`, then the command itself. Only a command
    * that takes effect moves the last `t` forward, so a no-op or a rejected command does not.
    *
    * **The log.** A command that takes effect is appended to `log()` before its events are delivered, so
@@ -206,6 +213,9 @@ export class Game {
       throw new RangeError(`index must be a whole number from 0 to ${total - 1}, got ${index}`);
     }
     if (this.#status === 'won' || this.#status === 'lost') return NO_EVENTS;
+    // A game holds at most MAX_REPLAY_COMMANDS commands, the number `validateReplayLog` accepts, so that every
+    // game that is played can be replayed. Flag toggles are accepted for ever, so nothing else bounds the log.
+    if (this.#log.length >= MAX_REPLAY_COMMANDS) return NO_EVENTS;
     // Time never goes backwards, and only whole milliseconds count; `Number.isSafeInteger` is false for
     // NaN, the infinities and fractions, and keeps every logged `t` exact in JSON.
     if (!Number.isSafeInteger(command.t) || command.t < this.#lastT) return NO_EVENTS;
