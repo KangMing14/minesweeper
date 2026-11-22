@@ -24,6 +24,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:browser": "vitest run --config vitest.browser.config.ts",
+    "test:scripts": "node --test scripts/compare-fuzz-digests.test.mjs",
+    "compare:fuzz-digests": "node scripts/compare-fuzz-digests.mjs",
     "test:affected": "node scripts/test-affected.mjs",
     "docs:api": "typedoc",
     "prepare": "husky"

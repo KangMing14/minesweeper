@@ -18,6 +18,7 @@ import type { FuzzOutcome } from './determinism.support.js';
 import {
   FUZZ_GAMES,
   STUBBED_NAMES,
+  fuzzDigest,
   hashInput,
   playFuzzGame,
   sha256Hex,
@@ -116,9 +117,31 @@ export function defineDeterminismSuite(environment: string): void {
       });
     });
 
+    describe('fuzzDigest (M2-T10)', () => {
+      const sample = (): FuzzOutcome[] =>
+        Array.from({ length: 6 }, (_, index) => playFuzzGame(index));
+
+      it('is the SHA-256 of the JSON of the outcomes', () => {
+        expect(fuzzDigest([])).toBe(sha256Hex('[]'));
+        const outcomes = sample();
+        expect(fuzzDigest(outcomes)).toBe(sha256Hex(JSON.stringify(outcomes)));
+      });
+
+      it('is the same for the same games and changes when any outcome changes', () => {
+        const digest = fuzzDigest(sample());
+        expect(digest).toMatch(/^[0-9a-f]{64}$/);
+        expect(fuzzDigest(sample())).toBe(digest);
+        const changed = sample();
+        const last = changed[changed.length - 1] as FuzzOutcome;
+        changed[changed.length - 1] = { ...last, replayed: { ...last.replayed, log: [] } };
+        expect(fuzzDigest(changed)).not.toBe(digest);
+        expect(fuzzDigest(sample().slice(1))).not.toBe(digest);
+      });
+    });
+
     const modes = [
-      { name: 'plain', run: <T>(work: () => T): T => work() },
-      { name: 'with clock and random reads made fatal', run: withThrowingStubs },
+      { name: 'plain', key: 'plain', run: <T>(work: () => T): T => work() },
+      { name: 'with clock and random reads made fatal', key: 'stubbed', run: withThrowingStubs },
     ] as const;
 
     for (const mode of modes) {
@@ -195,6 +218,15 @@ export function defineDeterminismSuite(environment: string): void {
                 ).toStrictEqual(outcome.live);
               }
             });
+          });
+
+          // M2-T10 (review M5): the digest is what the reporter of `tools/` writes to `reports/fuzz-digest/` and
+          // `scripts/compare-fuzz-digests.mjs` compares between the Node run and the Chromium run. It is computed in
+          // the run and never committed (`DEVELOPMENT_GUIDE.md`: a fixture must not come from the code it checks).
+          it('hands a SHA-256 digest of its outcomes to the reporter', ({ task }) => {
+            const digest = fuzzDigest(outcomes());
+            expect(digest).toMatch(/^[0-9a-f]{64}$/);
+            task.meta.fuzzDigest = { mode: mode.key, games: FUZZ_GAMES, digest };
           });
 
           // A fuzz run that only plays trivial games proves little. The games come from `createPrng`, so the

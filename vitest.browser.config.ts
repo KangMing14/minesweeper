@@ -11,6 +11,17 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     name: 'engine-browser',
+    // M2-T10: writes the fuzz digest of this run to `reports/fuzz-digest/browser.json` (see `vitest.config.ts`).
+    reporters: [
+      'default',
+      [
+        fileURLToPath(new URL('./tools/fuzz-digest-reporter.mjs', import.meta.url)),
+        {
+          environment: 'browser',
+          outputDir: fileURLToPath(new URL('./reports/fuzz-digest', import.meta.url)),
+        },
+      ],
+    ],
     root: fileURLToPath(new URL('./packages/engine', import.meta.url)),
     // Only the browser runners. The suite itself is `test/determinism.shared.ts`, shared with the Node runner.
     include: ['test/**/*.browser.test.ts'],

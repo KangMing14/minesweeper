@@ -78,6 +78,7 @@ jobs:
       - run: pnpm check:todos
       - run: pnpm check:links
       - run: pnpm test:lint-fixtures
+      - run: pnpm test:scripts
       - run: pnpm test:coverage
 
       # M2-T06: the determinism suite again, in a real Chromium (Vitest browser mode). It is a step of this job,
@@ -85,6 +86,12 @@ jobs:
       - name: Install Chromium for the browser tests
         run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:browser
+
+      # M2-T10 (review M5): the Node run (`test:coverage`) and the Chromium run (`test:browser`) each wrote a SHA-256
+      # of their 500 fuzz outcomes to `reports/fuzz-digest/`; this step fails if they differ or if either is
+      # missing. The digests are computed in the run and never committed.
+      - name: Compare the fuzz digests of Node and Chromium
+        run: pnpm compare:fuzz-digests
 
       - run: pnpm docs:api
 
@@ -105,5 +112,6 @@ jobs:
           path: |
             coverage
             docs/api
+            reports
           if-no-files-found: ignore
           retention-days: 7

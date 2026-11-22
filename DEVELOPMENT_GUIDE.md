@@ -172,6 +172,8 @@ Add or change a fixture in `tools/lint-fixtures/cases/` and its entry in `tools/
 | `pnpm test` | Vitest, all four projects (`engine`, `protocol`, `server`, `web`), once, no watch; never needs a browser (`*.browser.test.ts` files are excluded) |
 | `pnpm test:coverage` | The same with v8 coverage: terminal table plus `coverage/` (`lcov.info`, `coverage-summary.json`) |
 | `pnpm test:browser` | The determinism suite in Chromium (Vitest browser mode, `vitest.browser.config.ts`); needs the browser installed once (see "Running the browser tests") |
+| `pnpm test:scripts` | `node:test` tests of the cross-environment digest comparison (`scripts/compare-fuzz-digests.test.mjs`); no browser needed (M2-T10) |
+| `pnpm compare:fuzz-digests` | Compares `reports/fuzz-digest/node.json` (written by `pnpm test` or `pnpm test:coverage`) with `browser.json` (written by `pnpm test:browser`); exits 1 if they differ or a file is missing (M2-T10) |
 | `pnpm test:affected` | Only tests affected by changes since `origin/main` (what `pre-push` runs); the whole suite if `origin/main` is missing |
 | `pnpm typecheck` | `tsc -b` for the packages, then `pnpm typecheck:tests` |
 | `pnpm typecheck:tests` | Type-checks test files (`packages/*/tsconfig.test.json`) and `vitest.config.ts` and `vitest.browser.config.ts` (`tsconfig.tooling.json`) |
@@ -191,6 +193,7 @@ Add or change a fixture in `tools/lint-fixtures/cases/` and its entry in `tools/
 ### Running the browser tests
 - One-time per machine, and again after `playwright` changes version: `pnpm exec playwright install chromium`. On a bare Linux machine or container use `pnpm exec playwright install --with-deps chromium` (CI does), which also installs the system libraries.
 - Run: `pnpm test:browser`. It starts Chromium headless, runs `packages/engine/test/determinism.browser.test.ts` (the same suite as the Node runner, `determinism.shared.ts`) and prints the usual Vitest report. Run only the Node side with `pnpm exec vitest run --project engine packages/engine/test/determinism.node`.
+- Cross-environment check (M2-T10): run `pnpm test`, then `pnpm test:browser`, then `pnpm compare:fuzz-digests`. Each run writes the SHA-256 of its 500 fuzz outcomes to `reports/fuzz-digest/` (ignored by git); the last command fails if Node and Chromium ended any game differently. The digest is never committed. A difference is a real finding: use `/systematic-debugging`, and start by comparing a few games between the two runs.
 - "Executable doesn't exist" means the browser is not installed (or is the revision of another `playwright` version): run the install command above. A failure in the browser run only means a real difference between Node and Chromium (or a stub that Chromium will not let the test install, which is reported by name), so read the first failing test before changing anything; never edit a golden fixture to turn it green (ADR-002).
 - The browser tests run the TypeScript source through Vite, not the built `dist/`. They are not part of `pnpm test`, `pnpm test:coverage` or the `pre-push` hook, so a machine without Chromium can still do everything else.
 - Changing the suite: the checks live in `packages/engine/test/determinism.shared.ts` (one file for both environments), the stubs and the fuzz player in `determinism.support.ts`. The module is subject to the engine's purity lint, so the names `Date`, `performance` and `Math.random` may only appear as strings there.
@@ -202,9 +205,9 @@ Add or change a fixture in `tools/lint-fixtures/cases/` and its entry in `tools/
 
 ### Continuous integration
 - Workflow: `.github/workflows/ci.yml`, one job named `ci`, on every pull request to `main` and every push to `main`.
-- Steps, in order: install with `--frozen-lockfile` (pnpm store cached), `typecheck`, `lint`, `format:check`, `check:todos`, `check:links` (added in M0-T05), `test:lint-fixtures`, `test:coverage`, `playwright install --with-deps chromium` and `test:browser` (added in M2-T06), `docs:api`, and on pull requests a commitlint check of the **PR title**. Coverage and `docs/api` are uploaded as the `ci-reports` artifact (7 days).
+- Steps, in order: install with `--frozen-lockfile` (pnpm store cached), `typecheck`, `lint`, `format:check`, `check:todos`, `check:links` (added in M0-T05), `test:lint-fixtures`, `test:scripts` (M2-T10), `test:coverage`, `playwright install --with-deps chromium` and `test:browser` (added in M2-T06), `compare:fuzz-digests` (M2-T10), `docs:api`, and on pull requests a commitlint check of the **PR title**. Coverage, `docs/api` and `reports/` (the fuzz digests) are uploaded as the `ci-reports` artifact (7 days).
 - Third-party actions are pinned to full commit SHAs (tag in a comment). Versions and dates are in `DECISIONS.md`. Update them on purpose, one at a time.
-- Running everything CI runs, locally: `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:todos && pnpm check:links && pnpm test:lint-fixtures && pnpm test:coverage && pnpm test:browser && pnpm docs:api` (run `pnpm exec playwright install chromium` once before `pnpm test:browser`).
+- Running everything CI runs, locally: `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:todos && pnpm check:links && pnpm test:lint-fixtures && pnpm test:scripts && pnpm test:coverage && pnpm test:browser && pnpm compare:fuzz-digests && pnpm docs:api` (run `pnpm exec playwright install chromium` once before `pnpm test:browser`).
 - Checking a PR title locally: `printf '%s\n' 'ci: add test tooling [M0-T04]' | pnpm exec commitlint`.
 
 ### Making CI a required check

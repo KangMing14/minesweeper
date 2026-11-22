@@ -14,6 +14,8 @@ docs/api/
 # Test and coverage output
 coverage/
 playwright-report/
+# Fuzz digests of the Node and Chromium runs (M2-T10), written by tools/fuzz-digest-reporter.mjs
+reports/
 test-results/
 
 # Environment files: real values live in host secrets. Only the example is tracked.

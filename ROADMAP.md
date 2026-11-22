@@ -75,7 +75,7 @@ File: `docs/milestones/M2-deterministic-engine.md`. Tag when finished: `m2-compl
 | M2-T07 | Bound the command log so every live game replays (review B1) | Done |#28|c73eb1e|2026-11-22|
 | M2-T08 | M2 close-out: tracker, CHANGELOG, review on record (review I1, I2) | Done |#28|c73eb1e|2026-11-22|
 | M2-T09 | M2 review minors (review M1 to M4, M6) | Done |#28|c73eb1e|2026-11-22|
-| M2-T10 | Cross-environment digest of the fuzz outcomes (optional, review M5) | Not started |  |  |  |
+| M2-T10 | Cross-environment digest of the fuzz outcomes (optional, review M5) | Done |  |  |  |
 
 ## M3 Local Solo Client
 
