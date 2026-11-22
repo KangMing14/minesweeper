@@ -71,7 +71,7 @@ File: `docs/milestones/M2-deterministic-engine.md`. Tag when finished: `m2-compl
 | M2-T03 | `createGame` and the command log        | Done        |#24|c21bee8|2026-11-19|
 | M2-T04 | `ReplayLog` and `replay`                | Done        |#25|6262635|2026-11-19|
 | M2-T05 | Results and scoring                     | Done        |#26|6b499bf|2026-11-19|
-| M2-T06 | Determinism and cross-environment tests | Done        |     |        |         |
+| M2-T06 | Determinism and cross-environment tests | Done        |#27|6cdc41d|2026-11-21|
 
 ## M3 Local Solo Client
 
