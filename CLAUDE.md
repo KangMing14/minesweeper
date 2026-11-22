@@ -41,8 +41,10 @@ pnpm format:check     # Prettier (code and config files, not Markdown)
 pnpm check:todos      # every TODO names a task
 pnpm check:links      # relative links and anchors in Markdown files resolve
 pnpm test:lint-fixtures
+pnpm test:scripts     # node:test tests of the fuzz-digest comparison
 pnpm test             # Vitest, all four projects
 pnpm test:browser     # determinism suite in Chromium (first run: pnpm exec playwright install chromium)
+pnpm compare:fuzz-digests  # after pnpm test and pnpm test:browser: Node and Chromium ended the fuzz games the same way
 pnpm docs:api         # TypeDoc for engine and protocol, warnings are errors
 ```
 

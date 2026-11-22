@@ -356,3 +356,39 @@ export function playFuzzGame(index: number): FuzzOutcome {
   const replayed = replay(JSON.parse(JSON.stringify(log)) as ReplayLog);
   return { config, seed, live: snapshot(game), replayed: snapshot(replayed) };
 }
+
+/**
+ * What a fuzz run tells the reporter of `tools/fuzz-digest-reporter.mjs`: which run (`plain`, or `stubbed` with the
+ * clock and random reads made fatal), how many games, and the digest of their outcomes (M2-T10).
+ *
+ * @internal
+ */
+export interface FuzzDigestEntry {
+  readonly mode: 'plain' | 'stubbed';
+  readonly games: number;
+  readonly digest: string;
+}
+
+// The test meta is the channel from a test to the reporter, and it crosses from Chromium to the Node process
+// that runs Vitest the same way as from a Node worker, so one mechanism serves both runners.
+declare module 'vitest' {
+  interface TaskMeta {
+    fuzzDigest?: FuzzDigestEntry;
+  }
+}
+
+/**
+ * SHA-256 of the JSON of the fuzz outcomes, as 64 lower-case hex digits (M2-T10, review M5).
+ *
+ * The JSON of every outcome (config, seed, final view, result record and command log of the live game and of its
+ * replay) is the text that is hashed, so two environments get the same digest only if all 500 games ended the
+ * same way in both. It is computed in the run and never committed: a cross-environment equality check needs no
+ * oracle, and a committed value would be a fixture produced by the code it checks (`DEVELOPMENT_GUIDE.md`).
+ *
+ * @param outcomes - The outcomes of `playFuzzGame`, in game order.
+ * @returns The digest.
+ * @internal
+ */
+export function fuzzDigest(outcomes: readonly FuzzOutcome[]): string {
+  return sha256Hex(JSON.stringify(outcomes));
+}

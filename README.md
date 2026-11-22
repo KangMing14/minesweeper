@@ -31,6 +31,7 @@ On Windows, if pnpm fails to start after `npm i -g pnpm`, see the Windows note i
 | `pnpm test:lint-fixtures` | Proves each lint, TODO, branch-name and commit-message rule fires for the intended reason |
 | `pnpm test` | Vitest, once |
 | `pnpm test:browser` | The determinism suite in Chromium (Vitest browser mode); run `pnpm exec playwright install chromium` once first |
+| `pnpm test:scripts`, `pnpm compare:fuzz-digests` | The tests of, and the run of, the Node-versus-Chromium comparison of the fuzz digests (after `pnpm test` and `pnpm test:browser`) |
 | `pnpm test:affected` | Vitest on tests affected since `origin/main` (the pre-push hook) |
 | `pnpm audit:prod` / `pnpm audit:all` | Dependency advisories: moderate or higher in production dependencies (CI) / high or higher anywhere (weekly workflow) |
 | `pnpm test:coverage` | Vitest with coverage reports in `coverage/` |

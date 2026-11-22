@@ -32,6 +32,15 @@ export default defineConfig({
     ],
   },
   test: {
+    // M2-T10: writes the fuzz digest of the Node run to `reports/fuzz-digest/node.json`; the Chromium run does the
+    // same from `vitest.browser.config.ts`, and `scripts/compare-fuzz-digests.mjs` compares the two files in CI.
+    reporters: [
+      'default',
+      [
+        fromRoot('./tools/fuzz-digest-reporter.mjs'),
+        { environment: 'node', outputDir: fromRoot('./reports/fuzz-digest') },
+      ],
+    ],
     // A package without tests yet (both apps until M3 and M5) must not fail the run.
     passWithNoTests: true,
     projects: PROJECTS.map(({ name, dir }) => ({
