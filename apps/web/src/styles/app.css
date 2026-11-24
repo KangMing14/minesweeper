@@ -1,0 +1,53 @@
+/* Entry stylesheet: Tailwind, then the tokens, then the names Tailwind utilities use for them (M3-T01). */
+@import 'tailwindcss';
+@import './tokens.css';
+
+/*
+ * `inline` makes each utility read the token variable at use time, so a theme switch (which only changes the
+ * --ms-* variables) restyles the page without regenerating any class.
+ */
+@theme inline {
+  --color-surface: var(--ms-color-surface);
+  --color-raised: var(--ms-color-surface-raised);
+  --color-ink: var(--ms-color-text);
+  --color-ink-muted: var(--ms-color-text-muted);
+  --color-accent: var(--ms-color-accent);
+  --color-danger: var(--ms-color-danger);
+  --color-cell-hidden: var(--ms-color-cell-hidden);
+  --color-cell-revealed: var(--ms-color-cell-revealed);
+  --color-num-1: var(--ms-color-num-1);
+  --color-num-2: var(--ms-color-num-2);
+  --color-num-3: var(--ms-color-num-3);
+  --color-num-4: var(--ms-color-num-4);
+  --color-num-5: var(--ms-color-num-5);
+  --color-num-6: var(--ms-color-num-6);
+  --color-num-7: var(--ms-color-num-7);
+  --color-num-8: var(--ms-color-num-8);
+
+  --radius-sm: var(--ms-radius-sm);
+  --radius-md: var(--ms-radius-md);
+  --radius-lg: var(--ms-radius-lg);
+
+  --text-xs: var(--ms-font-size-xs);
+  --text-sm: var(--ms-font-size-sm);
+  --text-base: var(--ms-font-size-md);
+  --text-lg: var(--ms-font-size-lg);
+  --text-xl: var(--ms-font-size-xl);
+  --text-2xl: var(--ms-font-size-2xl);
+
+  --font-sans: var(--ms-font-sans);
+}
+
+@layer base {
+  html {
+    background-color: var(--ms-color-surface);
+    color: var(--ms-color-text);
+    font-family: var(--ms-font-sans);
+  }
+
+  /* One visible focus style for every control; the board cursor (M3-T08) reuses it. */
+  :focus-visible {
+    outline: 2px solid var(--ms-color-accent);
+    outline-offset: 2px;
+  }
+}

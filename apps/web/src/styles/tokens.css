@@ -1,0 +1,110 @@
+/*
+ * Design tokens (M3-T01). Every color, space, radius and type size of the client comes from here.
+ *
+ * Direction: a precision instrument for people who race the clock. Cool, quiet surfaces so the board and the
+ * timer carry the weight; the eight number colors are the one place the palette speaks up.
+ *
+ * Themes: the light values are the default. The dark values appear twice on purpose:
+ *   1. under prefers-color-scheme, unless the page was forced to light (data-theme="light");
+ *   2. when the page was forced to dark (data-theme="dark").
+ * CSS cannot share a declaration list between those two selectors, so tokens.test.ts fails if they drift apart.
+ * Number colors are checked against the revealed-cell color for 4.5:1 contrast in both themes.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces and text */
+  --ms-color-surface: #e4eaf0;
+  --ms-color-surface-raised: #f6f8fa;
+  --ms-color-text: #15212c;
+  --ms-color-text-muted: #46586a;
+  --ms-color-accent: #075f87;
+  --ms-color-danger: #b0231c;
+
+  /* Board cells */
+  --ms-color-cell-hidden: #bccad6;
+  --ms-color-cell-revealed: #f6f8fa;
+
+  /* Cell numbers 1 to 8 */
+  --ms-color-num-1: #1c5bb8;
+  --ms-color-num-2: #1b6e2f;
+  --ms-color-num-3: #b3261e;
+  --ms-color-num-4: #53279a;
+  --ms-color-num-5: #8a4a0c;
+  --ms-color-num-6: #00686f;
+  --ms-color-num-7: #24303b;
+  --ms-color-num-8: #556270;
+
+  /* Spacing */
+  --ms-space-1: 0.25rem;
+  --ms-space-2: 0.5rem;
+  --ms-space-3: 0.75rem;
+  --ms-space-4: 1rem;
+  --ms-space-5: 1.5rem;
+  --ms-space-6: 2.5rem;
+
+  /* Radius: small for cells, medium for controls, large for panels */
+  --ms-radius-sm: 0.125rem;
+  --ms-radius-md: 0.375rem;
+  --ms-radius-lg: 0.75rem;
+
+  /* Type scale (major third from 1rem) and family */
+  --ms-font-size-xs: 0.75rem;
+  --ms-font-size-sm: 0.875rem;
+  --ms-font-size-md: 1rem;
+  --ms-font-size-lg: 1.25rem;
+  --ms-font-size-xl: 1.5625rem;
+  --ms-font-size-2xl: 2.25rem;
+  --ms-font-sans:
+    'Avenir Next', 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --ms-color-surface: #0e1822;
+    --ms-color-surface-raised: #17242f;
+    --ms-color-text: #e6edf3;
+    --ms-color-text-muted: #a3b2c0;
+    --ms-color-accent: #5ec4ee;
+    --ms-color-danger: #ff8f86;
+
+    --ms-color-cell-hidden: #3b5064;
+    --ms-color-cell-revealed: #1a2834;
+
+    --ms-color-num-1: #78acff;
+    --ms-color-num-2: #62d28c;
+    --ms-color-num-3: #ff8f86;
+    --ms-color-num-4: #c9a8ff;
+    --ms-color-num-5: #e6a860;
+    --ms-color-num-6: #4fd3da;
+    --ms-color-num-7: #d8e1e9;
+    --ms-color-num-8: #a5b2bf;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --ms-color-surface: #0e1822;
+  --ms-color-surface-raised: #17242f;
+  --ms-color-text: #e6edf3;
+  --ms-color-text-muted: #a3b2c0;
+  --ms-color-accent: #5ec4ee;
+  --ms-color-danger: #ff8f86;
+
+  --ms-color-cell-hidden: #3b5064;
+  --ms-color-cell-revealed: #1a2834;
+
+  --ms-color-num-1: #78acff;
+  --ms-color-num-2: #62d28c;
+  --ms-color-num-3: #ff8f86;
+  --ms-color-num-4: #c9a8ff;
+  --ms-color-num-5: #e6a860;
+  --ms-color-num-6: #4fd3da;
+  --ms-color-num-7: #d8e1e9;
+  --ms-color-num-8: #a5b2bf;
+}

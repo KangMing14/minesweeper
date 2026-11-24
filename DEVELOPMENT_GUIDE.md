@@ -176,7 +176,7 @@ Add or change a fixture in `tools/lint-fixtures/cases/` and its entry in `tools/
 | `pnpm compare:fuzz-digests` | Compares `reports/fuzz-digest/node.json` (written by `pnpm test` or `pnpm test:coverage`) with `browser.json` (written by `pnpm test:browser`); exits 1 if they differ or a file is missing (M2-T10) |
 | `pnpm test:affected` | Only tests affected by changes since `origin/main` (what `pre-push` runs); the whole suite if `origin/main` is missing |
 | `pnpm typecheck` | `tsc -b` for the packages, then `pnpm typecheck:tests` |
-| `pnpm typecheck:tests` | Type-checks test files (`packages/*/tsconfig.test.json`) and `vitest.config.ts` and `vitest.browser.config.ts` (`tsconfig.tooling.json`) |
+| `pnpm typecheck:tests` | Type-checks test files (`packages/*/tsconfig.test.json`, `apps/web/tsconfig.test.json`) and `vitest.config.ts`, `vitest.browser.config.ts` and `apps/web/vite.config.ts` (`tsconfig.tooling.json`) |
 | `pnpm docs:api` | TypeDoc API reference for `engine` and `protocol` into `docs/api/` (ignored by git); any warning is an error |
 | `pnpm exec vitest --project engine` | Run one project; add `--watch` while developing |
 
@@ -205,9 +205,9 @@ Add or change a fixture in `tools/lint-fixtures/cases/` and its entry in `tools/
 
 ### Continuous integration
 - Workflow: `.github/workflows/ci.yml`, one job named `ci`, on every pull request to `main` and every push to `main`.
-- Steps, in order: install with `--frozen-lockfile` (pnpm store cached), `typecheck`, `lint`, `format:check`, `check:todos`, `check:links` (added in M0-T05), `test:lint-fixtures`, `test:scripts` (M2-T10), `test:coverage`, `playwright install --with-deps chromium` and `test:browser` (added in M2-T06), `compare:fuzz-digests` (M2-T10), `docs:api`, and on pull requests a commitlint check of the **PR title**. Coverage, `docs/api` and `reports/` (the fuzz digests) are uploaded as the `ci-reports` artifact (7 days).
+- Steps, in order: install with `--frozen-lockfile` (pnpm store cached), `typecheck`, `lint`, `format:check`, `check:todos`, `check:links` (added in M0-T05), `test:lint-fixtures`, `test:scripts` (M2-T10), `test:coverage`, the Vite build of the client (`pnpm --filter @minesweeper/web build`, M3-T01), `playwright install --with-deps chromium` and `test:browser` (added in M2-T06), `compare:fuzz-digests` (M2-T10), `docs:api`, and on pull requests a commitlint check of the **PR title**. Coverage, `docs/api` and `reports/` (the fuzz digests) are uploaded as the `ci-reports` artifact (7 days).
 - Third-party actions are pinned to full commit SHAs (tag in a comment). Versions and dates are in `DECISIONS.md`. Update them on purpose, one at a time.
-- Running everything CI runs, locally: `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:todos && pnpm check:links && pnpm test:lint-fixtures && pnpm test:scripts && pnpm test:coverage && pnpm test:browser && pnpm compare:fuzz-digests && pnpm docs:api` (run `pnpm exec playwright install chromium` once before `pnpm test:browser`).
+- Running everything CI runs, locally: `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:todos && pnpm check:links && pnpm test:lint-fixtures && pnpm test:scripts && pnpm test:coverage && pnpm --filter @minesweeper/web build && pnpm test:browser && pnpm compare:fuzz-digests && pnpm docs:api` (run `pnpm exec playwright install chromium` once before `pnpm test:browser`).
 - Checking a PR title locally: `printf '%s\n' 'ci: add test tooling [M0-T04]' | pnpm exec commitlint`.
 
 ### Making CI a required check
@@ -219,6 +219,24 @@ tools/verify-t01.sh --remote OWNER/REPO
 ```
 
 The required check is the job name, `ci`. Rename the job only together with this command.
+
+## Running the web app (M3-T01)
+
+The browser client is `apps/web` (package `@minesweeper/web`: React, Vite, Tailwind, Zustand). Run these from the repository root.
+
+| Command | What it does |
+|---|---|
+| `pnpm --filter web dev` | Vite dev server at `http://localhost:5173` with hot reload. No prior `tsc -b` is needed: `apps/web/vite.config.ts` resolves `@minesweeper/engine` and `@minesweeper/protocol` to their source, like the Vitest config does. |
+| `pnpm --filter web build` | `tsc -b` (type check), then the production build into `apps/web/dist/` (ignored by git). CI runs it. The root `pnpm build` is only `tsc -b` and does not run Vite. |
+| `pnpm --filter web preview` | Serves the last build locally. |
+| `pnpm exec vitest run --project web` | The component and token tests only; add `--watch` while developing. |
+
+- **Design tokens.** `apps/web/src/styles/tokens.css` is the only place that holds colors, spacing, radii and type sizes (`--ms-*` variables). `app.css` maps them to Tailwind names (`bg-surface`, `text-num-3`, ...) with `@theme inline`. Components use those utilities and never a literal color.
+- **Themes.** The light values are the default; dark applies by `prefers-color-scheme`, and the `data-theme="light"` or `data-theme="dark"` attribute on `<html>` forces one (`src/theme.ts`; the header button cycles system, light, dark). The dark values are written twice in `tokens.css` (system-dark and forced-dark); a test fails if the two copies differ.
+- **Changing a color.** Edit `tokens.css`, run `pnpm exec vitest run --project web`. `tokens.test.ts` checks that every token exists in both themes, that the eight number colors are distinct, and that numbers, text, accent and danger meet 4.5:1 on their backgrounds (WCAG 2.x, computed in `src/styles/contrast.ts`).
+- **Component tests** run in jsdom with React Testing Library; `apps/web/test/setup.ts` cleans up after each test. A test that reads files (such as `tokens.test.ts`) starts with `// @vitest-environment node`.
+- **Types.** `tsconfig.json` of `apps/web` has `types: []` and excludes test files; `tsconfig.test.json` adds Node types and checks them. Test files are checked by `pnpm typecheck`.
+- **Fonts.** The type stack is system fonts only (`--ms-font-sans`). A web font would be a new dependency and needs the developer's approval.
 
 ## Keeping the documents current
 
