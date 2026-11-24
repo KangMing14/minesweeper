@@ -7,6 +7,7 @@
 // tsconfig has no DOM lib and no ambient @types.
 
 export { Board } from './board.js';
+export type { Clock } from './clock.js';
 export type { Command } from './command.js';
 export type { BoardConfig, CellIndex } from './config.js';
 export { PRESETS, cellCount, safeCellCount, validateBoardConfig } from './config.js';

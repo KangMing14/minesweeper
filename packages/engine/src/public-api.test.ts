@@ -17,6 +17,7 @@ import {
 } from './index.js';
 import type {
   BoardGenerator,
+  Clock,
   Command,
   GameEvent,
   GameResult,
@@ -291,5 +292,21 @@ describe('reading the result of a game with Game.result, through the public entr
     };
     expect(live.result()).toMatchObject({ outcome: 'won', timeMs: 0, threeBVPerSecond: 0 });
     expect(replay(log).result()).toEqual(live.result());
+  });
+});
+
+// M3-T02: `Clock` is the engine's one declaration about time. It is an interface only: the engine never reads
+// a clock (ADR-002), the caller does, and passes the result in as `t`.
+describe('public API: Clock', () => {
+  it('lets a caller measure time itself and hand it to the engine as t', () => {
+    let now = 1_000;
+    const clock: Clock = { nowMs: () => now };
+    const start = clock.nowMs();
+    const game = createGame({ width: 3, height: 3, mineCount: 2 }, 7);
+
+    now = 1_250;
+    game.apply({ type: 'flag', index: 0, t: clock.nowMs() - start });
+
+    expect(game.log()).toEqual([{ type: 'flag', index: 0, t: 250 }]);
   });
 });

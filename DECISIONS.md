@@ -151,6 +151,17 @@ Looked up on the npm registry on **2026-11-23**, with the 14-day rule applied on
 - **Checked.** Every version above exists, is not deprecated, and meets the rule; `pnpm audit:prod` reports no known vulnerabilities after the install; `pnpm peers check` lists only the accepted `eslint-plugin-tsdoc` TypeScript warning; `pnpm audit` still shows only the accepted `minimatch` advisory (see "Dependency advisories").
 - **Not checked.** The GitHub repositories of the new packages (archived flag, open issues) were not read; only registry metadata and the audit endpoint were.
 
+## Game session (M3-T02)
+
+No ADR and no open decision. A note for the tasks that follow. ADR-004 says the exact signatures of `GameSession` are created in M3-T02 and recorded in `ARCHITECTURE.md` ("Game session"); nothing in ADR-004 or ADR-002 is contradicted, so there is no erratum.
+
+- **`isStuck()` (developer decision of 2026-11-24).** The milestone handoff fixes seven members for `GameSession`, and M3-T02 asks the session to "report the game as stuck" at `MAX_REPLAY_COMMANDS` (M2-T07). None of the seven can carry that (the status stays `'playing'`, `result()` stays `undefined`, `GameEvent` is the engine's), so the developer approved an eighth member, `isStuck(): boolean`, over a method only on the `LocalSession` class (the UI cannot reach it through the interface). The M3 and M5 milestone files now list it.
+- **M3-T05 (screens).** When `isStuck()` is true the play screen offers a new game, and the HUD timer is already stopped (`elapsedMs()` freezes). Do not wait for an event: there is none.
+- **M3-T06 (restart, retry).** The task keeps the last finished game's `ReplayLog` for ghosts, but `GameSession` exposes no command log (`Game.log()` stays inside `LocalSession`). That task decides how to reach it; if the answer is a new member of `GameSession`, it needs the developer's approval, like `isStuck()`.
+- **M4 (time-attack).** `LocalSession` starts its timer at `start()` (race semantics), as M3-T02 says. Whether solo time starts on the first click is settled with the time-attack rules; a change moves where t0 is read, not the interface.
+- **M5-T06 (`RemoteSession`).** Implements `isStuck()` as well. The server plays the same engine, so its game has the same limit and a stuck match is possible there too; what the match does about it is a decision of M5-T05 (see "Replay and versioning" above).
+- **Choices the task left open** (recorded in `ARCHITECTURE.md`): a second `start()` does nothing; `view()` before a successful `start()` throws; a bad config or seed throws from `start()` and leaves the session not started; a non-finite clock reading counts as no time passing; `elapsedMs()` also freezes when the game is stuck and at `dispose()`.
+
 ## ADR-005 input: dependency pins
 
 Versions were looked up on the npm registry on **2026-11-05**. Rule: the newest stable release at least 14 days old (published on or before 2026-10-22), within the major line of the registry's `latest`, unless a compatibility note says otherwise. A security fix is a second exception (added in M0-T06, ADR-005): a version below the first patched release of a published security advisory is not eligible, however old it is, and the 14-day wait does not apply to the patched version. Every version is exact (no `^` or `~`). "Latest" is what the registry tagged `latest` on that day.

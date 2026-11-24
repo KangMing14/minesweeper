@@ -18,7 +18,7 @@
 **Interfaces fixed for this milestone:**
 - `interface Clock { nowMs(): number }` (declared in `engine` as an interface only; `SystemClock` implemented in `apps/web`).
 - `type PlayerAction = { type: Command['type']; index: CellIndex }`.
-- `interface GameSession { start(): void; dispatch(action: PlayerAction): void; subscribe(listener: (event: GameEvent) => void): () => void; view(): GameView; elapsedMs(): number; result(): GameResult | undefined; dispose(): void }`.
+- `interface GameSession { start(): void; dispatch(action: PlayerAction): void; subscribe(listener: (event: GameEvent) => void): () => void; view(): GameView; elapsedMs(): number; result(): GameResult | undefined; isStuck(): boolean; dispose(): void }`. `isStuck()` was added in M3-T02 with the developer's approval (2026-11-24): true when the game accepted `MAX_REPLAY_COMMANDS` commands without ending, so the UI can offer a new game.
 
 ---
 
@@ -75,7 +75,7 @@
 - **Objective:** a complete flow from menu to result.
 - **Description:** menu with presets, play screen with HUD, result screen.
 - **Prerequisites:** M3-T04.
-- **Implementation guidance:** a screen state machine (`menu`, `playing`, `result`) held in Zustand with an explicit transition table (an enum plus switch is enough on the client). HUD: elapsed time, mines remaining, preset name. Result screen shows `GameResult` fields (time, 3BV, 3BV/s, outcome). Seeds come from `crypto.getRandomValues` (uint32). Use `/ux-copy` for button and message text.
+- **Implementation guidance:** a screen state machine (`menu`, `playing`, `result`) held in Zustand with an explicit transition table (an enum plus switch is enough on the client). HUD: elapsed time, mines remaining, preset name. Result screen shows `GameResult` fields (time, 3BV, 3BV/s, outcome). Seeds come from `crypto.getRandomValues` (uint32). Use `/ux-copy` for button and message text. When `session.isStuck()` is true (M3-T02), the play screen offers a new game; the timer has already stopped.
 - **Expected output:** `src/screens/`, `src/state/appStore.ts`, tests.
 - **Testing requirements:** component tests for each screen; transition table tests including invalid transitions rejected; HUD updates from session events.
 - **Acceptance criteria:** a manual play-through works for all three presets.
@@ -87,7 +87,7 @@
 - **Objective:** fast iteration, which is what competitive players expect.
 - **Description:** restart controls with hotkeys.
 - **Prerequisites:** M3-T05.
-- **Implementation guidance:** `R` starts a new board with the same preset and a new seed; `Shift+R` retries the same seed; both available as buttons on the result screen. A restart disposes the old session before creating the next. Keep the last finished game's `ReplayLog` in memory for ghost use in M4.
+- **Implementation guidance:** `R` starts a new board with the same preset and a new seed; `Shift+R` retries the same seed; both available as buttons on the result screen. A restart disposes the old session before creating the next. Keep the last finished game's `ReplayLog` in memory for ghost use in M4. `GameSession` exposes no command log (M3-T02); decide how to reach it, and ask the developer first if that means a new interface member.
 - **Expected output:** controls, store actions, tests.
 - **Testing requirements:** retrying the same seed yields an identical opening and layout; a new board differs with overwhelming probability; rapid repeated restarts leave no leaked subscriptions (count listeners).
 - **Acceptance criteria:** tests pass; hotkeys documented.

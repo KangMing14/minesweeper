@@ -26,6 +26,9 @@ interface CellsRevealed
   readonly cells: readonly { readonly index: CellIndex; readonly value: number; }[]
   readonly type: "cellsRevealed"
 
+interface Clock
+  nowMs(): number
+
 interface Command
   readonly index: number
   readonly t: number
