@@ -81,6 +81,9 @@ jobs:
       - run: pnpm test:scripts
       - run: pnpm test:coverage
 
+      # M3-T01: the real Vite build of the client (`pnpm build` is `tsc -b` and does not run Vite).
+      - run: pnpm --filter @minesweeper/web build
+
       # M2-T06: the determinism suite again, in a real Chromium (Vitest browser mode). It is a step of this job,
       # not a second job, so the single required check stays `ci`. `pnpm test` never needs a browser.
       - name: Install Chromium for the browser tests

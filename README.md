@@ -4,7 +4,7 @@
 
 A browser-based competitive Minesweeper: 1v1 races on an identical seeded board with a guaranteed safe opening, plus solo time-attack with leaderboards. TypeScript, pnpm monorepo, a deterministic engine and a server-authoritative backend. Inspired by the competitive feel of TETR.IO, not a copy of it.
 
-**Status:** M0 Foundations and M1 Engine core are done and tagged. M2 Deterministic engine has all six tasks done; the `m2-complete` tag follows its review. The first playable client arrives in M3. [ROADMAP.md](ROADMAP.md) has the status of every task. License: all rights reserved until launch ([ADR-008](docs/adr/ADR-008-license.md), [LICENSE](LICENSE)).
+**Status:** M0 Foundations, M1 Engine core and M2 Deterministic engine are done and tagged. M3 Local solo client has started: the web app shell and design tokens (M3-T01) are in place, and the board, input and screens follow. [ROADMAP.md](ROADMAP.md) has the status of every task. License: all rights reserved until launch ([ADR-008](docs/adr/ADR-008-license.md), [LICENSE](LICENSE)).
 
 ## Setup
 
@@ -25,6 +25,7 @@ On Windows, if pnpm fails to start after `npm i -g pnpm`, see the Windows note i
 | `pnpm typecheck` | Type-check every package and every test file |
 | `pnpm lint` / `pnpm format:check` | ESLint (TSDoc, boundaries, engine purity) / Prettier |
 | `pnpm build` | `tsc -b`, the same build `typecheck` starts with |
+| `pnpm --filter web dev` / `pnpm --filter web build` | The browser client: Vite dev server at `http://localhost:5173` / type check and production build into `apps/web/dist/` (CI runs the build) |
 | `pnpm format` | Prettier, writing changes |
 | `pnpm check:todos` | Fails on any TODO, FIXME, XXX or HACK that does not name a task (code, workflow and shell files) |
 | `pnpm check:links` | Fails on a broken relative link or anchor in any Markdown file |

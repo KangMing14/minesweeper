@@ -141,6 +141,16 @@ Looked up on the npm registry on **2026-11-21**: `playwright` `latest` is 1.65.1
 - **Compatibility, as far as it could be checked.** `@vitest/browser-playwright` 5.0.5 type-checks against `vitest` 5.0.5 (`vitest.browser.config.ts` is part of `pnpm typecheck`), and the suite passed in a Chromium 153 of an older Playwright revision. Playwright 1.65.0 with its own Chromium was run by the developer, not by me.
 - **Not checked.** The GitHub repository state of `playwright` (archived flag, open issues) was not read; only registry metadata and the audit endpoint were.
 
+## M3-T01 verification notes
+
+Looked up on the npm registry on **2026-11-23**, with the 14-day rule applied on that day (published on or before 2026-11-09). No ADR and no open decision.
+
+- **What the developer approved (2026-11-23).** (1) `jsdom`, `@testing-library/react` and `@testing-library/dom` as devDependencies of `apps/web`; none of them was in the pin table or in ADR-005. `jest-dom` and `user-event` are not added. (2) The newest eligible versions of `zustand`, `tailwindcss`, `@tailwindcss/vite` and `@vitejs/plugin-react`, instead of the pins of 2026-11-05. (3) A CI step that runs the real Vite build of the client.
+- **`@vitejs/plugin-react` 6.2.1, not 6.3.0.** 6.3.0 was published on 2026-11-09, exactly 14 days before the lookup; 6.2.1 is the default chosen in the task conversation. The plugin's peers other than `vite` (`oxc-transform-react`, `@rolldown/plugin-babel`, `babel-plugin-react-compiler`) are optional, and `pnpm peers check` lists none of them.
+- **`jsdom` 31.0.0, not 31.0.1.** 31.0.1 is under 14 days old. Not deprecated.
+- **Checked.** Every version above exists, is not deprecated, and meets the rule; `pnpm audit:prod` reports no known vulnerabilities after the install; `pnpm peers check` lists only the accepted `eslint-plugin-tsdoc` TypeScript warning; `pnpm audit` still shows only the accepted `minimatch` advisory (see "Dependency advisories").
+- **Not checked.** The GitHub repositories of the new packages (archived flag, open issues) were not read; only registry metadata and the audit endpoint were.
+
 ## ADR-005 input: dependency pins
 
 Versions were looked up on the npm registry on **2026-11-05**. Rule: the newest stable release at least 14 days old (published on or before 2026-10-22), within the major line of the registry's `latest`, unless a compatibility note says otherwise. A security fix is a second exception (added in M0-T06, ADR-005): a version below the first patched release of a published security advisory is not eligible, however old it is, and the 14-day wait does not apply to the patched version. Every version is exact (no `^` or `~`). "Latest" is what the registry tagged `latest` on that day.
@@ -165,15 +175,18 @@ Only the rows marked **installed** are in a `package.json` today. The rest are d
 
 | Tool | Pin | Published | Latest on 2026-11-05 | Status and notes |
 |---|---|---|---|---|
-| `react` | 19.3.1 | 2026-10-14 | 19.3.1 | M3-T01 |
-| `react-dom` | 19.3.1 | 2026-10-14 | 19.3.1 | M3-T01 |
-| `@types/react` | 19.3.0 | 2026-09-09 | 19.3.0 | M3-T01 |
-| `@types/react-dom` | 19.3.0 | 2026-09-09 | 19.3.0 | M3-T01 |
-| `vite` | 8.3.5 | 2026-10-21 | 8.3.5 | **installed** at the root in M0-T04, because Vitest 5 takes `vite` as a peer dependency. M3-T01 adds the same version to `apps/web`. |
-| `@vitejs/plugin-react` | 6.1.2 | 2026-10-05 | 6.2.1 (2026-11-02) | M3-T01. Peer: `vite ^8`. |
-| `zustand` | 5.0.15 | 2026-08-13 | 5.0.16 (2026-10-22) | M3-T01 |
-| `tailwindcss` | 4.3.3 | 2026-07-16 | 4.3.4 (2026-11-02) | M3-T01 |
-| `@tailwindcss/vite` | 4.3.3 | 2026-07-16 | 4.3.4 (2026-11-02) | M3-T01. Keep equal to `tailwindcss`. |
+| `react` | 19.3.1 | 2026-10-14 | 19.3.1 | **installed** in `apps/web` in M3-T01. |
+| `react-dom` | 19.3.1 | 2026-10-14 | 19.3.1 | **installed** in `apps/web` in M3-T01. |
+| `@types/react` | 19.3.0 | 2026-09-09 | 19.3.0 | **installed** in `apps/web` in M3-T01. |
+| `@types/react-dom` | 19.3.0 | 2026-09-09 | 19.3.0 | **installed** in `apps/web` in M3-T01. |
+| `vite` | 8.3.5 | 2026-10-21 | 8.3.5 | **installed** at the root in M0-T04, because Vitest 5 takes `vite` as a peer dependency. **installed** in `apps/web` in M3-T01 at the same version. |
+| `@vitejs/plugin-react` | 6.2.1 | 2026-11-02 | 6.3.0 (2026-11-09), looked up 2026-11-23 | **installed** in `apps/web` in M3-T01; the pin moved from 6.1.2 (see the M3-T01 notes). Peer: `vite ^8`; its other peers are optional. |
+| `zustand` | 5.1.0 | 2026-11-06 | 5.1.0, looked up 2026-11-23 | **installed** in `apps/web` in M3-T01; the pin moved from 5.0.15. No code uses it yet (M3-T05). |
+| `tailwindcss` | 4.3.5 | 2026-11-06 | 4.3.5, looked up 2026-11-23 | **installed** in `apps/web` in M3-T01; the pin moved from 4.3.3. |
+| `@tailwindcss/vite` | 4.3.5 | 2026-11-06 | 4.3.5, looked up 2026-11-23 | **installed** in `apps/web` in M3-T01. Keep equal to `tailwindcss`. |
+| `jsdom` | 31.0.0 | 2026-11-05 | 31.0.1, looked up 2026-11-23 | **installed** in `apps/web` in M3-T01 (DOM for component tests). Not in the 2026-11-05 table; added with the developer's approval of 2026-11-23. Node `^22.22.2 \|\| ^24.15.0 \|\| >=26`. Optional peer `@napi-rs/canvas` is not installed. |
+| `@testing-library/react` | 16.3.3 | 2026-08-27 | 16.3.3 | **installed** in `apps/web` in M3-T01. Same approval. |
+| `@testing-library/dom` | 10.4.2 | 2026-09-13 | 10.4.2 | **installed** in `apps/web` in M3-T01. A required peer of `@testing-library/react`, so it is installed explicitly. |
 
 Radix primitives are pinned per component when first used (M3, M10).
 

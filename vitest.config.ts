@@ -15,6 +15,14 @@ const PROJECTS = [
   { name: 'web', dir: 'apps/web' },
 ] as const;
 
+/**
+ * Settings that only some projects need. `web` runs component tests, so it gets a DOM (jsdom) and a setup
+ * file that cleans up after each test (M3-T01). The other projects stay on plain Node.
+ */
+const PROJECT_OVERRIDES: Record<string, { environment: 'jsdom'; setupFiles: string[] }> = {
+  web: { environment: 'jsdom', setupFiles: [fromRoot('./apps/web/test/setup.ts')] },
+};
+
 export default defineConfig({
   resolve: {
     // Why aliases: package.json `exports` point at `dist/`, which only exists after `tsc -b`. Resolving the
@@ -52,6 +60,7 @@ export default defineConfig({
         // Playwright specs live in `e2e/` (M3-T08) and are deliberately not matched here.
         include: ['src/**/*.{test,spec}.{ts,tsx}', 'test/**/*.{test,spec}.{ts,tsx}'],
         environment: 'node',
+        ...PROJECT_OVERRIDES[name],
         // The browser runner of the determinism suite (M2-T06) needs Chromium, so it has its own config and
         // script (`pnpm test:browser`, `vitest.browser.config.ts`) and stays out of `pnpm test` and `pre-push`.
         exclude: [...configDefaults.exclude, '**/*.browser.test.ts'],
