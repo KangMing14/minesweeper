@@ -83,7 +83,7 @@ File: `docs/milestones/M3-local-solo-client.md`. Tag when finished: `m3-complete
 
 | Task   | Title                                          | Status      | PR  | Commit | Done on |
 | ------ | ---------------------------------------------- | ----------- | --- | ------ | ------- |
-| M3-T01 | Web scaffold and design tokens                 | Not started |     |        |         |
+| M3-T01 | Web scaffold and design tokens                 | Done        |     |        |         |
 | M3-T02 | `GameSession` and `LocalSession`               | Not started |     |        |         |
 | M3-T03 | Canvas board renderer                          | Not started |     |        |         |
 | M3-T04 | Input controller                               | Not started |     |        |         |
