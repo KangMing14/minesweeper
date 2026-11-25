@@ -38,6 +38,8 @@ export class CanvasBoardRenderer implements BoardRenderer {
   #theme: BoardTheme | null = null;
   #layout: BoardLayout | null = null;
   #lastView: GameView | null = null;
+  /** The keyboard cursor, or null. Drawn as a ring over the cell (M3-T04). */
+  #cursor: CellIndex | null = null;
   /** What is on the canvas now, one visual code per cell; null until the first full draw. */
   #shown: Uint8Array | null = null;
 
@@ -61,6 +63,8 @@ export class CanvasBoardRenderer implements BoardRenderer {
     // Validate first: a bad view must not replace the remembered one.
     const visuals = computeVisuals(view);
     this.#lastView = view;
+    // A cursor that does not fit the new board is dropped, so it can never point at a cell that is not there.
+    if (this.#cursor !== null && this.#cursor >= visuals.length) this.#cursor = null;
     if (this.#canvas === null) return;
     const layout = this.#layout;
     if (
@@ -73,6 +77,26 @@ export class CanvasBoardRenderer implements BoardRenderer {
       return;
     }
     this.#drawChanges(visuals, this.#shown);
+  }
+
+  /** Puts the cursor ring on a cell, or removes it; redraws only the two cells involved. */
+  setCursor(index: CellIndex | null): void {
+    if (index !== null) {
+      const limit = this.#lastView === null ? Infinity : this.#lastView.cells.length;
+      if (!Number.isInteger(index) || index < 0 || index >= limit) {
+        throw new RangeError(
+          `cursor must be a whole number inside the board, got ${String(index)}`,
+        );
+      }
+    }
+    const before = this.#cursor;
+    if (before === index) return;
+    this.#cursor = index;
+    const shown = this.#shown;
+    if (shown === null) return;
+    // Cells are redrawn from what is on the canvas, so no view is needed and the ring never lags the picture.
+    if (before !== null) this.#drawCell(before, shown[before] ?? VISUAL.HIDDEN);
+    if (index !== null) this.#drawCell(index, shown[index] ?? VISUAL.HIDDEN);
   }
 
   /** The cell under a point in client coordinates, or `null`. */
@@ -154,7 +178,27 @@ export class CanvasBoardRenderer implements BoardRenderer {
     } else if (code > VISUAL.revealed(0) && code <= VISUAL.revealed(8)) {
       drawNumber(ctx, theme, code - VISUAL.revealed(0), x, y, size);
     }
+    if (index === this.#cursor) drawCursor(ctx, theme, x, y, size);
   }
+}
+
+/**
+ * The keyboard cursor: a frame along the inside edge of the cell, in the accent color. It is made of four
+ * rectangles, so it is a shape and does not rely on color alone, and it is drawn last so it stays over the cell.
+ */
+function drawCursor(
+  ctx: CanvasRenderingContext2D,
+  theme: BoardTheme,
+  x: number,
+  y: number,
+  size: number,
+): void {
+  const thick = Math.max(2, Math.round(size * 0.1));
+  ctx.fillStyle = theme.accent;
+  ctx.fillRect(x, y, size, thick);
+  ctx.fillRect(x, y + size - thick, size, thick);
+  ctx.fillRect(x, y + thick, thick, size - 2 * thick);
+  ctx.fillRect(x + size - thick, y + thick, thick, size - 2 * thick);
 }
 
 /** A digit, centered, bold, in the color of its value. */

@@ -18,6 +18,7 @@
 **Interfaces fixed for this milestone:**
 - `interface Clock { nowMs(): number }` (declared in `engine` as an interface only; `SystemClock` implemented in `apps/web`).
 - `type PlayerAction = { type: Command['type']; index: CellIndex }`.
+- `interface BoardRenderer { mount(canvas: HTMLCanvasElement): void; render(view: GameView): void; hitTest(clientX: number, clientY: number): CellIndex | null; setCursor(index: CellIndex | null): void; resize(): void; unmount(): void }`. `setCursor` was added in M3-T04 with the developer's approval (2026-11-25): it shows the keyboard cursor as a ring on one cell, or removes it with `null`.
 - `interface GameSession { start(): void; dispatch(action: PlayerAction): void; subscribe(listener: (event: GameEvent) => void): () => void; view(): GameView; elapsedMs(): number; result(): GameResult | undefined; isStuck(): boolean; dispose(): void }`. `isStuck()` was added in M3-T02 with the developer's approval (2026-11-24): true when the game accepted `MAX_REPLAY_COMMANDS` commands without ending, so the UI can offer a new game.
 
 ---
@@ -51,7 +52,7 @@
 - **Objective:** a fast, crisp board.
 - **Description:** `BoardRenderer` interface and `CanvasBoardRenderer`.
 - **Prerequisites:** M3-T02.
-- **Implementation guidance:** `interface BoardRenderer { mount(canvas: HTMLCanvasElement): void; render(view: GameView): void; hitTest(clientX: number, clientY: number): CellIndex | null; resize(): void; unmount(): void }`. Handle `devicePixelRatio`, redraw only changed cells (diff against the previous view), draw hidden, revealed, flagged, mine (after game over) and wrong-flag states using tokens. Cell size adapts to container, with a minimum size.
+- **Implementation guidance:** `interface BoardRenderer { mount(canvas: HTMLCanvasElement): void; render(view: GameView): void; hitTest(clientX: number, clientY: number): CellIndex | null; resize(): void; unmount(): void }` (M3-T04 adds `setCursor`, see the interfaces fixed for this milestone). Handle `devicePixelRatio`, redraw only changed cells (diff against the previous view), draw hidden, revealed, flagged, mine (after game over) and wrong-flag states using tokens. Cell size adapts to container, with a minimum size.
 - **Expected output:** `src/render/BoardRenderer.ts`, `CanvasBoardRenderer.ts`, a `BoardCanvas` React component, tests.
 - **Testing requirements:** `hitTest` maps pixel coordinates to indices for several sizes and DPRs, including edges and gaps (returns `null` outside); render smoke test using a canvas mock or `node-canvas`; benchmark test: full expert redraw under a documented budget.
 - **Acceptance criteria:** tests pass; manual check on an expert board is smooth.
@@ -63,7 +64,7 @@
 - **Objective:** mouse and keyboard play mapped to `PlayerAction`.
 - **Description:** `InputController` translating DOM events into session actions.
 - **Prerequisites:** M3-T03.
-- **Implementation guidance:** left click reveals, right click flags (suppress the context menu on the canvas), middle click or left+right together chords, click on a revealed number chords as an option. Keyboard: arrow keys move a visible cursor; Space reveals; F flags; Enter or C chords. The controller depends on `BoardRenderer.hitTest` and `GameSession.dispatch` only. No touch support yet (M10-T04).
+- **Implementation guidance:** left click reveals, right click flags (suppress the context menu on the canvas), middle click or left+right together chords, click on a revealed number chords as an option. Keyboard: arrow keys move a visible cursor; Space reveals; F flags; Enter or C chords. The controller depends on `BoardRenderer.hitTest` and `GameSession.dispatch` only. No touch support yet (M10-T04). *(Done in M3-T04 with two approved additions: `BoardRenderer.setCursor` draws the cursor, and the controller reads the read-only `session.view()` and `isStuck()` for the board size and to ignore input after the end.)*
 - **Expected output:** `src/input/InputController.ts`, tests.
 - **Testing requirements:** simulated pointer and keyboard events yield the expected `PlayerAction`s; context menu prevented; cursor clamps at board edges; input ignored when the game is over.
 - **Acceptance criteria:** tests pass; keyboard-only completion of a seeded game works in a component test.
@@ -111,7 +112,7 @@
 - **Objective:** a baseline that stays accessible, and a regression test for the whole flow.
 - **Description:** ARIA live announcements, focus management, Playwright smoke test in CI.
 - **Prerequisites:** M3-T07.
-- **Implementation guidance:** a visually hidden live region announces status changes (game started, cell revealed value, flag placed, win, loss); visible focus ring on the cursor cell; skip-to-board link. Add Playwright (Chromium) with a test that plays a fixed-seed game: the test computes safe cells with the engine and clicks them to a win, then checks the result screen. Add the job to CI. Run `/accessibility-review` as a quick pass and log findings for M10-T05.
+- **Implementation guidance:** a visually hidden live region announces status changes (game started, cell revealed value, flag placed, win, loss); visible focus ring on the cursor cell (the ring itself exists since M3-T04, `BoardRenderer.setCursor`; this task decides when it shows); skip-to-board link. Add Playwright (Chromium) with a test that plays a fixed-seed game: the test computes safe cells with the engine and clicks them to a win, then checks the result screen. Add the job to CI. Run `/accessibility-review` as a quick pass and log findings for M10-T05.
 - **Expected output:** accessibility code, `e2e/smoke.spec.ts`, CI job, findings list in `docs/a11y-findings.md`.
 - **Testing requirements:** component test asserts live-region messages; the Playwright test passes in CI; keyboard-only variant of the smoke test.
 - **Acceptance criteria:** CI green with the browser job; tag `m3-complete` after review.

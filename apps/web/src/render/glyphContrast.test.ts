@@ -43,4 +43,9 @@ describe.each(themes)('glyph colors in the %s theme', (_name, selector) => {
     expect(contrastRatio(color('danger'), color('cell-hidden'))).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(color('danger'), color('cell-revealed'))).toBeGreaterThanOrEqual(3);
   });
+
+  it('keeps the keyboard cursor ring visible as a graphic on both cells (3:1, M3-T04)', () => {
+    expect(contrastRatio(color('accent'), color('cell-hidden'))).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(color('accent'), color('cell-revealed'))).toBeGreaterThanOrEqual(3);
+  });
 });

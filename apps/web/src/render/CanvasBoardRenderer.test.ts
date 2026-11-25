@@ -12,6 +12,7 @@ const THEME: BoardTheme = {
   revealed: '#202020',
   text: '#303030',
   danger: '#404040',
+  accent: '#505050',
   fontFamily: 'TestSans, sans-serif',
   numbers: ['#a1a1a1', '#a2a2a2', '#a3a3a3', '#a4a4a4', '#a5a5a5', '#a6a6a6', '#a7a7a7', '#a8a8a8'],
 };
@@ -291,6 +292,142 @@ describe('redrawing only what changed', () => {
     rig.ctx.reset();
     renderer.render(allHidden(2, 2));
     expect(rig.ctx.ops).toHaveLength(0);
+  });
+});
+
+describe('setCursor (M3-T04)', () => {
+  const layout = (): ReturnType<typeof computeLayout> => computeLayout(9, 9, 360, 1);
+  const ring = (ops: readonly Op[]): Op[] =>
+    ops.filter((op) => op.name === 'fillRect' && op.fillStyle === THEME.accent);
+
+  function mounted(view: GameView = allHidden(9, 9)): void {
+    renderer.mount(rig.canvas);
+    renderer.render(view);
+    rig.ctx.reset();
+  }
+
+  it('draws a ring in the accent color inside the cell, and nothing outside it', () => {
+    mounted();
+    renderer.setCursor(40);
+    const square = cellRect(layout(), 40);
+    expect(ring(rig.ctx.ops).length).toBeGreaterThanOrEqual(4);
+    expect(rig.ctx.ops.every((op) => inside(op, square))).toBe(true);
+    expect(rig.ctx.all('clearRect')).toHaveLength(0);
+  });
+
+  it('keeps the ring a shape that survives the cell content: it is drawn after the cell', () => {
+    mounted(
+      makeView(
+        9,
+        9,
+        allHidden(9, 9).cells.map((c, i) => (i === 40 ? R(3) : c)),
+      ),
+    );
+    renderer.setCursor(40);
+    const names = rig.ctx.ops.map((op) => op.name);
+    const lastText = names.lastIndexOf('fillText');
+    const firstRing = rig.ctx.ops.findIndex((op) => op.fillStyle === THEME.accent);
+    expect(lastText).toBeGreaterThanOrEqual(0);
+    expect(firstRing).toBeGreaterThan(lastText);
+  });
+
+  it('moves the ring: redraws the old cell without it and the new cell with it, and no other cell', () => {
+    mounted();
+    renderer.setCursor(10);
+    rig.ctx.reset();
+    renderer.setCursor(11);
+    const [oldSquare, newSquare] = [cellRect(layout(), 10), cellRect(layout(), 11)];
+    const old = rig.ctx.ops.filter((op) => inside(op, oldSquare) && !inside(op, newSquare));
+    const fresh = rig.ctx.ops.filter((op) => inside(op, newSquare) && !inside(op, oldSquare));
+    expect(old.length + fresh.length).toBe(rig.ctx.ops.length);
+    expect(ring(old)).toHaveLength(0);
+    expect(old.some((op) => op.name === 'fillRect' && op.fillStyle === THEME.hidden)).toBe(true);
+    expect(ring(fresh).length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('removes the ring with null, and does nothing for a cursor that is already there', () => {
+    mounted();
+    renderer.setCursor(5);
+    rig.ctx.reset();
+    renderer.setCursor(5);
+    expect(rig.ctx.ops).toHaveLength(0);
+    renderer.setCursor(null);
+    expect(ring(rig.ctx.ops)).toHaveLength(0);
+    expect(rig.ctx.all('fillRect')).toHaveLength(1);
+    rig.ctx.reset();
+    renderer.setCursor(null);
+    expect(rig.ctx.ops).toHaveLength(0);
+  });
+
+  it('keeps the ring when the cell under it changes', () => {
+    mounted();
+    renderer.setCursor(40);
+    rig.ctx.reset();
+    renderer.render(
+      makeView(
+        9,
+        9,
+        allHidden(9, 9).cells.map((c, i) => (i === 40 ? R(3) : c)),
+      ),
+    );
+    expect(ring(rig.ctx.ops).length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('draws the ring again on a full redraw (resize) and on a later mount', () => {
+    mounted();
+    renderer.setCursor(7);
+    rig.ctx.reset();
+    renderer.resize();
+    expect(ring(rig.ctx.ops).length).toBeGreaterThanOrEqual(4);
+    renderer.unmount();
+    rig.ctx.reset();
+    renderer.mount(rig.canvas);
+    expect(ring(rig.ctx.ops).length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('remembers a cursor set before mount or before a view, and draws it when both exist', () => {
+    renderer.setCursor(2);
+    expect(rig.ctx.ops).toHaveLength(0);
+    renderer.mount(rig.canvas);
+    renderer.render(allHidden(3, 3));
+    expect(ring(rig.ctx.ops).length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('draws no ring on a cell that is not the cursor', () => {
+    renderer.mount(rig.canvas);
+    renderer.render(allHidden(3, 3));
+    expect(ring(rig.ctx.ops)).toHaveLength(0);
+  });
+
+  it('rejects an index that is not a whole number inside the shown board, and keeps the old cursor', () => {
+    mounted(allHidden(3, 3));
+    renderer.setCursor(4);
+    for (const bad of [-1, 9, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() => renderer.setCursor(bad)).toThrow(RangeError);
+    }
+    rig.ctx.reset();
+    renderer.resize();
+    const square = cellRect(computeLayout(3, 3, 360, 1), 4);
+    const rings = ring(rig.ctx.ops);
+    expect(rings.length).toBeGreaterThanOrEqual(4);
+    expect(rings.every((op) => inside(op, square))).toBe(true);
+  });
+
+  it('drops the cursor when a new board is smaller than the cursor index', () => {
+    mounted(allHidden(9, 9));
+    renderer.setCursor(70);
+    rig.ctx.reset();
+    renderer.render(allHidden(3, 3));
+    expect(rig.ctx.all('fillRect')).toHaveLength(9);
+    expect(ring(rig.ctx.ops)).toHaveLength(0);
+  });
+
+  it('costs a handful of calls, not a number that grows with the board', () => {
+    renderer.mount(rig.canvas);
+    renderer.render(allHidden(30, 16));
+    rig.ctx.reset();
+    renderer.setCursor(100);
+    expect(rig.ctx.ops.length).toBeLessThanOrEqual(15);
   });
 });
 
