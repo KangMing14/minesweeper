@@ -237,6 +237,8 @@ The browser client is `apps/web` (package `@minesweeper/web`: React, Vite, Tailw
 - **Component tests** run in jsdom with React Testing Library; `apps/web/test/setup.ts` cleans up after each test. A test that reads files (such as `tokens.test.ts`) starts with `// @vitest-environment node`.
 - **Types.** `tsconfig.json` of `apps/web` has `types: []` and excludes test files; `tsconfig.test.json` adds Node types and checks them. Test files are checked by `pnpm typecheck`.
 - **Fonts.** The type stack is system fonts only (`--ms-font-sans`). A web font would be a new dependency and needs the developer's approval.
+- **Board renderer tests (M3-T03).** jsdom has no canvas, so `apps/web/test/fakeCanvas.ts` gives a recording `FakeContext2D` and `makeCanvasRig` (a canvas in a container with a width, a settable pixel ratio and screen position). Tests assert which calls were made, in which color and inside which cell; they do not show pixels. To see the board, run `pnpm --filter web dev`: a change to the renderer needs a look at an expert board in the browser, in light and dark, because no test does that. The renderer takes its colors from the tokens, so a color change is a `tokens.css` change and not a renderer change. `CanvasBoardRenderer.test.ts` holds the documented draw budget for a full redraw of an expert board; if a change makes it fail, find out why before raising a number.
+- **Using the board in a screen.** `<BoardCanvas view={view} onRenderer={...} />` from `src/render/BoardCanvas.tsx`; put it in a container that has a width (the cell size follows it). It takes a `GameView`, never a session.
 
 ## Keeping the documents current
 
