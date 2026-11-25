@@ -40,6 +40,7 @@ function makeSpyRenderer(): BoardRenderer & {
       spy.views.push(view);
     },
     hitTest: () => null,
+    setCursor() {},
     resize() {
       spy.calls.push('resize');
     },

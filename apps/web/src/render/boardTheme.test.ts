@@ -19,6 +19,7 @@ describe('readBoardTheme', () => {
       '--ms-color-cell-revealed': '#020202',
       '--ms-color-text': '#030303',
       '--ms-color-danger': '#040404',
+      '--ms-color-accent': '#050505',
       '--ms-font-sans': 'Test Sans, sans-serif',
       ...Object.fromEntries(
         [1, 2, 3, 4, 5, 6, 7, 8].map((n) => [`--ms-color-num-${n}`, `#0a0a0${n}`]),
@@ -30,6 +31,7 @@ describe('readBoardTheme', () => {
       revealed: '#020202',
       text: '#030303',
       danger: '#040404',
+      accent: '#050505',
       fontFamily: 'Test Sans, sans-serif',
     });
     expect(theme.numbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8].map((n) => `#0a0a0${n}`));
@@ -44,10 +46,12 @@ describe('readBoardTheme', () => {
       theme.revealed,
       theme.text,
       theme.danger,
+      theme.accent,
       ...theme.numbers,
     ]) {
       expect(color).not.toBe('');
     }
+    expect(typeof theme.accent).toBe('string');
     expect(theme.hidden).not.toBe(theme.revealed);
     expect(theme.fontFamily).toMatch(/sans-serif/);
   });

@@ -4,7 +4,7 @@
 
 A browser-based competitive Minesweeper: 1v1 races on an identical seeded board with a guaranteed safe opening, plus solo time-attack with leaderboards. TypeScript, pnpm monorepo, a deterministic engine and a server-authoritative backend. Inspired by the competitive feel of TETR.IO, not a copy of it.
 
-**Status:** M0 Foundations, M1 Engine core and M2 Deterministic engine are done and tagged. M3 Local solo client has started: the web app shell and design tokens (M3-T01), the `GameSession` seam with `LocalSession` (M3-T02) and the canvas board renderer (M3-T03) are in place, and input, screens and statistics follow. [ROADMAP.md](ROADMAP.md) has the status of every task. License: all rights reserved until launch ([ADR-008](docs/adr/ADR-008-license.md), [LICENSE](LICENSE)).
+**Status:** M0 Foundations, M1 Engine core and M2 Deterministic engine are done and tagged. M3 Local solo client has started: the web app shell and design tokens (M3-T01), the `GameSession` seam with `LocalSession` (M3-T02) and the canvas board renderer (M3-T03) and the input controller (M3-T04) are in place, and screens and statistics follow. [ROADMAP.md](ROADMAP.md) has the status of every task. License: all rights reserved until launch ([ADR-008](docs/adr/ADR-008-license.md), [LICENSE](LICENSE)).
 
 ## Setup
 
@@ -39,6 +39,22 @@ On Windows, if pnpm fails to start after `npm i -g pnpm`, see the Windows note i
 | `pnpm docs:api` | TypeDoc API reference in `docs/api/` |
 
 CI runs all of these on every pull request. Details, the git workflow and the doc-comment rules are in [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md).
+
+## Controls
+
+Implemented by the input controller (M3-T04); the play screen that shows the board arrives with M3-T05, so there is nothing to click yet.
+
+| Input | Action |
+|---|---|
+| Left click | Reveal the cell. On a revealed number: chord (open its neighbors when the flags around it match the number) |
+| Right click | Flag or unflag a hidden cell |
+| Middle click, or left and right together | Chord |
+| Arrow keys | Move the keyboard cursor (stops at the edges). The first key you press only shows the cursor |
+| Space | Reveal the cursor cell |
+| F | Flag or unflag the cursor cell |
+| Enter or C | Chord at the cursor cell |
+
+The mouse acts when you release the button, over the cell where you release it. Releasing over a gap between cells does nothing. Ctrl+click is ignored. Restart keys (R, Shift+R) arrive with M3-T06.
 
 ## Repository layout
 

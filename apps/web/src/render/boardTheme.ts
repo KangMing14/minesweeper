@@ -19,6 +19,8 @@ export interface BoardTheme {
   readonly text: string;
   /** Flag cloth, wrong-flag cross (`--ms-color-danger`). */
   readonly danger: string;
+  /** The keyboard cursor ring (`--ms-color-accent`). */
+  readonly accent: string;
   /** The numbers 1 to 8, in order (`--ms-color-num-1` to `-8`). */
   readonly numbers: readonly string[];
   /** The font family for the numbers (`--ms-font-sans`). */
@@ -32,6 +34,7 @@ const FALLBACK = {
   revealed: 'white',
   text: 'black',
   danger: 'red',
+  accent: 'blue',
   number: 'black',
   fontFamily: 'sans-serif',
 } as const;
@@ -61,6 +64,7 @@ export function readBoardTheme(element: Element): BoardTheme {
     revealed: read('--ms-color-cell-revealed', FALLBACK.revealed),
     text: read('--ms-color-text', FALLBACK.text),
     danger: read('--ms-color-danger', FALLBACK.danger),
+    accent: read('--ms-color-accent', FALLBACK.accent),
     numbers: [1, 2, 3, 4, 5, 6, 7, 8].map((n) => read(`--ms-color-num-${n}`, FALLBACK.number)),
     fontFamily: read('--ms-font-sans', FALLBACK.fontFamily),
   };
