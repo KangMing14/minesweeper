@@ -86,8 +86,8 @@ File: `docs/milestones/M3-local-solo-client.md`. Tag when finished: `m3-complete
 | M3-T01 | Web scaffold and design tokens                 | Done        |#31|ce451d6|2026-11-24|
 | M3-T02 | `GameSession` and `LocalSession`               | Done        |#32|c53fa73|2026-11-24|
 | M3-T03 | Canvas board renderer                          | Done        |#33|4d742f6|2026-11-25|
-| M3-T04 | Input controller                               | Done        |     |        |         |
-| M3-T05 | Game lifecycle, screens and difficulty         | Not started |     |        |         |
+| M3-T04 | Input controller                               | Done        |#34|14ee400|2026-11-25|
+| M3-T05 | Game lifecycle, screens and difficulty         | Done        |     |        |         |
 | M3-T06 | Restart, retry same board, new board           | Not started |     |        |         |
 | M3-T07 | Local statistics                               | Not started |     |        |         |
 | M3-T08 | Accessibility basics and end-to-end smoke test | Not started |     |        |         |

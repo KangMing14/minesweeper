@@ -82,6 +82,7 @@
 - **Acceptance criteria:** a manual play-through works for all three presets.
 - **Relevant skills:** baseline; `/frontend-design`; `/ux-copy`.
 - **Documentation updates:** `ARCHITECTURE.md` (screen flow); `README.md`.
+- *(Done in M3-T05: `BoardCanvas` got the optional prop `onCanvas` so that the screen can attach the `InputController` to the canvas; the store is made by `createAppStore` and has `startGame`, `newGame`, `finishGame` and `toMenu`; the clock starts when the board appears, as M3-T02 says. See `DECISIONS.md`, "Screens and state (M3-T05)".)*
 
 ### M3-T06 Restart, retry same board, new board
 
@@ -94,6 +95,7 @@
 - **Acceptance criteria:** tests pass; hotkeys documented.
 - **Relevant skills:** baseline.
 - **Documentation updates:** `README.md` key bindings.
+- *(Note from M3-T05: the store already has `newGame()` (same preset, new seed). Retry of the same seed needs a new store event, and the replay log still needs a decision; both are written up in `DECISIONS.md`, "Screens and state (M3-T05)". `PlayScreen` is keyed by the store's `gameId`, so a retry that raises `gameId` gets a fresh session.)*
 
 ### M3-T07 Local statistics
 
