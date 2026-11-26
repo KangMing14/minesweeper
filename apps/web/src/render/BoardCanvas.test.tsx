@@ -133,6 +133,50 @@ describe('BoardCanvas lifecycle', () => {
     expect(seen).toEqual([renderer, null]);
   });
 
+  it('gives the canvas element to onCanvas, so an input controller can listen on it (M3-T05)', () => {
+    const renderer = makeSpyRenderer();
+    const seen: (HTMLCanvasElement | null)[] = [];
+    const { unmount } = render(
+      <BoardCanvas
+        view={makeView(3, 3)}
+        createRenderer={() => renderer}
+        onCanvas={(c) => seen.push(c)}
+      />,
+    );
+    const canvas = screen.getByRole('img');
+    expect(seen).toEqual([canvas]);
+    expect(canvas.tagName).toBe('CANVAS');
+    unmount();
+    expect(seen).toEqual([canvas, null]);
+  });
+
+  it('calls onCanvas and onRenderer for the same mount, the canvas first, and pairs every call with a null', () => {
+    const order: string[] = [];
+    render(
+      <StrictMode>
+        <BoardCanvas
+          view={makeView(3, 3)}
+          createRenderer={makeSpyRenderer}
+          onCanvas={(c) => order.push(c === null ? 'canvas:null' : 'canvas')}
+          onRenderer={(r) => order.push(r === null ? 'renderer:null' : 'renderer')}
+        />
+      </StrictMode>,
+    );
+    cleanup();
+    // StrictMode mounts, unmounts and mounts again; each mount announces the canvas before the renderer,
+    // and each unmount takes the renderer away before the canvas.
+    expect(order).toEqual([
+      'canvas',
+      'renderer',
+      'renderer:null',
+      'canvas:null',
+      'canvas',
+      'renderer',
+      'renderer:null',
+      'canvas:null',
+    ]);
+  });
+
   it('renders each new view without mounting again', () => {
     const renderer = makeSpyRenderer();
     const first = makeView(3, 3);

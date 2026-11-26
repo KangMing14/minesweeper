@@ -15,6 +15,12 @@ export interface BoardCanvasProps {
    * let go. Read once per mount; changing the function later does not remount the board.
    */
   readonly onRenderer?: (renderer: BoardRenderer | null) => void;
+  /**
+   * Called with the canvas element once the renderer is mounted on it (just before `onRenderer`), and with
+   * `null` when the board leaves the page (just after `onRenderer(null)`). The input controller listens on
+   * this element, so it needs it as well as the renderer. Read once per mount, like `onRenderer`.
+   */
+  readonly onCanvas?: (canvas: HTMLCanvasElement | null) => void;
   /** Makes the renderer. Defaults to `new CanvasBoardRenderer()`. Read once per mount; used by tests. */
   readonly createRenderer?: () => BoardRenderer;
 }
@@ -54,12 +60,17 @@ function watchPixelRatio(onChange: () => void): () => void {
  *
  * @example
  * ```tsx
- * <BoardCanvas view={session.view()} onRenderer={(r) => (rendererRef.current = r)} />
+ * <BoardCanvas
+ * view={session.view()}
+ * onRenderer={(r) => (rendererRef.current = r)}
+ * onCanvas={(c) => (canvasRef.current = c)}
+ * />
  * ```
  */
 export function BoardCanvas({
   view,
   onRenderer,
+  onCanvas,
   createRenderer,
 }: BoardCanvasProps): React.JSX.Element {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -68,14 +79,14 @@ export function BoardCanvas({
   const [unavailable, setUnavailable] = useState(false);
 
   // The effect below must see the latest of these without running again, so it reads them through refs.
-  const latest = useRef({ view, onRenderer, createRenderer });
-  latest.current = { view, onRenderer, createRenderer };
+  const latest = useRef({ view, onRenderer, onCanvas, createRenderer });
+  latest.current = { view, onRenderer, onCanvas, createRenderer };
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const wrapper = wrapperRef.current;
     if (canvas === null || wrapper === null) return undefined;
-    const { createRenderer: make, onRenderer: notify } = latest.current;
+    const { createRenderer: make, onRenderer: notify, onCanvas: notifyCanvas } = latest.current;
     const renderer = make?.() ?? new CanvasBoardRenderer();
     try {
       renderer.mount(canvas);
@@ -85,6 +96,7 @@ export function BoardCanvas({
     }
     // The effect below shows the view; effects of one component run in order, so it runs right after this one.
     rendererRef.current = renderer;
+    notifyCanvas?.(canvas);
     notify?.(renderer);
 
     const resize = (): void => renderer.resize();
@@ -110,6 +122,7 @@ export function BoardCanvas({
       scheme?.removeEventListener('change', resize);
       stopPixelRatio();
       notify?.(null);
+      notifyCanvas?.(null);
       renderer.unmount();
       rendererRef.current = null;
     };

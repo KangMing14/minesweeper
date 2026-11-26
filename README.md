@@ -4,7 +4,7 @@
 
 A browser-based competitive Minesweeper: 1v1 races on an identical seeded board with a guaranteed safe opening, plus solo time-attack with leaderboards. TypeScript, pnpm monorepo, a deterministic engine and a server-authoritative backend. Inspired by the competitive feel of TETR.IO, not a copy of it.
 
-**Status:** M0 Foundations, M1 Engine core and M2 Deterministic engine are done and tagged. M3 Local solo client has started: the web app shell and design tokens (M3-T01), the `GameSession` seam with `LocalSession` (M3-T02) and the canvas board renderer (M3-T03) and the input controller (M3-T04) are in place, and screens and statistics follow. [ROADMAP.md](ROADMAP.md) has the status of every task. License: all rights reserved until launch ([ADR-008](docs/adr/ADR-008-license.md), [LICENSE](LICENSE)).
+**Status:** M0 Foundations, M1 Engine core and M2 Deterministic engine are done and tagged. M3 Local solo client has started: the web app shell and design tokens (M3-T01), the `GameSession` seam with `LocalSession` (M3-T02) the canvas board renderer (M3-T03), the input controller (M3-T04) and the screens (M3-T05: menu, play, result) are in place, so the game can be played in the browser; restart keys and statistics follow. [ROADMAP.md](ROADMAP.md) has the status of every task. License: all rights reserved until launch ([ADR-008](docs/adr/ADR-008-license.md), [LICENSE](LICENSE)).
 
 ## Setup
 
@@ -42,7 +42,7 @@ CI runs all of these on every pull request. Details, the git workflow and the do
 
 ## Controls
 
-Implemented by the input controller (M3-T04); the play screen that shows the board arrives with M3-T05, so there is nothing to click yet.
+Implemented by the input controller (M3-T04) on the play screen (M3-T05). Start the app with `pnpm --filter web dev`, pick a difficulty, and play.
 
 | Input | Action |
 |---|---|
@@ -55,6 +55,13 @@ Implemented by the input controller (M3-T04); the play screen that shows the boa
 | Enter or C | Chord at the cursor cell |
 
 The mouse acts when you release the button, over the cell where you release it. Releasing over a gap between cells does nothing. Ctrl+click is ignored. Restart keys (R, Shift+R) arrive with M3-T06.
+
+## How a game goes
+
+1. **Menu.** Choose Beginner (9 × 9, 10 mines), Intermediate (16 × 16, 40 mines) or Expert (30 × 16, 99 mines). Each game gets a new random board.
+2. **Play.** The clock starts as soon as the board appears, not at your first click (the solo timing rule is settled in M4). The HUD shows the clock and the mines left, which goes below zero if you place more flags than there are mines. The board has the keyboard focus from the start. "Change difficulty" returns to the menu and abandons the game.
+3. **Result.** The heading says whether you cleared the board or hit a mine, with your time, the board's 3BV, 3BV per second and how many safe cells you cleared, and the finished board with its mines. "New board" plays the same difficulty again.
+4. **Stuck game.** A game that reaches the engine's limit of 100,000 commands without ending cannot go on; the play screen says so and offers "New board".
 
 ## Repository layout
 
