@@ -1,5 +1,5 @@
 import { PRESETS } from '@minesweeper/engine';
-import type { GameResult, GameView } from '@minesweeper/engine';
+import type { GameResult, GameView, ReplayLog } from '@minesweeper/engine';
 import { createContext, useContext } from 'react';
 import { createStore, useStore, type StoreApi } from 'zustand';
 import { randomSeed } from './seed.js';
@@ -35,12 +35,27 @@ export interface AppState {
   readonly gameId: number;
   /** The game that just ended, while the result screen shows; otherwise `null`. */
   readonly finished: FinishedGame | null;
+  /**
+   * The replay log of the last game that finished (M3-T06), kept for ghosts (M4). Unlike `finished` it
+   * survives a new board, a retry and the menu, and the next finished game replaces it. `null` before any
+   * game has finished, or when the finished game came without a log.
+   */
+  readonly lastReplayLog: ReplayLog | null;
   /** Menu to playing, on the given preset, with a new seed. Returns `false` and changes nothing if refused. */
   startGame(presetId: PresetId): boolean;
   /** Playing or result to playing: the same preset, a new seed. Returns `false` if refused. */
   newGame(): boolean;
-  /** Playing to result, with the game that ended. Returns `false` if refused, and then keeps the old state. */
-  finishGame(game: FinishedGame): boolean;
+  /**
+   * Playing to result, with the game that ended and, if the session has one, its replay log. Returns `false`
+   * if refused, and then keeps the old state, the old log included.
+   */
+  finishGame(game: FinishedGame, replayLog?: ReplayLog): boolean;
+  /**
+   * Playing or result to playing: the same preset and the same seed, so the board is identical. `gameId`
+   * still rises, which is what gives the play screen a fresh session. Draws no seed. Returns `false` if
+   * refused.
+   */
+  retryGame(): boolean;
   /** Playing or result to the menu. Returns `false` if refused. */
   toMenu(): boolean;
 }
@@ -86,6 +101,7 @@ export function createAppStore(options: AppStoreOptions = {}): AppStore {
       seed: null,
       gameId: 0,
       finished: null,
+      lastReplayLog: null,
       startGame: (presetId) =>
         isPresetId(presetId) &&
         move('start', (s) => ({
@@ -97,7 +113,10 @@ export function createAppStore(options: AppStoreOptions = {}): AppStore {
       newGame: () =>
         get().presetId !== null &&
         move('newGame', (s) => ({ seed: newSeed(), gameId: s.gameId + 1, finished: null })),
-      finishGame: (game) => move('finish', () => ({ finished: game })),
+      finishGame: (game, replayLog) =>
+        move('finish', () => ({ finished: game, lastReplayLog: replayLog ?? null })),
+      retryGame: () =>
+        get().presetId !== null && move('retry', (s) => ({ gameId: s.gameId + 1, finished: null })),
       toMenu: () => move('toMenu', () => ({ presetId: null, seed: null, finished: null })),
     };
   });

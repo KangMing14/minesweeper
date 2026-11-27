@@ -1,5 +1,5 @@
 import { PRESETS } from '@minesweeper/engine';
-import type { GameResult, GameView } from '@minesweeper/engine';
+import type { GameResult, GameView, ReplayLog } from '@minesweeper/engine';
 import { describe, expect, it } from 'vitest';
 import { createAppStore, type FinishedGame } from './appStore.js';
 
@@ -25,6 +25,12 @@ const RESULT: GameResult = {
   threeBV: 2,
   threeBVPerSecond: 1.62,
 };
+const logOf = (seed: number): ReplayLog => ({
+  version: 1,
+  config: { width: 2, height: 2, mineCount: 1 },
+  seed,
+  commands: [{ type: 'reveal', index: 0, t: 5 }],
+});
 const finished = (presetId: FinishedGame['presetId'], seed: number): FinishedGame => ({
   presetId,
   seed,
@@ -153,5 +159,90 @@ describe('appStore', () => {
       store.getState().toMenu();
       expect(store.getState().startGame(id as 'beginner')).toBe(true);
     }
+  });
+  // M3-T06: retry keeps the seed; the last finished game's replay log is kept for ghosts (M4).
+  it('retryGame from the result keeps the preset and the seed, clears the finished game and raises the gameId', () => {
+    const store = createAppStore({ newSeed: counter() });
+    store.getState().startGame('intermediate');
+    store.getState().finishGame(finished('intermediate', 100));
+    expect(store.getState().retryGame()).toBe(true);
+    const state = store.getState();
+    expect(state.screen).toBe('playing');
+    expect(state.presetId).toBe('intermediate');
+    expect(state.seed).toBe(100);
+    expect(state.finished).toBeNull();
+    expect(state.gameId).toBe(2);
+  });
+
+  it('retryGame from playing restarts the same board, and draws no seed', () => {
+    const store = createAppStore({ newSeed: counter() });
+    store.getState().startGame('beginner');
+    expect(store.getState().retryGame()).toBe(true);
+    expect(store.getState().seed).toBe(100);
+    expect(store.getState().gameId).toBe(2);
+    // The seed source was not used by the retry: the next new board gets 101, not 102.
+    store.getState().newGame();
+    expect(store.getState().seed).toBe(101);
+  });
+
+  it('retryGame is refused on the menu and changes nothing', () => {
+    const store = createAppStore({ newSeed: counter() });
+    const before = store.getState();
+    expect(store.getState().retryGame()).toBe(false);
+    expect(store.getState().screen).toBe('menu');
+    expect(store.getState().gameId).toBe(before.gameId);
+  });
+
+  it('keeps no replay log before any game has finished', () => {
+    expect(createAppStore({ newSeed: counter() }).getState().lastReplayLog).toBeNull();
+  });
+
+  it('finishGame keeps the replay log it is given', () => {
+    const store = createAppStore({ newSeed: counter() });
+    store.getState().startGame('beginner');
+    const log = logOf(100);
+    store.getState().finishGame(finished('beginner', 100), log);
+    expect(store.getState().lastReplayLog).toBe(log);
+  });
+
+  it('keeps the last replay log across a new board, a retry and the menu', () => {
+    const store = createAppStore({ newSeed: counter() });
+    store.getState().startGame('beginner');
+    const log = logOf(100);
+    store.getState().finishGame(finished('beginner', 100), log);
+    store.getState().newGame();
+    expect(store.getState().lastReplayLog).toBe(log);
+    store.getState().retryGame();
+    expect(store.getState().lastReplayLog).toBe(log);
+    store.getState().toMenu();
+    expect(store.getState().lastReplayLog).toBe(log);
+  });
+
+  it('replaces the replay log when the next game finishes', () => {
+    const store = createAppStore({ newSeed: counter() });
+    store.getState().startGame('beginner');
+    store.getState().finishGame(finished('beginner', 100), logOf(100));
+    store.getState().newGame();
+    const second = logOf(101);
+    store.getState().finishGame(finished('beginner', 101), second);
+    expect(store.getState().lastReplayLog).toBe(second);
+  });
+
+  it('a refused finishGame leaves the replay log alone', () => {
+    const store = createAppStore({ newSeed: counter() });
+    store.getState().startGame('beginner');
+    const first = logOf(100);
+    store.getState().finishGame(finished('beginner', 100), first);
+    expect(store.getState().finishGame(finished('beginner', 999), logOf(999))).toBe(false);
+    expect(store.getState().lastReplayLog).toBe(first);
+  });
+
+  it('a finished game that comes without a log clears the old one instead of keeping a stale log', () => {
+    const store = createAppStore({ newSeed: counter() });
+    store.getState().startGame('beginner');
+    store.getState().finishGame(finished('beginner', 100), logOf(100));
+    store.getState().newGame();
+    store.getState().finishGame(finished('beginner', 101));
+    expect(store.getState().lastReplayLog).toBeNull();
   });
 });

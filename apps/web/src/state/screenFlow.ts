@@ -8,7 +8,7 @@ export const SCREENS = ['menu', 'playing', 'result'] as const;
 export type Screen = (typeof SCREENS)[number];
 
 /** Everything that can move the client from one screen to another. */
-export const SCREEN_EVENTS = ['start', 'finish', 'newGame', 'toMenu'] as const;
+export const SCREEN_EVENTS = ['start', 'finish', 'newGame', 'retry', 'toMenu'] as const;
 
 /** Something that moves the client from one screen to another. */
 export type ScreenEvent = (typeof SCREEN_EVENTS)[number];
@@ -19,8 +19,8 @@ export type ScreenEvent = (typeof SCREEN_EVENTS)[number];
  */
 const TABLE: Readonly<Record<Screen, Readonly<Partial<Record<ScreenEvent, Screen>>>>> = {
   menu: { start: 'playing' },
-  playing: { finish: 'result', newGame: 'playing', toMenu: 'menu' },
-  result: { newGame: 'playing', toMenu: 'menu' },
+  playing: { finish: 'result', newGame: 'playing', retry: 'playing', toMenu: 'menu' },
+  result: { newGame: 'playing', retry: 'playing', toMenu: 'menu' },
 };
 
 /**

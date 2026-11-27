@@ -1,4 +1,4 @@
-import type { BoardConfig, GameResult, GameView } from '@minesweeper/engine';
+import type { BoardConfig, GameResult, GameView, ReplayLog } from '@minesweeper/engine';
 import { useEffect, useRef, useState, type JSX } from 'react';
 import { formatClock } from '../format.js';
 import { InputController } from '../input/InputController.js';
@@ -8,6 +8,7 @@ import type { GameSession } from '../session/GameSession.js';
 import { LocalSession } from '../session/LocalSession.js';
 import { SystemClock } from '../session/SystemClock.js';
 import { describeBoard } from './presets.js';
+import { RestartHint } from './RestartHint.js';
 import { PRIMARY_BUTTON, SCREEN_HEADING, SECONDARY_BUTTON } from './styles.js';
 
 /** Props of `PlayScreen`. */
@@ -18,8 +19,11 @@ export interface PlayScreenProps {
   readonly config: BoardConfig;
   /** The seed of the board. */
   readonly seed: number;
-  /** Called once, when the game is won or lost, with the final view and the result record. */
-  readonly onFinish: (view: GameView, result: GameResult) => void;
+  /**
+   * Called once, when the game is won or lost, with the final view, the result record and the game's replay
+   * log (M3-T06; `undefined` only if the session has none).
+   */
+  readonly onFinish: (view: GameView, result: GameResult, replayLog: ReplayLog | undefined) => void;
   /** Called when the player asks for another board, which is offered only when the game is stuck. */
   readonly onNewGame: () => void;
   /** Called when the player goes back to the menu. */
@@ -92,7 +96,7 @@ export function PlayScreen(props: PlayScreenProps): JSX.Element {
         const result = current.result();
         if (result !== undefined) {
           reported = true;
-          latest.current.onFinish(view, result);
+          latest.current.onFinish(view, result, current.replayLog());
         }
       }
     };
@@ -156,6 +160,8 @@ export function PlayScreen(props: PlayScreenProps): JSX.Element {
       {snapshot !== null && (
         <BoardCanvas view={snapshot.view} onRenderer={setRenderer} onCanvas={setCanvas} />
       )}
+
+      <RestartHint />
 
       <div>
         <button type="button" className={SECONDARY_BUTTON} onClick={onMenu}>

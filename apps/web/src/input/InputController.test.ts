@@ -1,4 +1,11 @@
-import type { CellIndex, CellView, GameResult, GameStatus, GameView } from '@minesweeper/engine';
+import type {
+  CellIndex,
+  CellView,
+  GameResult,
+  GameStatus,
+  GameView,
+  ReplayLog,
+} from '@minesweeper/engine';
 import { fireEvent } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { BoardRenderer } from '../render/BoardRenderer.js';
@@ -55,6 +62,9 @@ class FakeSession implements GameSession {
   }
   isStuck(): boolean {
     return this.stuck;
+  }
+  replayLog(): ReplayLog | undefined {
+    return undefined;
   }
   dispose(): void {}
 }

@@ -95,3 +95,83 @@ export function trackIntervals(): { live: () => number; restore: () => void } {
     },
   };
 }
+
+/** One listener that is registered and not yet removed. */
+interface OpenListener {
+  readonly target: EventTarget;
+  readonly type: string;
+  readonly listener: unknown;
+  readonly capture: boolean;
+}
+
+const captures = (options: unknown): boolean =>
+  options === true ||
+  (typeof options === 'object' &&
+    options !== null &&
+    'capture' in options &&
+    options.capture === true);
+
+/**
+ * Counts the event listeners that are added and not yet removed, on every target (M3-T06: a restart must leave
+ * no listener of the old game behind). Registering the same function twice on one target and type counts once,
+ * as the DOM does. `restore()` puts the real methods back.
+ */
+export function trackListeners(): {
+  live: (type?: string, target?: EventTarget) => number;
+  restore: () => void;
+} {
+  // jsdom gives `window` its own addEventListener, so patching the prototype alone would miss it.
+  const holders: {
+    addEventListener: EventTarget['addEventListener'];
+    removeEventListener: EventTarget['removeEventListener'];
+  }[] = [EventTarget.prototype, window];
+  const originals = holders.map((holder) => ({
+    holder,
+    add: holder.addEventListener,
+    remove: holder.removeEventListener,
+  }));
+  const open: OpenListener[] = [];
+  const find = (target: EventTarget, type: string, listener: unknown, capture: boolean): number =>
+    open.findIndex(
+      (entry) =>
+        entry.target === target &&
+        entry.type === type &&
+        entry.listener === listener &&
+        entry.capture === capture,
+    );
+  for (const { holder, add, remove } of originals) {
+    holder.addEventListener = function (
+      this: EventTarget,
+      ...args: Parameters<EventTarget['addEventListener']>
+    ): void {
+      const [type, listener, options] = args;
+      if (listener !== null && find(this, type, listener, captures(options)) < 0) {
+        open.push({ target: this, type, listener, capture: captures(options) });
+      }
+      add.apply(this, args);
+    };
+    holder.removeEventListener = function (
+      this: EventTarget,
+      ...args: Parameters<EventTarget['removeEventListener']>
+    ): void {
+      const [type, listener, options] = args;
+      const at = find(this, type, listener, captures(options));
+      if (at >= 0) open.splice(at, 1);
+      remove.apply(this, args);
+    };
+  }
+  return {
+    live: (type, target) =>
+      open.filter(
+        (entry) =>
+          (type === undefined || entry.type === type) &&
+          (target === undefined || entry.target === target),
+      ).length,
+    restore: () => {
+      for (const { holder, add, remove } of originals) {
+        holder.addEventListener = add;
+        holder.removeEventListener = remove;
+      }
+    },
+  };
+}

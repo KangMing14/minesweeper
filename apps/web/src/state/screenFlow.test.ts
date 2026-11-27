@@ -8,8 +8,10 @@ const ALLOWED: readonly (readonly [Screen, ScreenEvent, Screen])[] = [
   ['menu', 'start', 'playing'],
   ['playing', 'finish', 'result'],
   ['playing', 'newGame', 'playing'],
+  ['playing', 'retry', 'playing'],
   ['playing', 'toMenu', 'menu'],
   ['result', 'newGame', 'playing'],
+  ['result', 'retry', 'playing'],
   ['result', 'toMenu', 'menu'],
 ];
 

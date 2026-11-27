@@ -1,4 +1,10 @@
-import { MAX_REPLAY_COMMANDS, SeededBoardGenerator, createGame } from '@minesweeper/engine';
+import {
+  MAX_REPLAY_COMMANDS,
+  SeededBoardGenerator,
+  createGame,
+  replay,
+  validateReplayLog,
+} from '@minesweeper/engine';
 import type { BoardConfig, Clock, Command, GameEvent } from '@minesweeper/engine';
 import { describe, expect, it } from 'vitest';
 import { LocalSession } from './LocalSession.js';
@@ -389,5 +395,106 @@ describe('LocalSession: the command limit (M2-T07)', () => {
       outcome: 'lost',
       effectiveCommands: MAX_REPLAY_COMMANDS,
     });
+  });
+});
+
+// M3-T06. The replay log of a finished game leaves the session through `replayLog()`, so that a screen can
+// keep it (ghosts, M4). It exists only once the game has ended, and it plays back to the same game.
+describe('LocalSession: replayLog', () => {
+  /** Reveals every safe cell that is still hidden, which wins the game. */
+  function winIt(session: LocalSession, clock: FakeClock): void {
+    for (const index of FACTS.safe) {
+      clock.now += 10;
+      session.dispatch(reveal(index));
+    }
+  }
+
+  it('is undefined before start(), while the game is ready and while it is playing', () => {
+    const fresh = new LocalSession(CONFIG, SEED, new FakeClock(0));
+    expect(fresh.replayLog()).toBeUndefined();
+    const { session, clock } = started();
+    expect(session.replayLog()).toBeUndefined();
+    clock.now += 50;
+    session.dispatch(reveal(hiddenSafeCell(session)));
+    expect(session.view().status).toBe('playing');
+    expect(session.replayLog()).toBeUndefined();
+  });
+
+  it('after a win holds version 1, the config, the seed and the commands that took effect', () => {
+    const { session, clock } = started();
+    winIt(session, clock);
+    expect(session.view().status).toBe('won');
+    const log = session.replayLog();
+    if (log === undefined) throw new Error('no replay log after a win');
+    expect(log.version).toBe(1);
+    expect(log.config).toEqual(CONFIG);
+    expect(log.seed).toBe(SEED);
+    expect(log.commands.length).toBe(session.result()?.effectiveCommands);
+    expect(() => validateReplayLog(log)).not.toThrow();
+  });
+
+  it('plays back to the same game: same view and same result record', () => {
+    const { session, clock } = started();
+    winIt(session, clock);
+    const log = session.replayLog();
+    if (log === undefined) throw new Error('no replay log after a win');
+    const again = replay(log);
+    expect(again.view()).toEqual(session.view());
+    expect(again.result()).toEqual(session.result());
+  });
+
+  it('is there after a loss too, and leaves out a command the engine refused', () => {
+    const { session, clock } = started();
+    const safe = hiddenSafeCell(session);
+    clock.now += 20;
+    session.dispatch(reveal(safe));
+    clock.now += 20;
+    session.dispatch(reveal(safe)); // already revealed: no effect, not logged
+    clock.now += 20;
+    session.dispatch(reveal(FACTS.mines[0] as number));
+    expect(session.view().status).toBe('lost');
+    const log = session.replayLog();
+    if (log === undefined) throw new Error('no replay log after a loss');
+    expect(log.commands.map((c) => c.index)).toEqual([safe, FACTS.mines[0]]);
+    expect(replay(log).view()).toEqual(session.view());
+  });
+
+  it('exists at once for a board that the opening clears at creation, with no commands', () => {
+    const session = new LocalSession({ width: 1, height: 1, mineCount: 0 }, 3, new FakeClock(0));
+    session.start();
+    expect(session.view().status).toBe('won');
+    const log = session.replayLog();
+    expect(log?.commands).toEqual([]);
+    if (log === undefined) throw new Error('no replay log');
+    expect(replay(log).result()).toEqual(session.result());
+  });
+
+  it('is already there for a subscriber that reads it on the event that wins the game', () => {
+    const { session, clock } = started();
+    const seen: (number | undefined)[] = [];
+    session.subscribe(() => {
+      seen.push(session.replayLog()?.commands.length);
+    });
+    winIt(session, clock);
+    // The winning command announces cellsRevealed and then gameWon: both must already see the log.
+    expect(seen.at(-1)).toBeDefined();
+    expect(seen.at(-2)).toBeDefined();
+    expect(seen.at(-1)).toBe(seen.at(-2));
+  });
+
+  it('is a plain copy: changing the config it returned does not change the session or the next log', () => {
+    const { session, clock } = started();
+    winIt(session, clock);
+    const first = session.replayLog();
+    const second = session.replayLog();
+    expect(second).toEqual(first);
+    expect(second?.config).not.toBe(CONFIG);
+  });
+
+  it('is still there after dispose()', () => {
+    const { session, clock } = started();
+    winIt(session, clock);
+    session.dispose();
+    expect(session.replayLog()?.commands.length).toBeGreaterThan(0);
   });
 });
