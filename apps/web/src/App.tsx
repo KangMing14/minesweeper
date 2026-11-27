@@ -7,23 +7,31 @@ import { presetInfo } from './screens/presets.js';
 import { ResultScreen } from './screens/ResultScreen.js';
 import type { GameSession } from './session/GameSession.js';
 import { AppStoreContext, createAppStore, useAppStore, type AppStore } from './state/appStore.js';
+import { createStatsStore } from './stats/createStatsStore.js';
+import type { StatsStore } from './stats/StatsStore.js';
 import { applyTheme, nextTheme, type ThemePreference } from './theme.js';
 
-/** Props of `App`. Both are for tests; the app itself passes nothing. */
+/** Props of `App`. All are for tests; the app itself passes nothing. */
 export interface AppProps {
   /** The store of the client. Defaults to a new one, on the menu. */
   readonly store?: AppStore;
   /** Makes the session of a game. Defaults to a `LocalSession` on the system clock. */
   readonly createSession?: (config: BoardConfig, seed: number) => GameSession;
+  /** Where finished games are recorded (M3-T07). Defaults to the browser's `localStorage`, or memory. */
+  readonly statsStore?: StatsStore;
 }
 
 /** Shows the screen that the store says is current. */
-function Screens({ createSession }: Pick<AppProps, 'createSession'>): JSX.Element {
+function Screens({
+  createSession,
+  statsStore,
+}: Pick<AppProps, 'createSession'> & { readonly statsStore: StatsStore }): JSX.Element {
   const screen = useAppStore((s) => s.screen);
   const presetId = useAppStore((s) => s.presetId);
   const seed = useAppStore((s) => s.seed);
   const gameId = useAppStore((s) => s.gameId);
   const finished = useAppStore((s) => s.finished);
+  const isRetry = useAppStore((s) => s.isRetry);
   const startGame = useAppStore((s) => s.startGame);
   const newGame = useAppStore((s) => s.newGame);
   const finishGame = useAppStore((s) => s.finishGame);
@@ -48,7 +56,12 @@ function Screens({ createSession }: Pick<AppProps, 'createSession'>): JSX.Elemen
         config={preset.config}
         seed={seed}
         onFinish={(view, result, replayLog) => {
-          finishGame({ presetId, seed, view, result }, replayLog);
+          // Record only when the store took the game: a second report of the same game (StrictMode runs
+          // the play screen's effect twice) is refused by the screen table and must not count twice.
+          // A retry of the same board is not a new attempt for the statistics (M3-T07, developer decision).
+          if (finishGame({ presetId, seed, view, result }, replayLog) && !isRetry) {
+            statsStore.record(presetId, result);
+          }
         }}
         onNewGame={newGame}
         onMenu={toMenu}
@@ -61,7 +74,7 @@ function Screens({ createSession }: Pick<AppProps, 'createSession'>): JSX.Elemen
       <ResultScreen finished={finished} onNewGame={newGame} onRetry={retryGame} onMenu={toMenu} />
     );
   }
-  return <MenuScreen onStart={startGame} />;
+  return <MenuScreen onStart={startGame} stats={(id) => statsStore.summary(id)} />;
 }
 
 /**
@@ -75,9 +88,10 @@ function Screens({ createSession }: Pick<AppProps, 'createSession'>): JSX.Elemen
  * createRoot(element).render(<App />);
  * ```
  */
-export function App({ store, createSession }: AppProps = {}): JSX.Element {
+export function App({ store, createSession, statsStore }: AppProps = {}): JSX.Element {
   const [theme, setTheme] = useState<ThemePreference>('system');
   const [appStore] = useState(() => store ?? createAppStore());
+  const [stats] = useState(() => statsStore ?? createStatsStore());
 
   useEffect(() => {
     applyTheme(theme);
@@ -99,7 +113,7 @@ export function App({ store, createSession }: AppProps = {}): JSX.Element {
           </button>
         </header>
         <main className="mx-auto w-full max-w-6xl px-5 py-6">
-          <Screens {...(createSession === undefined ? {} : { createSession })} />
+          <Screens statsStore={stats} {...(createSession === undefined ? {} : { createSession })} />
         </main>
       </div>
     </AppStoreContext.Provider>

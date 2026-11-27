@@ -109,6 +109,7 @@
 - **Acceptance criteria:** tests pass.
 - **Relevant skills:** baseline.
 - **Documentation updates:** TSDoc; `ARCHITECTURE.md` (persistence boundary: local stats are replaced by server stats in M7).
+- *(Done in M3-T07: `StatsStore`, `MemoryStatsStore`, `LocalStorageStatsStore` and `createStatsStore()` in `apps/web/src/stats/`, a "Your records" table on the menu, and recording in `App`'s `onFinish` path. The developer decided on 2026-11-27 that retries of the same board are not counted: the store state has the flag `isRetry`, set by `retryGame()` and cleared by `newGame()`, `startGame()` and `toMenu()`. Wins-only average and the time-0 rule are in `DECISIONS.md`, "Local statistics (M3-T07)", with findings for M3-T08.)*
 
 ### M3-T08 Accessibility basics and end-to-end smoke test
 
