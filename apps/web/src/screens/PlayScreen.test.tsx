@@ -1,4 +1,5 @@
-import type { BoardConfig, GameResult, GameView } from '@minesweeper/engine';
+import { replay, validateReplayLog } from '@minesweeper/engine';
+import type { BoardConfig, GameResult, GameView, ReplayLog } from '@minesweeper/engine';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
@@ -35,7 +36,7 @@ afterEach(() => {
 });
 
 interface Handlers {
-  onFinish: (view: GameView, result: GameResult) => void;
+  onFinish: (view: GameView, result: GameResult, replayLog: ReplayLog | undefined) => void;
   onNewGame: () => void;
   onMenu: () => void;
 }
@@ -253,5 +254,46 @@ describe('PlayScreen: a stuck game', () => {
     tick(5000);
     expect(readout('Time')).toBe(shown);
     expect(intervals.live()).toBe(0);
+  });
+});
+
+// M3-T06. The play screen reads the replay log from the session when the game ends and hands it to its
+// parent with the result; it also says which keys restart the game.
+describe('PlayScreen: restart hint and the replay log', () => {
+  it('says which keys start a new board and retry this one', () => {
+    show(handlers());
+    expect(
+      screen.getByText(
+        (_content, node) =>
+          node?.tagName === 'P' &&
+          node.textContent === 'Press R for a new board, or Shift+R to retry this one.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('hands over the replay log of a won game, and it plays back to the same game', () => {
+    const h = handlers();
+    show(h);
+    const { safe } = boardFacts(CONFIG, SEED);
+    act(() => {
+      for (const index of safe) session().dispatch({ type: 'reveal', index });
+    });
+    expect(h.onFinish).toHaveBeenCalledTimes(1);
+    const [view, result, log] = h.onFinish.mock.calls[0] ?? [];
+    if (view === undefined || result === undefined || log === undefined)
+      throw new Error('onFinish was not called with a log');
+    expect(() => validateReplayLog(log)).not.toThrow();
+    expect(log.seed).toBe(SEED);
+    expect(log.config).toEqual(CONFIG);
+    expect(replay(log).view()).toEqual(view);
+    expect(replay(log).result()).toEqual(result);
+  });
+
+  it('hands over the replay log of a lost game too', () => {
+    const h = handlers();
+    show(h);
+    const { mines } = boardFacts(CONFIG, SEED);
+    act(() => session().dispatch({ type: 'reveal', index: mines[0] as number }));
+    expect(h.onFinish.mock.calls[0]?.[2]?.commands.map((c) => c.index)).toEqual([mines[0]]);
   });
 });

@@ -5,6 +5,8 @@ import { stubCanvasContext } from '../../test/sessionKit.js';
 import type { FinishedGame } from '../state/appStore.js';
 import { ResultScreen } from './ResultScreen.js';
 
+const HINT = 'Press R for a new board, or Shift+R to retry this one.';
+
 const VIEW: GameView = {
   width: 3,
   height: 3,
@@ -44,6 +46,7 @@ describe('ResultScreen', () => {
       <ResultScreen
         finished={game({}, 'won')}
         onNewGame={() => undefined}
+        onRetry={() => undefined}
         onMenu={() => undefined}
       />,
     );
@@ -64,6 +67,7 @@ describe('ResultScreen', () => {
           'lost',
         )}
         onNewGame={() => undefined}
+        onRetry={() => undefined}
         onMenu={() => undefined}
       />,
     );
@@ -77,21 +81,70 @@ describe('ResultScreen', () => {
       <ResultScreen
         finished={game({}, 'won')}
         onNewGame={() => undefined}
+        onRetry={() => undefined}
         onMenu={() => undefined}
       />,
     );
     expect(screen.getByText(/Beginner, 9 × 9, 10 mines/)).toBeTruthy();
   });
 
-  it('offers a new board and a change of difficulty', () => {
+  it('offers a new board, a retry of the same board and a change of difficulty', () => {
     const onNewGame = vi.fn();
+    const onRetry = vi.fn();
     const onMenu = vi.fn();
-    render(<ResultScreen finished={game({}, 'won')} onNewGame={onNewGame} onMenu={onMenu} />);
+    render(
+      <ResultScreen
+        finished={game({}, 'won')}
+        onNewGame={onNewGame}
+        onRetry={onRetry}
+        onMenu={onMenu}
+      />,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'New board' }));
+    expect(onNewGame).toHaveBeenCalledTimes(1);
+    expect(onRetry).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry this board' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
     expect(onNewGame).toHaveBeenCalledTimes(1);
     expect(onMenu).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Change difficulty' }));
     expect(onMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it('puts the primary button first, then the retry, then the way back', () => {
+    render(
+      <ResultScreen
+        finished={game({}, 'lost')}
+        onNewGame={() => undefined}
+        onRetry={() => undefined}
+        onMenu={() => undefined}
+      />,
+    );
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual([
+      'New board',
+      'Retry this board',
+      'Change difficulty',
+    ]);
+  });
+
+  it('announces the keys of the two restart buttons and says them in words', () => {
+    render(
+      <ResultScreen
+        finished={game({}, 'won')}
+        onNewGame={() => undefined}
+        onRetry={() => undefined}
+        onMenu={() => undefined}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'New board' }).getAttribute('aria-keyshortcuts'),
+    ).toBe('R');
+    expect(
+      screen.getByRole('button', { name: 'Retry this board' }).getAttribute('aria-keyshortcuts'),
+    ).toBe('Shift+R');
+    expect(
+      screen.getByText((_content, node) => node?.tagName === 'P' && node.textContent === HINT),
+    ).toBeTruthy();
   });
 
   it('keeps the finished board on screen, read-only (no keyboard focus, no controls)', () => {
@@ -99,6 +152,7 @@ describe('ResultScreen', () => {
       <ResultScreen
         finished={game({}, 'won')}
         onNewGame={() => undefined}
+        onRetry={() => undefined}
         onMenu={() => undefined}
       />,
     );
@@ -112,6 +166,7 @@ describe('ResultScreen', () => {
       <ResultScreen
         finished={game({}, 'won')}
         onNewGame={() => undefined}
+        onRetry={() => undefined}
         onMenu={() => undefined}
       />,
     );

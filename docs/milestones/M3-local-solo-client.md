@@ -19,7 +19,7 @@
 - `interface Clock { nowMs(): number }` (declared in `engine` as an interface only; `SystemClock` implemented in `apps/web`).
 - `type PlayerAction = { type: Command['type']; index: CellIndex }`.
 - `interface BoardRenderer { mount(canvas: HTMLCanvasElement): void; render(view: GameView): void; hitTest(clientX: number, clientY: number): CellIndex | null; setCursor(index: CellIndex | null): void; resize(): void; unmount(): void }`. `setCursor` was added in M3-T04 with the developer's approval (2026-11-25): it shows the keyboard cursor as a ring on one cell, or removes it with `null`.
-- `interface GameSession { start(): void; dispatch(action: PlayerAction): void; subscribe(listener: (event: GameEvent) => void): () => void; view(): GameView; elapsedMs(): number; result(): GameResult | undefined; isStuck(): boolean; dispose(): void }`. `isStuck()` was added in M3-T02 with the developer's approval (2026-11-24): true when the game accepted `MAX_REPLAY_COMMANDS` commands without ending, so the UI can offer a new game.
+- `interface GameSession { start(): void; dispatch(action: PlayerAction): void; subscribe(listener: (event: GameEvent) => void): () => void; view(): GameView; elapsedMs(): number; result(): GameResult | undefined; isStuck(): boolean; replayLog(): ReplayLog | undefined; dispose(): void }`. `isStuck()` was added in M3-T02 with the developer's approval (2026-11-24): true when the game accepted `MAX_REPLAY_COMMANDS` commands without ending, so the UI can offer a new game. `replayLog()` was added in M3-T06 with the developer's approval (2026-11-26): `undefined` until the game is won or lost, then the `ReplayLog` of the game (`replay` plays it back to the same result).
 
 ---
 
@@ -95,6 +95,7 @@
 - **Acceptance criteria:** tests pass; hotkeys documented.
 - **Relevant skills:** baseline.
 - **Documentation updates:** `README.md` key bindings.
+- *(Done in M3-T06: the screen event `retry` and the store action `retryGame()` (same preset and seed, `gameId` still rises); `GameSession.replayLog()` (a ninth member, approved 2026-11-26) and the store field `lastReplayLog`, which keeps the last finished game's log across restarts and the menu; `attachRestartKeys` on the window for R and Shift+R, active on the play and result screens, ignoring Ctrl, Meta, Alt, key-repeat and text fields; a "Retry this board" button on the result screen. Single-character shortcuts that are active everywhere are a WCAG 2.1.4 finding for M3-T08; see `DECISIONS.md`, "Restart, retry and the replay log (M3-T06)".)*
 - *(Note from M3-T05: the store already has `newGame()` (same preset, new seed). Retry of the same seed needs a new store event, and the replay log still needs a decision; both are written up in `DECISIONS.md`, "Screens and state (M3-T05)". `PlayScreen` is keyed by the store's `gameId`, so a retry that raises `gameId` gets a fresh session.)*
 
 ### M3-T07 Local statistics

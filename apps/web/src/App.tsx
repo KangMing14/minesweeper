@@ -1,5 +1,6 @@
 import type { BoardConfig } from '@minesweeper/engine';
 import { useEffect, useState, type JSX } from 'react';
+import { attachRestartKeys } from './input/restartKeys.js';
 import { MenuScreen } from './screens/MenuScreen.js';
 import { PlayScreen } from './screens/PlayScreen.js';
 import { presetInfo } from './screens/presets.js';
@@ -26,7 +27,16 @@ function Screens({ createSession }: Pick<AppProps, 'createSession'>): JSX.Elemen
   const startGame = useAppStore((s) => s.startGame);
   const newGame = useAppStore((s) => s.newGame);
   const finishGame = useAppStore((s) => s.finishGame);
+  const retryGame = useAppStore((s) => s.retryGame);
   const toMenu = useAppStore((s) => s.toMenu);
+
+  // R and Shift+R, on the play and result screens only: the menu has no board to restart. The store refuses
+  // a restart that the screen table does not allow, so a late key press can never start a game by mistake.
+  const restartable = screen !== 'menu';
+  useEffect(() => {
+    if (!restartable) return undefined;
+    return attachRestartKeys(window, { onNewBoard: newGame, onRetry: retryGame });
+  }, [restartable, newGame, retryGame]);
 
   if (screen === 'playing' && presetId !== null && seed !== null) {
     const preset = presetInfo(presetId);
@@ -37,8 +47,8 @@ function Screens({ createSession }: Pick<AppProps, 'createSession'>): JSX.Elemen
         presetName={preset.name}
         config={preset.config}
         seed={seed}
-        onFinish={(view, result) => {
-          finishGame({ presetId, seed, view, result });
+        onFinish={(view, result, replayLog) => {
+          finishGame({ presetId, seed, view, result }, replayLog);
         }}
         onNewGame={newGame}
         onMenu={toMenu}
@@ -47,7 +57,9 @@ function Screens({ createSession }: Pick<AppProps, 'createSession'>): JSX.Elemen
     );
   }
   if (screen === 'result' && finished !== null) {
-    return <ResultScreen finished={finished} onNewGame={newGame} onMenu={toMenu} />;
+    return (
+      <ResultScreen finished={finished} onNewGame={newGame} onRetry={retryGame} onMenu={toMenu} />
+    );
   }
   return <MenuScreen onStart={startGame} />;
 }

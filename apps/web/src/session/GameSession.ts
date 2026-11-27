@@ -1,4 +1,11 @@
-import type { CellIndex, Command, GameEvent, GameResult, GameView } from '@minesweeper/engine';
+import type {
+  CellIndex,
+  Command,
+  GameEvent,
+  GameResult,
+  GameView,
+  ReplayLog,
+} from '@minesweeper/engine';
 
 /**
  * What a player asks for: a command without a time.
@@ -60,6 +67,13 @@ export interface GameSession {
    * still change or has ended.
    */
   isStuck(): boolean;
+  /**
+   * The replay log of a finished game: its version, board, seed and the commands that took effect, which
+   * `replay` plays back to the same game and the same result (ADR-002). `undefined` while the game is not
+   * won or lost, and for a stuck game. The log holds the player's own commands and no mine positions, so a
+   * networked session may hand it out without breaking the mine-release rule (D-14).
+   */
+  replayLog(): ReplayLog | undefined;
   /** Stops all events and ignores everything that follows. Safe to call more than once. */
   dispose(): void;
 }

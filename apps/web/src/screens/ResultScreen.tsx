@@ -3,6 +3,7 @@ import { BoardCanvas } from '../render/BoardCanvas.js';
 import { formatDuration, formatRate } from '../format.js';
 import type { FinishedGame } from '../state/appStore.js';
 import { describeBoard, presetInfo } from './presets.js';
+import { RestartHint } from './RestartHint.js';
 import { PRIMARY_BUTTON, SCREEN_HEADING, SECONDARY_BUTTON } from './styles.js';
 import { useFocusOnMount } from './useFocusOnMount.js';
 
@@ -12,22 +13,30 @@ export interface ResultScreenProps {
   readonly finished: FinishedGame;
   /** Called to play another board of the same difficulty. */
   readonly onNewGame: () => void;
+  /** Called to play the same board again, with the same seed. */
+  readonly onRetry: () => void;
   /** Called to go back to the menu. */
   readonly onMenu: () => void;
 }
 
 /**
  * The result of a finished game: the outcome as the heading, then time, 3BV, 3BV per second and how many
- * safe cells were cleared, with the finished board (read-only, mines shown) below.
+ * safe cells were cleared, with the finished board (read-only, mines shown) below. It offers another board (R), the same board again
+ * (Shift+R) and a change of difficulty.
  *
- * @param props - The finished game and the two ways on.
+ * @param props - The finished game and the three ways on.
  * @returns The screen.
  * @example
  * ```tsx
- * <ResultScreen finished={store.getState().finished} onNewGame={newGame} onMenu={toMenu} />
+ * <ResultScreen finished={store.getState().finished} onNewGame={newGame} onRetry={retryGame} onMenu={toMenu} />
  * ```
  */
-export function ResultScreen({ finished, onNewGame, onMenu }: ResultScreenProps): JSX.Element {
+export function ResultScreen({
+  finished,
+  onNewGame,
+  onRetry,
+  onMenu,
+}: ResultScreenProps): JSX.Element {
   const heading = useFocusOnMount<HTMLHeadingElement>();
   const { result, view, presetId } = finished;
   const preset = presetInfo(presetId);
@@ -59,13 +68,22 @@ export function ResultScreen({ finished, onNewGame, onMenu }: ResultScreenProps)
         ))}
       </dl>
       <div className="flex flex-wrap gap-3">
-        <button type="button" className={PRIMARY_BUTTON} onClick={onNewGame}>
+        <button type="button" className={PRIMARY_BUTTON} aria-keyshortcuts="R" onClick={onNewGame}>
           New board
+        </button>
+        <button
+          type="button"
+          className={SECONDARY_BUTTON}
+          aria-keyshortcuts="Shift+R"
+          onClick={onRetry}
+        >
+          Retry this board
         </button>
         <button type="button" className={SECONDARY_BUTTON} onClick={onMenu}>
           Change difficulty
         </button>
       </div>
+      <RestartHint />
       <BoardCanvas view={view} />
     </section>
   );

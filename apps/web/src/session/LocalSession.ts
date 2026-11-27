@@ -6,6 +6,7 @@ import type {
   GameEvent,
   GameResult,
   GameView,
+  ReplayLog,
 } from '@minesweeper/engine';
 import type { GameSession, PlayerAction } from './GameSession.js';
 
@@ -135,6 +136,24 @@ export class LocalSession implements GameSession {
   /** See `GameSession.isStuck`. */
   isStuck(): boolean {
     return this.#game !== undefined && !this.#ended && this.#accepted >= MAX_REPLAY_COMMANDS;
+  }
+
+  /**
+   * See `GameSession.replayLog`. Built from the engine's own command log on each call, so the caller gets a
+   * new object whose config is a copy; the commands are the engine's frozen copies.
+   */
+  replayLog(): ReplayLog | undefined {
+    const game = this.#game;
+    // Asked of the engine and not of `#ended`: the last reveal of a win announces `cellsRevealed` before
+    // `gameWon`, and a subscriber that reads the log on that first event must already get it.
+    if (game === undefined || game.result() === undefined) return undefined;
+    const { width, height, mineCount } = this.#config;
+    return {
+      version: 1,
+      config: { width, height, mineCount },
+      seed: this.#seed,
+      commands: game.log(),
+    };
   }
 
   /** See `GameSession.dispose`. */
