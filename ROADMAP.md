@@ -88,8 +88,8 @@ File: `docs/milestones/M3-local-solo-client.md`. Tag when finished: `m3-complete
 | M3-T03 | Canvas board renderer                          | Done        |#33|4d742f6|2026-11-25|
 | M3-T04 | Input controller                               | Done        |#34|14ee400|2026-11-25|
 | M3-T05 | Game lifecycle, screens and difficulty         | Done        |#35|25ce9b2|2026-11-26|
-| M3-T06 | Restart, retry same board, new board           | Done        |     |        |         |
-| M3-T07 | Local statistics                               | Not started |     |        |         |
+| M3-T06 | Restart, retry same board, new board           | Done        |#36|a21870b|2026-11-27|
+| M3-T07 | Local statistics                               | Done        |     |        |         |
 | M3-T08 | Accessibility basics and end-to-end smoke test | Not started |     |        |         |
 
 ## M4 Mode Framework and Ghost Race

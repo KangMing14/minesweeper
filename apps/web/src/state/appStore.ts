@@ -36,6 +36,13 @@ export interface AppState {
   /** The game that just ended, while the result screen shows; otherwise `null`. */
   readonly finished: FinishedGame | null;
   /**
+   * Whether the current game is a retry of a board that the player already started (M3-T07): `retryGame`
+   * sets it, and it stays set through further retries of that board and through the result screen. A new
+   * board, the menu and a new `startGame` clear it. It is a flag and not a comparison of seeds, so a new
+   * board that draws the same seed again is not a retry. The statistics leave retries out.
+   */
+  readonly isRetry: boolean;
+  /**
    * The replay log of the last game that finished (M3-T06), kept for ghosts (M4). Unlike `finished` it
    * survives a new board, a retry and the menu, and the next finished game replaces it. `null` before any
    * game has finished, or when the finished game came without a log.
@@ -101,6 +108,7 @@ export function createAppStore(options: AppStoreOptions = {}): AppStore {
       seed: null,
       gameId: 0,
       finished: null,
+      isRetry: false,
       lastReplayLog: null,
       startGame: (presetId) =>
         isPresetId(presetId) &&
@@ -109,15 +117,23 @@ export function createAppStore(options: AppStoreOptions = {}): AppStore {
           seed: newSeed(),
           gameId: s.gameId + 1,
           finished: null,
+          isRetry: false,
         })),
       newGame: () =>
         get().presetId !== null &&
-        move('newGame', (s) => ({ seed: newSeed(), gameId: s.gameId + 1, finished: null })),
+        move('newGame', (s) => ({
+          seed: newSeed(),
+          gameId: s.gameId + 1,
+          finished: null,
+          isRetry: false,
+        })),
       finishGame: (game, replayLog) =>
         move('finish', () => ({ finished: game, lastReplayLog: replayLog ?? null })),
       retryGame: () =>
-        get().presetId !== null && move('retry', (s) => ({ gameId: s.gameId + 1, finished: null })),
-      toMenu: () => move('toMenu', () => ({ presetId: null, seed: null, finished: null })),
+        get().presetId !== null &&
+        move('retry', (s) => ({ gameId: s.gameId + 1, finished: null, isRetry: true })),
+      toMenu: () =>
+        move('toMenu', () => ({ presetId: null, seed: null, finished: null, isRetry: false })),
     };
   });
 }

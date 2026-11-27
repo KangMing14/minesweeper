@@ -5,4 +5,7 @@ import { afterEach } from 'vitest';
 
 afterEach(() => {
   cleanup();
+  // M3-T07. The app keeps statistics in localStorage; a test must not see the records of the one before it.
+  // Some test files run in the node environment, which has no localStorage.
+  if (typeof localStorage !== 'undefined') localStorage.clear();
 });
