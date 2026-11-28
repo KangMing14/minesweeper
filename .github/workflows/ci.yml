@@ -96,6 +96,11 @@ jobs:
       - name: Compare the fuzz digests of Node and Chromium
         run: pnpm compare:fuzz-digests
 
+      # M3-T08: the end-to-end smoke tests, in the Chromium installed above, against the production build of the
+      # client. `playwright.config.ts` builds and serves it; this is a step of `ci`, not a second job.
+      - name: End-to-end tests
+        run: pnpm test:e2e
+
       - run: pnpm docs:api
 
       # The PR title becomes the squash-commit subject on `main`, so it must follow the commit rules.
@@ -116,5 +121,7 @@ jobs:
             coverage
             docs/api
             reports
+            playwright-report
+            test-results
           if-no-files-found: ignore
           retention-days: 7

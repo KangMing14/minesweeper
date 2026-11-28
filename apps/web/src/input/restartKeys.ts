@@ -18,7 +18,7 @@ function typesText(target: EventTarget | null): boolean {
 }
 
 /**
- * Listens for R and Shift+R on `target` (the window in the app) and calls the matching handler.
+ * Listens for R and Shift+R on `target` (the game region in the app, M3-T08) and calls the matching handler.
  *
  * @remarks
  * A key is left alone, with no call and no `preventDefault`, when Ctrl, Meta or Alt is held (Ctrl+R and
@@ -28,14 +28,16 @@ function typesText(target: EventTarget | null): boolean {
  * Lock counts as a plain R. The keys are matched by the character they produce, so they work on any
  * keyboard layout that has an R.
  *
- * The caller decides when to attach: the app attaches on the play and result screens only.
+ * The caller decides where and when to attach. The app attaches to the element that wraps the play and
+ * result screens, and only while they are shown: a key that is only a printable character must be active
+ * only while a component of the page has the focus (WCAG 2.1.4, level A), so there is no window listener.
  *
- * @param target - Where to listen, normally `window`.
+ * @param target - Where to listen: an element, so that only keys typed while the focus is inside it count.
  * @param handlers - What each key asks for.
  * @returns A function that stops listening. It is safe to call more than once.
  * @example
  * ```ts
- * const detach = attachRestartKeys(window, { onNewBoard: newGame, onRetry: retryGame });
+ * const detach = attachRestartKeys(region, { onNewBoard: newGame, onRetry: retryGame });
  * // later
  * detach();
  * ```

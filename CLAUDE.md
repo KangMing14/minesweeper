@@ -46,6 +46,7 @@ pnpm test             # Vitest, all four projects
 pnpm --filter @minesweeper/web build  # tsc -b, then the Vite production build of the client
 pnpm test:browser     # determinism suite in Chromium (first run: pnpm exec playwright install chromium)
 pnpm compare:fuzz-digests  # after pnpm test and pnpm test:browser: Node and Chromium ended the fuzz games the same way
+pnpm test:e2e         # Playwright smoke tests in Chromium against the production build of the client (needs the same Chromium install)
 pnpm docs:api         # TypeDoc for engine and protocol, warnings are errors
 ```
 

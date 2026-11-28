@@ -1,5 +1,8 @@
 import type { BoardConfig, GameResult, GameView, ReplayLog } from '@minesweeper/engine';
 import { useEffect, useRef, useState, type JSX } from 'react';
+import { useAnnounce } from '../a11y/Announcer.js';
+import { describeCell, describeEvent, describeStart } from '../a11y/announcements.js';
+import { PLAY_BOARD_HELP_ID, PLAY_BOARD_ID } from '../a11y/ids.js';
 import { formatClock } from '../format.js';
 import { InputController } from '../input/InputController.js';
 import { BoardCanvas } from '../render/BoardCanvas.js';
@@ -74,6 +77,10 @@ export function PlayScreen(props: PlayScreenProps): JSX.Element {
   // The effects below must see the latest callbacks without running again when the parent re-renders.
   const latest = useRef(props);
   latest.current = props;
+  // The live region (M3-T08). Read through a ref, like the callbacks, so a new function never restarts a game.
+  const announce = useAnnounce();
+  const announceRef = useRef(announce);
+  announceRef.current = announce;
 
   useEffect(() => {
     // Rebuilt from its numbers: the effect must restart for a different board and never for a new object.
@@ -102,6 +109,11 @@ export function PlayScreen(props: PlayScreenProps): JSX.Element {
     };
 
     const unsubscribe = current.subscribe(sync);
+    // Words for the live region come from the session's events only: no mine position, in any mode (D-14).
+    const unsubscribeSpeech = current.subscribe((event) => {
+      announceRef.current(describeEvent(event, width));
+    });
+    announceRef.current(describeStart(latest.current.presetName, board));
     setSession(current);
     timer = setInterval(sync, CLOCK_TICK_MS);
     // A board that the opening already clears is won before any command: nothing will send an event.
@@ -110,6 +122,7 @@ export function PlayScreen(props: PlayScreenProps): JSX.Element {
     return () => {
       clearInterval(timer);
       unsubscribe();
+      unsubscribeSpeech();
       current.dispose();
     };
   }, [width, height, mineCount, seed]);
@@ -118,10 +131,22 @@ export function PlayScreen(props: PlayScreenProps): JSX.Element {
   // created once all three exist and let go of when any of them goes.
   useEffect(() => {
     if (session === null || renderer === null || canvas === null) return undefined;
-    const controller = new InputController({ session, renderer });
+    // The focus that starts a game shows the ring after a keyboard start, but its cursor report must not be
+    // spoken: it would replace "New game: ..." in the live region before it was read. The screen reader
+    // reads the board's own name on that focus, and the first arrow key says the cell.
+    let starting = true;
+    const controller = new InputController({
+      session,
+      renderer,
+      onCursorChange: (index) => {
+        if (!starting) announceRef.current(describeCell(session.view(), index));
+      },
+    });
     controller.attach(canvas);
-    // Arrow keys work at once, without a click first (M3-T08 refines focus management).
+    // Arrow keys work at once, without a click first. The focus event of this call is what shows the ring
+    // when the game was started from the keyboard (`:focus-visible`), and shows nothing after a mouse click.
     canvas.focus({ preventScroll: true });
+    starting = false;
     return () => {
       controller.detach();
     };
@@ -158,8 +183,19 @@ export function PlayScreen(props: PlayScreenProps): JSX.Element {
       )}
 
       {snapshot !== null && (
-        <BoardCanvas view={snapshot.view} onRenderer={setRenderer} onCanvas={setCanvas} />
+        <BoardCanvas
+          view={snapshot.view}
+          onRenderer={setRenderer}
+          onCanvas={setCanvas}
+          interactive
+          canvasId={PLAY_BOARD_ID}
+          describedBy={PLAY_BOARD_HELP_ID}
+        />
       )}
+      <p id={PLAY_BOARD_HELP_ID} className="sr-only">
+        Arrow keys move around the board. Space reveals a cell, F flags it, C or Enter chords. R
+        starts a new board and Shift+R retries this one, while the focus is in the game.
+      </p>
 
       <RestartHint />
 

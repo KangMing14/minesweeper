@@ -75,7 +75,7 @@ describe('PlayScreen: HUD', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Beginner' })).toBeTruthy();
     expect(readout('Time')).toBe('0.0');
     expect(readout('Mines left')).toBe('6');
-    expect(screen.getByRole('img', { name: /minesweeper board.*6 by 6/i })).toBeTruthy();
+    expect(screen.getByRole('application', { name: /minesweeper board.*6 by 6/i })).toBeTruthy();
   });
 
   it('runs the clock in tenths of a second, from the moment the board appears', () => {
@@ -108,12 +108,12 @@ describe('PlayScreen: HUD', () => {
 describe('PlayScreen: input', () => {
   it('puts the keyboard focus on the board, so the arrow keys work at once', () => {
     show(handlers());
-    expect(document.activeElement).toBe(screen.getByRole('img'));
+    expect(document.activeElement).toBe(screen.getByRole('application'));
   });
 
   it('plays from the keyboard: the first key shows the cursor, F flags the cell under it', () => {
     show(handlers());
-    const board = screen.getByRole('img');
+    const board = screen.getByRole('application');
     fireEvent.keyDown(board, { key: 'ArrowUp' });
     fireEvent.keyDown(board, { key: 'f' });
     expect(readout('Mines left')).toBe('5');
@@ -122,7 +122,7 @@ describe('PlayScreen: input', () => {
 
   it('plays from the mouse: the controller listens on the same canvas', () => {
     show(handlers());
-    const board = screen.getByRole('img');
+    const board = screen.getByRole('application');
     // jsdom has no layout, so `hitTest` answers null; what matters is that the controller is attached:
     // the context menu is suppressed on exactly this element.
     expect(fireEvent.contextMenu(board)).toBe(false);

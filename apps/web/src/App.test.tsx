@@ -122,7 +122,7 @@ describe.each([
   it('leaves a game in progress for the menu, and disposes the session', () => {
     const { factory } = setup();
     fireEvent.click(screen.getByRole('button', { name: /^Expert/ }));
-    expect(screen.getByRole('img', { name: /30 by 16/ })).toBeTruthy();
+    expect(screen.getByRole('application', { name: /30 by 16/ })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Change difficulty' }));
     expect(level2('Choose a difficulty')).toBeTruthy();
     expect(factory.live()).toHaveLength(0);
@@ -133,7 +133,9 @@ describe.each([
     for (const [id, config] of Object.entries(PRESETS)) {
       fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${id}`, 'i') }));
       expect(
-        screen.getByRole('img', { name: new RegExp(`${config.width} by ${config.height}`) }),
+        screen.getByRole('application', {
+          name: new RegExp(`${config.width} by ${config.height}`),
+        }),
       ).toBeTruthy();
       fireEvent.click(screen.getByRole('button', { name: 'Change difficulty' }));
     }
@@ -209,7 +211,12 @@ describe.each([
     return { factory, store, seeds, configs };
   }
   const level2 = (name: string): HTMLElement => screen.getByRole('heading', { level: 2, name });
-  const key = (init: KeyboardEventInit, target: Element | Window = window): void => {
+  // M3-T08: the restart keys work while the focus is inside the game region (WCAG 2.1.4), so a key goes to the
+  // element that has the focus, as a real key does: the board during play, the heading on the result screen.
+  const key = (
+    init: KeyboardEventInit,
+    target: Element | Window = document.activeElement ?? document.body,
+  ): void => {
     fireEvent.keyDown(target, init);
   };
   const R = { key: 'r' };
@@ -231,14 +238,14 @@ describe.each([
     expect(factory.live()).toHaveLength(1);
   });
 
-  it('works when the board has the focus: the key bubbles from the canvas to the window', () => {
+  it('works when the board has the focus: the key bubbles from the canvas to the game region', () => {
     const { store } = setup();
     start();
-    const board = screen.getByRole('img');
+    const board = screen.getByRole('application');
     expect(document.activeElement).toBe(board);
     key(R, board);
     expect(store.getState().seed).toBe(101);
-    key(SHIFT_R, screen.getByRole('img'));
+    key(SHIFT_R, screen.getByRole('application'));
     expect(store.getState().seed).toBe(101);
     expect(store.getState().gameId).toBe(3);
   });
@@ -301,6 +308,71 @@ describe.each([
     expect(factory.live()).toHaveLength(1);
   });
 
+  // M3-T08, WCAG 2.1.4 (Character Key Shortcuts): a shortcut made of one printable character is active only
+  // while a component of the page has the focus. Here that component is the game region.
+  it('ignores R and Shift+R when the focus is outside the game region', () => {
+    const { store } = setup();
+    start();
+    const theme = screen.getByRole('button', { name: /^Theme: / });
+    theme.focus();
+    key(R, theme);
+    key(SHIFT_R, theme);
+    key(R, document.body);
+    key(SHIFT_R, window);
+    key(R, document.documentElement);
+    expect(store.getState().gameId).toBe(1);
+    expect(store.getState().seed).toBe(100);
+  });
+
+  it('has no listener on the window at all, so a screen reader that takes the letter loses nothing', () => {
+    const listeners = trackListeners();
+    try {
+      setup();
+      start();
+      expect(listeners.live('keydown', window)).toBe(0);
+      expect(listeners.live('keydown', document)).toBe(0);
+    } finally {
+      listeners.restore();
+    }
+  });
+
+  it('works from a button inside the game region, on the play and the result screens', () => {
+    const { store, factory } = setup();
+    start();
+    const change = screen.getByRole('button', { name: 'Change difficulty' });
+    key(R, change);
+    expect(store.getState().gameId).toBe(2);
+    const { mines } = boardFacts(PRESETS.beginner, 101);
+    act(() => factory.live()[0]?.dispatch({ type: 'reveal', index: mines[0] as number }));
+    key(SHIFT_R, screen.getByRole('button', { name: 'New board' }));
+    expect(store.getState().gameId).toBe(3);
+    expect(store.getState().seed).toBe(101);
+  });
+
+  it('works again once the focus returns to the board', () => {
+    const { store } = setup();
+    start();
+    const theme = screen.getByRole('button', { name: /^Theme: / });
+    theme.focus();
+    key(R, theme);
+    expect(store.getState().gameId).toBe(1);
+    screen.getByRole('application').focus();
+    key(R);
+    expect(store.getState().gameId).toBe(2);
+  });
+
+  it('has a region named Game on the play and result screens, and none on the menu', () => {
+    const { factory } = setup();
+    expect(screen.queryByRole('region', { name: 'Game' })).toBeNull();
+    start();
+    expect(screen.getByRole('region', { name: 'Game' })).toBeTruthy();
+    const { mines } = boardFacts(PRESETS.beginner, 100);
+    act(() => factory.live()[0]?.dispatch({ type: 'reveal', index: mines[0] as number }));
+    expect(screen.getByRole('region', { name: 'Game' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Change difficulty' }));
+    expect(screen.queryByRole('region', { name: 'Game' })).toBeNull();
+  });
+
   it('does nothing on the menu', () => {
     const { factory, store } = setup();
     key(R);
@@ -360,8 +432,10 @@ describe.each([
       start();
       const oneGameListeners = listeners.live();
       const oneGameKeyListeners = listeners.live('keydown');
-      // Sanity: the restart keys are listened for on the window, and the controller on the canvas.
-      expect(listeners.live('keydown', window)).toBe(1);
+      // Sanity: the restart keys are listened for on the game region, and the controller on the canvas.
+      const region = screen.getByRole('region', { name: 'Game' });
+      expect(listeners.live('keydown', region)).toBe(1);
+      expect(listeners.live('keydown', window)).toBe(0);
       expect(oneGameListeners).toBeGreaterThan(1);
       expect(intervals.live()).toBe(1);
 
@@ -373,11 +447,13 @@ describe.each([
       expect(intervals.live()).toBe(1);
       expect(listeners.live()).toBe(oneGameListeners);
       expect(listeners.live('keydown')).toBe(oneGameKeyListeners);
-      expect(listeners.live('keydown', window)).toBe(1);
+      expect(listeners.live('keydown', region)).toBe(1);
+      expect(listeners.live('keydown', window)).toBe(0);
 
       fireEvent.click(screen.getByRole('button', { name: 'Change difficulty' }));
       expect(factory.live()).toHaveLength(0);
       expect(intervals.live()).toBe(0);
+      expect(listeners.live('keydown', region)).toBe(0);
       expect(listeners.live('keydown', window)).toBe(0);
     } finally {
       listeners.restore();

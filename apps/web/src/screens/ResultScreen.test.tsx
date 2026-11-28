@@ -156,7 +156,7 @@ describe('ResultScreen', () => {
         onMenu={() => undefined}
       />,
     );
-    const board = screen.getByRole('img', { name: /minesweeper board.*3 by 3/i });
+    const board = screen.getByRole('img', { name: /finished board, 3 by 3/i });
     expect(board.tagName).toBe('CANVAS');
     expect(board.hasAttribute('tabindex')).toBe(false);
   });
