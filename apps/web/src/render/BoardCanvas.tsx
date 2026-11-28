@@ -23,6 +23,17 @@ export interface BoardCanvasProps {
   readonly onCanvas?: (canvas: HTMLCanvasElement | null) => void;
   /** Makes the renderer. Defaults to `new CanvasBoardRenderer()`. Read once per mount; used by tests. */
   readonly createRenderer?: () => BoardRenderer;
+  /**
+   * True when something (the input controller) makes the canvas a keyboard widget (M3-T08). The canvas then
+   * has `role="application"`, because a focusable `img` is a contradiction; the default is a read-only `img`.
+   */
+  readonly interactive?: boolean;
+  /** The accessible name. Defaults to `Minesweeper board, <width> by <height>`. */
+  readonly label?: string;
+  /** The `id` of the canvas, so a skip link can move the focus to it (M3-T08). */
+  readonly canvasId?: string;
+  /** The `id` of the element that describes the board, for `aria-describedby` (M3-T08). */
+  readonly describedBy?: string;
 }
 
 /** Calls `onChange` whenever the device pixel ratio changes (browser zoom, moving to another screen). */
@@ -72,6 +83,10 @@ export function BoardCanvas({
   onRenderer,
   onCanvas,
   createRenderer,
+  interactive = false,
+  label,
+  canvasId,
+  describedBy,
 }: BoardCanvasProps): React.JSX.Element {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -145,8 +160,10 @@ export function BoardCanvas({
     <div ref={wrapperRef} className="w-full overflow-x-auto">
       <canvas
         ref={canvasRef}
-        role="img"
-        aria-label={`Minesweeper board, ${view.width} by ${view.height}`}
+        id={canvasId}
+        role={interactive ? 'application' : 'img'}
+        aria-label={label ?? `Minesweeper board, ${view.width} by ${view.height}`}
+        aria-describedby={describedBy}
         className="mx-auto block"
       />
     </div>

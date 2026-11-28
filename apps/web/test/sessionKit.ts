@@ -175,3 +175,19 @@ export function trackListeners(): {
     },
   };
 }
+
+/**
+ * Makes every element answer `:focus-visible` the same way, so a test can model how the focus arrived (M3-T08).
+ * jsdom has no input-modality heuristic and treats every focus as visible; a browser shows the ring after a
+ * keyboard focus and not after a mouse click, so `false` is a game started with the mouse and `true` one
+ * started from the keyboard. Any other selector goes to the real `matches`.
+ */
+export function stubFocusVisible(visible: boolean): void {
+  const original = Element.prototype.matches;
+  vi.spyOn(Element.prototype, 'matches').mockImplementation(function (
+    this: Element,
+    selector: string,
+  ): boolean {
+    return selector === ':focus-visible' ? visible : original.call(this, selector);
+  });
+}

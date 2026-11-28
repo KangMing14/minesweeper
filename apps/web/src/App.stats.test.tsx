@@ -77,7 +77,7 @@ describe.each([
     win(ctx, 100, 6_000);
     expect(ctx.stats.summary('beginner')).toMatchObject({ games: 1, wins: 0, bestTimeMs: null });
 
-    fireEvent.keyDown(window, { key: 'R', shiftKey: true });
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'R', shiftKey: true });
     win(ctx, 100, 5_000);
     expect(ctx.stats.summary('beginner')).toMatchObject({ games: 1, wins: 0, bestTimeMs: null });
   });
@@ -85,8 +85,8 @@ describe.each([
   it('does not count a retry that follows a retry, and a game left by Shift+R in between records nothing', () => {
     const ctx = setup();
     start(/^Beginner/);
-    fireEvent.keyDown(window, { key: 'R', shiftKey: true });
-    fireEvent.keyDown(window, { key: 'R', shiftKey: true });
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'R', shiftKey: true });
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'R', shiftKey: true });
     lose(ctx, 100);
     expect(ctx.stats.summary('beginner').games).toBe(0);
     fireEvent.click(screen.getByRole('button', { name: 'Retry this board' }));
@@ -127,7 +127,7 @@ describe.each([
   it('records nothing for a game that is left, by the menu or by a restart key', () => {
     const ctx = setup();
     start(/^Beginner/);
-    fireEvent.keyDown(window, { key: 'r' });
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'r' });
     fireEvent.click(screen.getByRole('button', { name: 'Change difficulty' }));
     expect(ctx.stats.summary('beginner').games).toBe(0);
   });

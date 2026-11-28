@@ -84,7 +84,12 @@ export function ResultScreen({
         </button>
       </div>
       <RestartHint />
-      <BoardCanvas view={view} />
+      <BoardCanvas
+        view={view}
+        label={`Finished board, ${view.width} by ${view.height}. ${
+          result.outcome === 'won' ? 'You cleared the board.' : 'You hit a mine.'
+        }`}
+      />
     </section>
   );
 }

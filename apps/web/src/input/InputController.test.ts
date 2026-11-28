@@ -7,7 +7,7 @@ import type {
   ReplayLog,
 } from '@minesweeper/engine';
 import { fireEvent } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BoardRenderer } from '../render/BoardRenderer.js';
 import type { GameSession, PlayerAction } from '../session/GameSession.js';
 import { InputController } from './InputController.js';
@@ -95,7 +95,7 @@ let controller = new InputController({ session, renderer });
 
 function setup(
   view: GameView = makeView(3, 3),
-  options: { chordOnNumberClick?: boolean } = {},
+  options: { chordOnNumberClick?: boolean; onCursorChange?: (index: CellIndex) => void } = {},
 ): void {
   controller.detach(); // a test may call setup() again; two controllers on one element would double every event
   session = new FakeSession(view);
@@ -471,5 +471,108 @@ describe('attach and detach', () => {
     controller.detach();
     const fresh = new InputController({ session, renderer });
     expect(() => fresh.detach()).not.toThrow();
+  });
+});
+
+describe('keyboard focus and cursor reports (M3-T08)', () => {
+  /** Makes the element answer `:focus-visible` the way a browser does after a keyboard focus (or not). */
+  const focusVisible = (visible: boolean): void => {
+    vi.spyOn(element, 'matches').mockImplementation(
+      (selector: string) => selector === ':focus-visible' && visible,
+    );
+  };
+
+  it('shows the ring in the middle when the element gets the focus from the keyboard', () => {
+    focusVisible(true);
+    fireEvent.focus(element);
+    expect(renderer.shown).toBe(4);
+    expect(controller.cursor).toBe(4);
+  });
+
+  it('shows no ring when the focus comes from the mouse', () => {
+    focusVisible(false);
+    fireEvent.focus(element);
+    expect(renderer.cursorCalls).toEqual([]);
+    expect(controller.cursor).toBeNull();
+  });
+
+  it('lets a key act on the cell that a keyboard focus has marked', () => {
+    focusVisible(true);
+    fireEvent.focus(element);
+    key(' ');
+    expect(session.actions).toEqual([{ type: 'reveal', index: 4 }]);
+  });
+
+  it('still only shows the ring on the first key when the focus came from the mouse', () => {
+    focusVisible(false);
+    fireEvent.focus(element);
+    key(' ');
+    expect(session.actions).toEqual([]);
+    expect(renderer.shown).toBe(4);
+  });
+
+  it('puts the ring back on the remembered cell after a blur and a keyboard focus', () => {
+    focusVisible(true);
+    fireEvent.focus(element);
+    key('ArrowRight');
+    key('ArrowDown');
+    expect(controller.cursor).toBe(8);
+    fireEvent.blur(element);
+    expect(renderer.shown).toBeNull();
+    fireEvent.focus(element);
+    expect(renderer.shown).toBe(8);
+  });
+
+  it('shows no ring, and does not throw, when the browser cannot answer :focus-visible', () => {
+    vi.spyOn(element, 'matches').mockImplementation(() => {
+      throw new SyntaxError('unsupported selector');
+    });
+    expect(() => fireEvent.focus(element)).not.toThrow();
+    expect(renderer.cursorCalls).toEqual([]);
+  });
+
+  it('shows no ring on focus once the controller is detached', () => {
+    focusVisible(true);
+    controller.detach();
+    fireEvent.focus(element);
+    expect(renderer.cursorCalls).toEqual([]);
+  });
+
+  describe('onCursorChange', () => {
+    const reports: CellIndex[] = [];
+    beforeEach(() => {
+      reports.length = 0;
+      setup(makeView(3, 3), { onCursorChange: (index) => reports.push(index) });
+    });
+
+    it('reports the cell the ring is first shown on, then every move', () => {
+      key('ArrowRight'); // first key: shows the ring at the middle, no move
+      key('ArrowRight');
+      key('ArrowDown');
+      expect(reports).toEqual([4, 5, 8]);
+    });
+
+    it('reports the cell when a keyboard focus shows the ring', () => {
+      vi.spyOn(element, 'matches').mockImplementation((s: string) => s === ':focus-visible');
+      fireEvent.focus(element);
+      expect(reports).toEqual([4]);
+    });
+
+    it('reports the same cell again when the edge of the board stops a move, so the key is not silent', () => {
+      key('ArrowRight');
+      key('ArrowRight');
+      key('ArrowRight');
+      expect(reports).toEqual([4, 5, 5]);
+    });
+
+    it('does not report mouse actions, or the actions of the keyboard', () => {
+      click(0, 2);
+      click(2, 3);
+      expect(reports).toEqual([]);
+      key('ArrowRight'); // shows the ring on the remembered cell 3
+      key('f');
+      key(' ');
+      expect(reports).toEqual([3]);
+    });
   });
 });

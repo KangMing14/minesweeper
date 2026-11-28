@@ -331,3 +331,48 @@ describe('BoardCanvas with the real renderer', () => {
     expect(screen.getByRole('alert')).toBeTruthy();
   });
 });
+
+describe('BoardCanvas accessibility props (M3-T08)', () => {
+  const view = makeView(4, 3);
+  const canvas = (): HTMLElement => document.querySelector('canvas') as HTMLElement;
+
+  it('is a named image by default: nothing about it is interactive', () => {
+    render(<BoardCanvas view={view} createRenderer={makeSpyRenderer} />);
+    expect(canvas().getAttribute('role')).toBe('img');
+    expect(canvas().getAttribute('aria-label')).toBe('Minesweeper board, 4 by 3');
+    expect(canvas().hasAttribute('id')).toBe(false);
+    expect(canvas().hasAttribute('aria-describedby')).toBe(false);
+  });
+
+  it('is an application when it is interactive, because a focusable image is a contradiction', () => {
+    render(<BoardCanvas view={view} interactive createRenderer={makeSpyRenderer} />);
+    expect(canvas().getAttribute('role')).toBe('application');
+    expect(screen.queryByRole('img')).toBeNull();
+    expect(canvas().getAttribute('aria-label')).toBe('Minesweeper board, 4 by 3');
+  });
+
+  it('takes the name the screen gives it, in both roles', () => {
+    const { rerender } = render(
+      <BoardCanvas view={view} label="Finished board" createRenderer={makeSpyRenderer} />,
+    );
+    expect(canvas().getAttribute('aria-label')).toBe('Finished board');
+    rerender(
+      <BoardCanvas view={view} interactive label="Play area" createRenderer={makeSpyRenderer} />,
+    );
+    expect(canvas().getAttribute('aria-label')).toBe('Play area');
+  });
+
+  it('carries the id and the description the screen gives it', () => {
+    render(
+      <BoardCanvas
+        view={view}
+        interactive
+        canvasId="play-board"
+        describedBy="play-board-help"
+        createRenderer={makeSpyRenderer}
+      />,
+    );
+    expect(canvas().id).toBe('play-board');
+    expect(canvas().getAttribute('aria-describedby')).toBe('play-board-help');
+  });
+});

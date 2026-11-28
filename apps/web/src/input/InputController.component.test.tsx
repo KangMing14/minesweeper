@@ -7,6 +7,7 @@ import { FakeContext2D } from '../../test/fakeCanvas.js';
 import { BoardCanvas } from '../render/BoardCanvas.js';
 import type { BoardRenderer } from '../render/BoardRenderer.js';
 import { LocalSession } from '../session/LocalSession.js';
+import { stubFocusVisible } from '../../test/sessionKit.js';
 import { InputController } from './InputController.js';
 
 // M3-T04 acceptance: keyboard-only completion of a seeded game, through the real pieces: LocalSession (with a
@@ -42,10 +43,11 @@ let canvas: HTMLElement;
 function Board(props: { onRenderer: (renderer: BoardRenderer | null) => void }): React.JSX.Element {
   const [view, setView] = useState<GameView>(() => session.view());
   useEffect(() => session.subscribe(() => setView(session.view())), []);
-  return <BoardCanvas view={view} onRenderer={props.onRenderer} />;
+  return <BoardCanvas view={view} onRenderer={props.onRenderer} interactive />;
 }
 
 beforeEach(() => {
+  stubFocusVisible(false); // a focus that came from the mouse: the ring waits for the first key
   ctx = new FakeContext2D();
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
     ctx as unknown as CanvasRenderingContext2D,
@@ -56,7 +58,7 @@ beforeEach(() => {
   render(<Board onRenderer={(r) => (renderer = r)} />);
   if (renderer === null) throw new Error('the board did not give out its renderer');
   controller = new InputController({ session, renderer });
-  canvas = screen.getByRole('img');
+  canvas = screen.getByRole('application');
   controller.attach(canvas);
 });
 
@@ -135,5 +137,23 @@ describe('playing with the keyboard alone', () => {
     press(' ');
     expect(session.view().revealedCount).toBe(before);
     expect(session.view().status).toBe('ready');
+  });
+});
+
+describe('keyboard focus (M3-T08)', () => {
+  it('shows the ring at once after a keyboard focus, and the next key acts on the marked cell', () => {
+    stubFocusVisible(true);
+    canvas.focus();
+    expect(controller.cursor).toBe(21); // the middle of the 6 x 6 board: the later middle cell on an even side
+    press(' ');
+    expect(session.view().status).not.toBe('ready');
+  });
+
+  it('shows nothing after a mouse focus, and the first key only shows the ring', () => {
+    canvas.focus();
+    expect(controller.cursor).toBeNull();
+    press(' ');
+    expect(session.view().status).toBe('ready');
+    expect(controller.cursor).toBe(21);
   });
 });

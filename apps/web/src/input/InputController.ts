@@ -18,6 +18,12 @@ export interface InputControllerOptions {
    * revealed cell has no effect in the engine, so the shortcut takes nothing away.
    */
   readonly chordOnNumberClick?: boolean;
+  /**
+   * Called with the cell the ring marks each time the keyboard shows it or moves it, also when a move is
+   * stopped by the edge (the same cell again, so a key press is never silent). Not called for the mouse and
+   * not for actions. The play screen turns it into a live-region message (M3-T08).
+   */
+  readonly onCursorChange?: (index: CellIndex) => void;
 }
 
 /** The three mouse buttons the controller uses: `MouseEvent.button` values. */
@@ -76,6 +82,7 @@ export class InputController {
   readonly #session: GameSession;
   readonly #renderer: BoardRenderer;
   readonly #chordOnNumberClick: boolean;
+  readonly #onCursorChange: ((index: CellIndex) => void) | undefined;
   #element: HTMLElement | null = null;
   #addedTabIndex = false;
   /** The keyboard cursor, or null before the first key or click. Remembered while the ring is hidden. */
@@ -90,6 +97,7 @@ export class InputController {
     this.#session = options.session;
     this.#renderer = options.renderer;
     this.#chordOnNumberClick = options.chordOnNumberClick ?? true;
+    this.#onCursorChange = options.onCursorChange;
   }
 
   /** The cell the keyboard cursor is on, or `null` before the first key or click. */
@@ -116,6 +124,7 @@ export class InputController {
     element.addEventListener('contextmenu', this.#onContextMenu);
     element.addEventListener('keydown', this.#onKeyDown);
     element.addEventListener('blur', this.#onBlur);
+    element.addEventListener('focus', this.#onFocus);
   }
 
   /** Stops listening, removes the ring and forgets a half-finished gesture. Safe to call at any time. */
@@ -128,6 +137,7 @@ export class InputController {
     element.removeEventListener('contextmenu', this.#onContextMenu);
     element.removeEventListener('keydown', this.#onKeyDown);
     element.removeEventListener('blur', this.#onBlur);
+    element.removeEventListener('focus', this.#onFocus);
     if (this.#addedTabIndex) element.removeAttribute('tabindex');
     this.#addedTabIndex = false;
     this.#element = null;
@@ -158,6 +168,20 @@ export class InputController {
 
   readonly #onBlur = (): void => {
     this.#hideRing();
+  };
+
+  /**
+   * A focus that the browser treats as keyboard focus (`:focus-visible`: Tab, or a script after a key press)
+   * shows the ring at once, on the remembered cell or in the middle, so a keyboard player sees where they
+   * are without pressing a key first. A focus from the mouse shows nothing: the ring stays hidden until the
+   * first key, which only shows it (M3-T04), so no key ever acts on a cell that was not marked.
+   */
+  readonly #onFocus = (): void => {
+    const element = this.#element;
+    if (element === null || !matchesFocusVisible(element)) return;
+    const view = this.#session.view();
+    if (this.#cursor === null || this.#cursor >= view.cells.length) this.#cursor = centerOf(view);
+    this.#showRing();
   };
 
   readonly #onKeyDown = (event: KeyboardEvent): void => {
@@ -230,12 +254,22 @@ export class InputController {
   #showRing(): void {
     this.#ringShown = true;
     this.#renderer.setCursor(this.#cursor);
+    if (this.#cursor !== null) this.#onCursorChange?.(this.#cursor);
   }
 
   #hideRing(): void {
     if (!this.#ringShown) return;
     this.#ringShown = false;
     this.#renderer.setCursor(null);
+  }
+}
+
+/** Whether the browser shows a focus ring on the element; false where it cannot say (an old browser, jsdom). */
+function matchesFocusVisible(element: HTMLElement): boolean {
+  try {
+    return element.matches(':focus-visible');
+  } catch {
+    return false;
   }
 }
 
